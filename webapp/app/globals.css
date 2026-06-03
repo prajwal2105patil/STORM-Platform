@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy:   #1A3A5C;
+  --teal:   #0D6B8E;
+  --steel:  #2E75B6;
+  --green:  #16a34a;
+  --red:    #dc2626;
+  --amber:  #d97706;
+}
+
+body {
+  @apply antialiased;
+}
+
+.status-validated       { @apply bg-green-100  text-green-800  border border-green-200; }
+.status-rejected        { @apply bg-red-100    text-red-800    border border-red-200; }
+.status-pending         { @apply bg-amber-100  text-amber-800  border border-amber-200; }
+.status-insufficient    { @apply bg-gray-100   text-gray-700   border border-gray-200; }

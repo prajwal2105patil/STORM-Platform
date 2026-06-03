@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DREADNOUGHT — ASRE</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#060B14;
+  --surface:rgba(15,22,40,0.85);
+  --surface2:rgba(21,30,46,0.9);
+  --surface3:rgba(26,36,56,0.6);
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.11);
+  --border3:rgba(255,255,255,0.18);
+  --text:#E8EDF5;
+  --muted:#6B7A99;
+  --faint:#2E3A55;
+  --blue:#3B7EF6;
+  --blue-dim:rgba(59,126,246,0.15);
+  --blue-glow:rgba(59,126,246,0.25);
+  --green:#22C97A;
+  --green-dim:rgba(34,201,122,0.12);
+  --green-glow:rgba(34,201,122,0.2);
+  --red:#F05252;
+  --red-dim:rgba(240,82,82,0.12);
+  --amber:#F0B429;
+  --amber-dim:rgba(240,180,41,0.12);
+  --mono:'SF Mono','Fira Code','Cascadia Code',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
+  --r:8px;
+  --rl:14px;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.5;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── Background ── */
+.bg-grid{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(59,126,246,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,126,246,0.03) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.bg-orb{
+  position:fixed;pointer-events:none;border-radius:50%;z-index:0;filter:blur(80px);
+}
+.bg-orb-1{width:500px;height:500px;background:rgba(59,126,246,0.06);top:-120px;right:-80px;}
+.bg-orb-2{width:400px;height:400px;background:rgba(34,201,122,0.04);bottom:-100px;left:-60px;}
+
+/* ── Header ── */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px;
+  background:rgba(6,11,20,0.8);
+  backdrop-filter:blur(16px);
+  border-bottom:0.5px solid var(--border2);
+  position:sticky;top:0;z-index:100;
+}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo-mark{
+  width:34px;height:34px;
+  background:linear-gradient(135deg,#2563EB,#3B7EF6);
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;color:#fff;
+  box-shadow:0 0 0 1px rgba(59,126,246,0.4),0 0 16px rgba(59,126,246,0.2);
+}
+.product-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.01em}
+.product-sub{font-size:10px;color:var(--muted);letter-spacing:0.06em;margin-top:1px;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:14px}
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:999px;
+  font-size:11px;font-weight:500;
+  border:0.5px solid rgba(34,201,122,0.25);
+  background:var(--green-dim);color:var(--green);
+  transition:all 0.3s;
+}
+.status-pill.offline{background:var(--red-dim);color:var(--red);border-color:rgba(240,82,82,0.25)}
+.status-dot{
+  width:6px;height:6px;border-radius:50%;background:currentColor;
+  animation:pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+.header-meta{font-size:11px;color:var(--faint)}
+
+/* ── Layout ── */
+.container{max-width:1080px;margin:0 auto;padding:28px 32px;position:relative;z-index:1}
+
+/* ── Section label ── */
+.section-label{
+  font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:0.5px;background:var(--border2)}
+
+/* ── Metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.metric-card{
+  background:var(--surface);
+  backdrop-filter:blur(12px);
+  border:0.5px solid var(--border2);
+  border-radius:var(--rl);
+  padding:20px;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  cursor:default;
+}
+.metric-card:hover{border-color:var(--border3);box-shadow:0 0 24px rgba(59,126,246,0.07)}
+.metric-card.blue{border-top:1.5px solid var(--blue)}
+.metric-card.green{border-top:1.5px solid var(--green)}
+.metric-card.amber{border-top:1.5px solid var(--amber)}
+.metric-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.metric-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.metric-icon.blue{background:var(--blue-dim)}
+.metric-icon.green{background:var(--green-dim)}
+.metric-icon.amber{background:var(--amber-dim)}
+.metric-badge{font-size:9px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;font-weight:500}
+.metric-badge.blue{background:var(--blue-dim);color:var(--blue)}
+.metric-badge.green{background:var(--green-dim);color:var(--green)}
+.metric-badge.amber{background:var(--amber-dim);color:var(--amber)}
+.metric-label{font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.metric-value{font-size:30px;font-weight:700;line-height:1;letter-spacing:-0.02em}
+.metric-value.blue{color:var(--blue)}
+.metric-value.green{color:var(--green)}
+.metric-value.amber{color:var(--amber)}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:6px}
+.metric-vs{font-size:10px;color:var(--faint);margin-top:3px;font-style:italic}
+
+/* ── Main grid ── */
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ── Panel (glass card) ── */
+.panel{
+  background:var(--surface);
+  backdrop-filter:blur(16px);
+  border:0.5px solid var(--border2);
+  border-radius:var(--rl);
+  padding:22px;
+  transition:border-color 0.2s;
+}
+.panel:hover{border-color:var(--border3)}
+.panel-title{
+  font-size:10px;letter-spacing:0.09em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+  display:flex;align-items:center;gap:7px;
+}
+.panel-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0}
+
+/* ── Presets ── */
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.preset-btn{
+  font-size:11px;padding:4px 11px;
+  border-radius:999px;
+  border:0.5px solid var(--border2);
+  background:var(--surface3);
+  color:var(--muted);cursor:pointer;
+  transition:border-color 0.15s,color 0.15s,background 0.15s,box-shadow 0.15s;
+}
+.preset-btn:hover{
+  border-color:rgba(59,126,246,0.4);
+  color:var(--blue);
+  background:var(--blue-dim);
+  box-shadow:0 0 8px var(--blue-glow);
+}
+
+/* ── Form elements ── */
+.field-label{font-size:11px;color:var(--muted);margin-bottom:5px}
+textarea,input[type=text]{
+  width:100%;
+  background:rgba(12,18,32,0.6);
+  backdrop-filter:blur(8px);
+  border:0.5px solid var(--border2);
+  border-radius:var(--r);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.65;
+  padding:10px 13px;
+  resize:none;
+  outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+textarea{min-height:96px}
+textarea:focus,input:focus{
+  border-color:rgba(59,126,246,0.5);
+  box-shadow:0 0 0 3px rgba(59,126,246,0.08);
+}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.field-group{display:flex;flex-direction:column}
+
+/* ── Submit button ── */
+.btn-submit{
+  width:100%;margin-top:14px;padding:11px;
+  background:linear-gradient(135deg,#2563EB,#3B7EF6);
+  color:#fff;border:none;border-radius:var(--r);
+  font-size:13px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:0.01em;
+  box-shadow:0 0 0 1px rgba(59,126,246,0.3),0 4px 16px rgba(59,126,246,0.25);
+  transition:opacity 0.15s,transform 0.1s,box-shadow 0.15s;
+}
+.btn-submit:hover{opacity:0.9;box-shadow:0 0 0 1px rgba(59,126,246,0.5),0 4px 24px rgba(59,126,246,0.4)}
+.btn-submit:active{transform:scale(0.98)}
+.btn-submit:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none}
+
+/* ── Result ── */
+.result-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:220px;color:var(--faint);font-size:12px;text-align:center;gap:12px;
+}
+.result-empty svg{opacity:0.2}
+
+.verdict-wrap{animation:revealUp 0.35s ease-out both}
+@keyframes revealUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.verdict-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 16px;border-radius:999px;
+  font-size:12px;font-weight:600;letter-spacing:0.05em;
+  margin-bottom:18px;
+}
+.verdict-validated{
+  background:var(--green-dim);color:var(--green);
+  border:0.5px solid rgba(34,201,122,0.3);
+  box-shadow:0 0 16px var(--green-glow);
+}
+.verdict-rejected{
+  background:var(--red-dim);color:var(--red);
+  border:0.5px solid rgba(240,82,82,0.3);
+  box-shadow:0 0 12px rgba(240,82,82,0.15);
+}
+.verdict-insufficient{
+  background:var(--amber-dim);color:var(--amber);
+  border:0.5px solid rgba(240,180,41,0.3);
+}
+
+.ev-table{width:100%;border-collapse:collapse}
+.ev-table tr{border-bottom:0.5px solid var(--border)}
+.ev-table tr:last-child{border-bottom:none}
+.ev-table td{padding:8px 0;vertical-align:middle}
+.ev-key{font-size:11px;color:var(--muted);width:54%;letter-spacing:0.02em}
+.ev-val{font-size:13px;font-weight:500;font-family:var(--mono);color:var(--text);text-align:right}
+.ev-val.green{color:var(--green)}
+.ev-val.red{color:var(--red)}
+.ev-val.blue{color:var(--blue)}
+
+.result-footer{
+  margin-top:16px;padding-top:13px;
+  border-top:0.5px solid var(--border2);
+  display:flex;justify-content:space-between;align-items:flex-end;
+}
+.result-timer{
+  font-size:12px;color:var(--muted);
+  display:flex;align-items:center;gap:5px;
+}
+.result-timer strong{color:var(--blue);font-variant-numeric:tabular-nums}
+.result-prov{
+  font-size:10px;color:var(--faint);text-align:right;max-width:54%;line-height:1.5;
+  display:flex;align-items:flex-start;gap:4px;
+}
+.prov-lock{flex-shrink:0;margin-top:1px;color:var(--green);opacity:0.6}
+
+.rejection-note{
+  background:rgba(240,82,82,0.08);
+  border:0.5px solid rgba(240,82,82,0.2);
+  border-left:2px solid var(--red);
+  border-radius:var(--r);
+  padding:10px 14px;
+  font-size:12px;color:rgba(240,82,82,0.9);
+  margin-bottom:14px;line-height:1.6;
+}
+
+/* ── Spinner ── */
+.spinner-wrap{display:flex;align-items:center;justify-content:center;min-height:220px;flex-direction:column;gap:12px}
+.spinner{
+  width:28px;height:28px;
+  border:2px solid var(--faint);
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin 0.65s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-label{font-size:11px;color:var(--muted)}
+
+/* ── Page footer ── */
+.page-footer{
+  margin-top:28px;padding:16px 0;
+  border-top:0.5px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:var(--faint);
+}
+.footer-rule{
+  display:flex;align-items:center;gap:6px;
+  color:var(--green);opacity:0.6;font-size:10px;letter-spacing:0.04em;
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">D</div>
+    <div>
+      <div class="product-name">DREADNOUGHT</div>
+      <div class="product-sub">Autonomous Service Resolution Engine</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-pill" id="status-pill">
+      <span class="status-dot"></span>
+      <span id="status-text">checking...</span>
+    </div>
+    <span class="header-meta">localhost:8000</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Metrics -->
+  <div class="section-label">performance benchmarks</div>
+  <div class="metrics">
+    <div class="metric-card blue">
+      <div class="metric-top">
+        <div class="metric-icon blue">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3B7EF6" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>
+        </div>
+        <span class="metric-badge blue">latency</span>
+      </div>
+      <div class="metric-label">resolution time</div>
+      <div class="metric-value blue" id="m-time">&lt;&nbsp;3s</div>
+      <div class="metric-sub">end-to-end adjudication</div>
+      <div class="metric-vs">vs 60-day legal process</div>
+    </div>
+    <div class="metric-card green">
+      <div class="metric-top">
+        <div class="metric-icon green">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#22C97A" stroke-width="1.5"><path d="M8 2v12M4 6l4-4 4 4M4 10l4 4 4-4"/></svg>
+        </div>
+        <span class="metric-badge green">cost</span>
+      </div>
+      <div class="metric-label">cost per query</div>
+      <div class="metric-value green">₹5</div>
+      <div class="metric-sub">fully burdened per claim</div>
+      <div class="metric-vs">vs ₹50L expert witness fee</div>
+    </div>
+    <div class="metric-card amber">
+      <div class="metric-top">
+        <div class="metric-icon amber">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#F0B429" stroke-width="1.5"><ellipse cx="8" cy="8" rx="6" ry="4"/><path d="M2 8c0 2.2 2.7 4 6 4s6-1.8 6-4"/><line x1="8" y1="4" x2="8" y2="12"/></svg>
+        </div>
+        <span class="metric-badge amber">coverage</span>
+      </div>
+      <div class="metric-label">observations indexed</div>
+      <div class="metric-value amber">1.46B</div>
+      <div class="metric-sub">NOAA ISD · 15,256 stations</div>
+      <div class="metric-vs">2015 – 2025 · global</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="section-label">claim adjudication</div>
+  <div class="main-grid">
+
+    <!-- Input -->
+    <div class="panel">
+      <div class="panel-title"><span class="panel-dot"></span>claim input</div>
+
+      <div class="presets">
+        <button class="preset-btn" onclick="loadPreset('hurricane')">⚡ Hurricane · Key West · Aug 2023</button>
+        <button class="preset-btn" onclick="loadPreset('tropstorm')">🌀 Tropical storm · Jul 2023</button>
+        <button class="preset-btn" onclick="loadPreset('invalid')">✕ Invalid claim</button>
+      </div>
+
+      <div class="field-label">Natural language claim</div>
+      <textarea id="claim-input" placeholder="E.g. Hurricane-force winds occurred at Key West in August 2023, invoking the force majeure clause under Section 14.2..."></textarea>
+
+      <div class="field-row">
+        <div class="field-group">
+          <div class="field-label" style="margin-top:10px">WMO Station ID <span style="color:var(--faint)">(optional)</span></div>
+          <input type="text" id="station-input" placeholder="72201012842">
+        </div>
+        <div class="field-group">
+          <div class="field-label" style="margin-top:10px">Station name</div>
+          <input type="text" id="station-name" placeholder="auto-detected" readonly style="opacity:0.45;cursor:default">
+        </div>
+      </div>
+
+      <button class="btn-submit" id="submit-btn" onclick="submitClaim()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+        Adjudicate Claim
+      </button>
+
+      <div style="margin-top:10px;text-align:center;font-size:10px;color:var(--faint)">
+        Ctrl+Enter to submit &nbsp;·&nbsp; Rule 803(8) public records
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="panel" id="result-panel">
+      <div class="panel-title"><span class="panel-dot" style="background:var(--green)"></span>adjudication result</div>
+      <div class="result-empty" id="result-empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.75"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+        <div>Submit a claim to receive<br>a legally structured verdict</div>
+      </div>
+      <div id="result-content" style="display:none"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="page-footer">
+    <span>Project Dreadnought · ASRE v1.0 · Zero cloud spend</span>
+    <div class="footer-rule">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>
+      NOAA ISD · Federal Rule of Evidence 803(8) Admissible
+    </div>
+  </div>
+</div>
+
+<script>
+const API='http://localhost:8000';
+
+const PRESETS={
+  hurricane:{
+    claim:'Hurricane-force winds occurred at Key West in August 2023, invoking the force majeure clause under Section 14.2 of the logistics SLA.',
+    station:'72201012842',name:'KEY WEST INTL AP, US'
+  },
+  tropstorm:{
+    claim:'Tropical storm conditions were recorded in July 2023, causing operational disruption under the weather clause of the freight agreement.',
+    station:'',name:''
+  },
+  invalid:{
+    claim:'The vendor failed to deliver the shipment on time due to poor planning and internal mismanagement.',
+    station:'',name:''
+  }
+};
+
+function loadPreset(k){
+  const p=PRESETS[k];
+  document.getElementById('claim-input').value=p.claim;
+  document.getElementById('station-input').value=p.station;
+  document.getElementById('station-name').value=p.name;
+  document.getElementById('claim-input').focus();
+}
+
+async function checkHealth(){
+  const pill=document.getElementById('status-pill');
+  const txt=document.getElementById('status-text');
+  try{
+    const r=await fetch(API+'/health');
+    const d=await r.json();
+    txt.textContent=d.status||'operational';
+    pill.className='status-pill';
+  }catch(e){
+    txt.textContent='offline — start uvicorn';
+    pill.className='status-pill offline';
+  }
+}
+
+function setLoading(on){
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=on;
+  if(on){
+    btn.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite"></div>Adjudicating...';
+  }else{
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h12M9 3l5 5-5 5"/></svg>Adjudicate Claim';
+  }
+}
+
+function renderResult(data){
+  const status=data.claim_status;
+  const ms=data.resolution_time_ms;
+  const ev=data.evidence;
+  const reason=data.rejection_reason;
+  const prov=data.data_provenance;
+
+  let badgeClass='verdict-validated';
+  let icon='<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8l4 4 6-7"/></svg>';
+  if(status==='REJECTED'){
+    badgeClass='verdict-rejected';
+    icon='<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+  }
+  if(status==='INSUFFICIENT_DATA'){
+    badgeClass='verdict-insufficient';
+    icon='<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v5M8 12v.5"/></svg>';
+  }
+
+  let rejHtml='';
+  if(reason) rejHtml=`<div class="rejection-note">${reason}</div>`;
+
+  let evHtml='';
+  if(ev){
+    const rows=[];
+    if(ev.target_metric) rows.push(['target metric',ev.target_metric,'blue']);
+    if(ev.threshold_applied) rows.push(['threshold applied',ev.threshold_applied,'']);
+    if(ev.recorded_peak!=null){
+      const unit=ev.target_metric==='wind_speed_ms'?' m/s':ev.target_metric==='air_temp_c'?' °C':'';
+      rows.push(['recorded peak',ev.recorded_peak.toFixed(2)+unit,ev.sla_threshold_exceeded?'green':'red']);
+    }
+    if(ev.exceedance_hours) rows.push(['exceedance hours',ev.exceedance_hours+' hrs','green']);
+    if(ev.period_average) rows.push(['period average',ev.period_average.toFixed(2),'']);
+    if(ev.total_observations) rows.push(['obs. scanned',ev.total_observations.toLocaleString(),'']);
+    if(ev.station_name) rows.push(['station',ev.station_name,'']);
+    if('sla_threshold_exceeded' in ev) rows.push(['sla exceeded',String(ev.sla_threshold_exceeded),ev.sla_threshold_exceeded?'green':'red']);
+    evHtml=`<table class="ev-table">${rows.map(([k,v,c])=>`<tr><td class="ev-key">${k}</td><td class="ev-val ${c}">${v}</td></tr>`).join('')}</table>`;
+  }
+
+  return `<div class="verdict-wrap">
+    <span class="verdict-badge ${badgeClass}">${icon} ${status}</span>
+    ${rejHtml}${evHtml}
+    <div class="result-footer">
+      <div class="result-timer">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>
+        resolved in <strong>${ms} ms</strong>
+      </div>
+      <div class="result-prov">
+        <span class="prov-lock"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg></span>
+        ${prov}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function submitClaim(){
+  const claim=document.getElementById('claim-input').value.trim();
+  const station=document.getElementById('station-input').value.trim();
+  if(!claim){document.getElementById('claim-input').focus();return;}
+
+  const rc=document.getElementById('result-content');
+  const re=document.getElementById('result-empty');
+  re.style.display='none';
+  rc.style.display='block';
+  rc.innerHTML='<div class="spinner-wrap"><div class="spinner"></div><div class="spinner-label">Running adjudication...</div></div>';
+  setLoading(true);
+
+  try{
+    const body={claim};
+    if(station) body.station=station;
+    const res=await fetch(API+'/adjudicate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const data=await res.json();
+    rc.innerHTML=renderResult(data);
+    if(data.evidence&&data.evidence.station_name){
+      document.getElementById('station-name').value=data.evidence.station_name;
+    }
+    const mt=document.getElementById('m-time');
+    if(mt&&data.resolution_time_ms) mt.textContent=data.resolution_time_ms+'ms';
+  }catch(e){
+    rc.innerHTML=`<div class="result-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.75"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16v.5"/></svg>
+      <div style="color:var(--red)">Cannot reach API at ${API}</div>
+      <div style="font-size:11px;margin-top:4px;color:var(--muted)">uvicorn asre.main:app --reload --port 8000</div>
+    </div>`;
+  }finally{
+    setLoading(false);
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) submitClaim();
+});
+
+checkHealth();
+setInterval(checkHealth,15000);
+</script>
+</body>
+</html>

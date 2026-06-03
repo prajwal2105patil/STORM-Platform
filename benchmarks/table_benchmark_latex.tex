@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{DS-PAF vs.\ Unconstrained LLM Baseline: Per-Class F1-Score on 1{,}000-Claim Synthetic Benchmark ($\text{seed}=42$)}
+\label{tab:benchmark}
+\begin{tabular}{lrr}
+\hline
+\textbf{Claim Class} & \textbf{DS-PAF F1} & \textbf{Baseline F1} \\
+\hline
+Validated Weather Event & \textbf{1.000} & 0.571 \\
+Rejected: Unavailable Data Partition & \textbf{1.000} & 0.750 \\
+Rejected: Non-Weather Cause & \textbf{1.000} & 0.893 \\
+Rejected: Malformed Coordinates & \textbf{1.000} & 0.785 \\
+Insufficient Spatial Coverage & \textbf{1.000} & 0.773 \\
+Rejected: Missing Date Fields & \textbf{1.000} & 0.921 \\
+\hline
+\textbf{Macro F1} & \textbf{1.000} & 0.782 \\
+\textbf{Accuracy} & \textbf{100.0\%} & 73.7\% \\
+\hline
+\end{tabular}
+\end{table}
