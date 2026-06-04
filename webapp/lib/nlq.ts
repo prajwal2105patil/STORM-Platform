@@ -89,26 +89,45 @@ async function extractIntents(question: string): Promise<{
     const client = new Groq({ apiKey: groqKey });
     const message = await client.chat.completions.create({
       model: "llama-3.1-8b-instant",
-      max_tokens: 100,
+      max_tokens: 150,
       messages: [
         {
           role: "system",
-          content: `Extract weather query intents. Reply with JSON only: {station, metric, year, month}.
-- station: city name (e.g. "Mumbai")
-- metric: "wind", "gale", "temperature", "pressure", "humidity"
-- year: 4-digit year or null
-- month: 1-12 or null`,
+          content: `You are a weather query parser. Extract ONLY these fields from the question:
+{
+  "station": "city name" or null,
+  "metric": "wind" | "gale" | "temperature" | "pressure" | "humidity" or null,
+  "year": 4-digit year (2014-2024) or null,
+  "month": 1-12 (January=1, December=12) or null
+}
+
+RULES:
+- For "gale force" or "storm hours", use metric="gale"
+- For "peak wind", use metric="wind"
+- If no year given, assume current data (2023)
+- If no month given, assume August (8)
+- Return ONLY valid JSON, no explanation
+
+Example: "Peak wind in Mumbai August 2023?" → {"station":"Mumbai","metric":"wind","year":2023,"month":8}`,
         },
         {
           role: "user",
-          content: `"${question}"`,
+          content: question,
         },
       ],
     });
 
     const reply = message.choices[0].message.content || "{}";
-    return JSON.parse(reply);
-  } catch {
+    const parsed = JSON.parse(reply);
+
+    return {
+      station: parsed.station || null,
+      metric: parsed.metric || null,
+      year: parsed.year || null,
+      month: parsed.month || null,
+    };
+  } catch (err) {
+    console.error("Intent extraction error:", err);
     return { station: null, metric: null, year: null, month: null };
   }
 }
@@ -140,10 +159,15 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     }
 
     // Match metric
-    const metricKey = Object.keys(METRICS).find(
-      (m) => intents.metric && intents.metric.toLowerCase().includes(m)
-    );
-    if (!metricKey) {
+    let metricKey = intents.metric;
+
+    // Handle aliases
+    if (metricKey === "gale") metricKey = "gale force";
+    if (metricKey === "temp") metricKey = "temperature";
+    if (metricKey === "wind speed") metricKey = "wind";
+    if (metricKey === "humidity level") metricKey = "humidity";
+
+    if (!metricKey || !METRICS[metricKey as keyof typeof METRICS]) {
       return {
         question,
         station: stationMatch.name,
@@ -154,16 +178,47 @@ export async function queryWeather(question: string): Promise<QueryResult> {
         unit: "",
         source: "NOAA ISD (Rule 803(8))",
         confidence: "no_data",
-        message: `Metric "${intents.metric}" not supported. Try: wind, gale force, temperature, pressure, humidity.`,
+        message: `Metric "${intents.metric}" not recognized. Try: wind, gale force, temperature, pressure, humidity.`,
         processing_ms: Date.now() - startMs,
       };
     }
 
     const metric = METRICS[metricKey as keyof typeof METRICS];
 
-    // Default to most recent available data
-    let year = intents.year || 2023;
-    let month = intents.month || 8;
+    // Default to most recent available data (Aug 2023 for Mumbai/Surat)
+    // Our sample data has: 2022 (Jul, Aug, Sep) and 2023 (Aug)
+    let year = intents.year;
+    let month = intents.month;
+
+    // Smart defaulting
+    if (!year && !month) {
+      // No date specified → use most recent (Aug 2023)
+      year = 2023;
+      month = 8;
+    } else if (!year && month) {
+      // Only month specified → assume 2023 (most recent)
+      year = 2023;
+    } else if (year && !month) {
+      // Only year specified → default to August
+      month = 8;
+    }
+
+    // Validate year/month are in available range
+    if (year < 2022 || year > 2023 || month < 1 || month > 12) {
+      return {
+        question,
+        station: stationMatch.name,
+        year: year || 0,
+        month: month || 0,
+        metric: metricKey,
+        value: null,
+        unit: metric.unit,
+        source: "NOAA ISD (Rule 803(8))",
+        confidence: "no_data",
+        message: `Data available for ${stationMatch.name} only in: July-September 2022, August 2023.`,
+        processing_ms: Date.now() - startMs,
+      };
+    }
 
     // Query Supabase
     const res = await fetch(
