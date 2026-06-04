@@ -72,15 +72,15 @@ def migrate():
     con = duckdb.connect()
 
     print("=" * 60)
-    print("DREADNOUGHT → Supabase Migration")
+    print("DREADNOUGHT -> Supabase Migration")
     print("=" * 60)
 
-    # ── Step 1: Upsert stations ────────────────────────────────────────
+    # Step 1: Upsert stations
     print("\n[1/4] Upserting station registry...")
     result = supabase.table("stations").upsert(STATION_REGISTRY, on_conflict="id").execute()
     print(f"      {len(STATION_REGISTRY)} stations upserted")
 
-    # ── Step 2: Discover available data combos ─────────────────────────
+    # Step 2: Discover available data combos
     print("\n[2/4] Discovering available year/month combos in Parquet...")
     try:
         combos = con.execute(f"""

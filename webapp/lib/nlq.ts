@@ -73,6 +73,18 @@ function fuzzyMatchStation(input: string): { id: string; name: string } | null {
   return null;
 }
 
+// Fallback regex-based station extraction if Groq fails
+function fallbackStationExtraction(question: string): string | null {
+  const stationNames = STATIONS.map((s) => s.name.toLowerCase());
+  const qLower = question.toLowerCase();
+  for (const name of stationNames) {
+    if (qLower.includes(name)) {
+      return STATIONS.find((s) => s.name.toLowerCase() === name)?.name || null;
+    }
+  }
+  return null;
+}
+
 // Extract year/month from question using Groq
 async function extractIntents(question: string): Promise<{
   station: string | null;
@@ -82,53 +94,71 @@ async function extractIntents(question: string): Promise<{
 }> {
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey) {
-    return { station: null, metric: null, year: null, month: null };
+    console.warn("GROQ_API_KEY not found, using fallback extraction");
+    return {
+      station: fallbackStationExtraction(question),
+      metric: null,
+      year: null,
+      month: null,
+    };
   }
 
   try {
     const client = new Groq({ apiKey: groqKey });
     const message = await client.chat.completions.create({
       model: "llama-3.1-8b-instant",
-      max_tokens: 150,
+      max_tokens: 200,
       messages: [
         {
           role: "system",
-          content: `You are a weather query parser. Extract ONLY these fields from the question:
+          content: `You are a JSON extraction tool. Your ONLY job is to extract weather query parameters.
+
+CRITICAL: Return ONLY valid JSON on a single line. No explanation. No markdown.
+
+Extract these fields:
 {
-  "station": "city name" or null,
+  "station": "exact city name from question or null",
   "metric": "wind" | "gale" | "temperature" | "pressure" | "humidity" or null,
-  "year": 4-digit year (2014-2024) or null,
-  "month": 1-12 (January=1, December=12) or null
+  "year": year number (2022-2023) or null,
+  "month": month number 1-12 or null
 }
 
-RULES:
-- For "gale force" or "storm hours", use metric="gale"
-- For "peak wind", use metric="wind"
-- If no year given, assume current data (2023)
-- If no month given, assume August (8)
-- Return ONLY valid JSON, no explanation
+Station names available: Mumbai, Surat, Jaipur, Pune, Bangalore, Chennai, Hyderabad, Kolkata
 
-Example: "Peak wind in Mumbai August 2023?" → {"station":"Mumbai","metric":"wind","year":2023,"month":8}`,
+Examples:
+Q: "peak wind in Mumbai August 2023" → {"station":"Mumbai","metric":"wind","year":2023,"month":8}
+Q: "average temperature in Surat" → {"station":"Surat","metric":"temperature","year":2023,"month":8}
+Q: "gale hours in Jaipur July 2022" → {"station":"Jaipur","metric":"gale","year":2022,"month":7}`,
         },
         {
           role: "user",
-          content: question,
+          content: `Extract: ${question}`,
         },
       ],
     });
 
-    const reply = message.choices[0].message.content || "{}";
+    const reply = (message.choices[0].message.content || "{}").trim();
+    console.log("[NLQ] Groq response:", reply);
+
     const parsed = JSON.parse(reply);
 
+    // Fallback to regex if Groq returns null station
+    const station = parsed.station || fallbackStationExtraction(question);
+
     return {
-      station: parsed.station || null,
+      station,
       metric: parsed.metric || null,
       year: parsed.year || null,
       month: parsed.month || null,
     };
   } catch (err) {
-    console.error("Intent extraction error:", err);
-    return { station: null, metric: null, year: null, month: null };
+    console.error("[NLQ] Intent extraction error:", err);
+    return {
+      station: fallbackStationExtraction(question),
+      metric: null,
+      year: null,
+      month: null,
+    };
   }
 }
 
