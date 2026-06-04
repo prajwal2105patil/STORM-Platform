@@ -26,6 +26,9 @@ let stationsCache: Station[] | null = null;
 let stationsCachedAt = 0;
 const STATIONS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+// Cache Groq cause classification — same cause always yields same result
+const causeCache = new Map<string, boolean>();
+
 const VALID_CAUSES = new Set([
   "cyclone", "hurricane", "typhoon", "tornado", "storm", "gale",
   "high wind", "wind storm", "strong wind", "severe wind",
@@ -77,37 +80,33 @@ function nearestStation(
 async function classifyCause(claimedCause: string): Promise<boolean> {
   const normalised = claimedCause.toLowerCase().trim();
 
-  // Fast path: exact match
+  // Fast path 1: exact keyword match (no LLM needed)
   for (const valid of VALID_CAUSES) {
     if (normalised.includes(valid)) return true;
   }
 
+  // Fast path 2: in-memory cache (same cause = same result always)
+  if (causeCache.has(normalised)) {
+    return causeCache.get(normalised)!;
+  }
+
   // LLM path: Groq for ambiguous cases
   const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) {
-    // No LLM available — conservative reject
-    return false;
-  }
+  if (!groqKey) return false;
 
   try {
     const client  = new Groq({ apiKey: groqKey });
     const message = await client.chat.completions.create({
       model: "llama-3.1-8b-instant",
-      max_tokens: 10,
+      max_tokens: 5,
       messages: [
-        {
-          role: "system",
-          content:
-            'You classify whether a force majeure cause is weather-related. Reply with only "YES" or "NO".',
-        },
-        {
-          role: "user",
-          content: `Is this a weather-related cause of loss: "${claimedCause}"?`,
-        },
+        { role: "system", content: 'Classify if weather-related force majeure. Reply YES or NO only.' },
+        { role: "user", content: `"${claimedCause}"` },
       ],
     });
-    const reply = message.choices[0].message.content?.trim().toUpperCase() || "";
-    return reply.startsWith("YES");
+    const result = (message.choices[0].message.content?.trim().toUpperCase() || "").startsWith("YES");
+    causeCache.set(normalised, result); // Cache forever — deterministic
+    return result;
   } catch {
     return false;
   }
@@ -194,6 +193,13 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
       legal_summary: `No NOAA ISD station within ${MAX_RANGE_KM} km of asset coordinates (${lat}, ${lon}).` };
   }
 
+  // Multi-station IDW: find ALL stations within range, weight by inverse distance
+  const allInRange = stationList
+    .map((s) => ({ station: s, distKm: haversine(lat, lon, s.lat, s.lon) }))
+    .filter((d) => d.distKm <= MAX_RANGE_KM)
+    .sort((a, b) => a.distKm - b.distKm)
+    .slice(0, 5); // top 5 nearest stations
+
   // ── NODE 3: Execution Cage (Supabase weather lookup) ────────────────────
   nodePath.push("ExecutionCage");
 
@@ -212,13 +218,13 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
     cur.setMonth(cur.getMonth() + 1);
   }
 
-  // Build a Supabase OR filter across all (year, month) pairs
-  const orFilters = ymPairs
-    .map(
-      ({ year, month }) =>
-        `and(station_id.eq.${nearest.station.id},year.eq.${year},month.eq.${month})`
+  // Build OR filter for ALL nearby stations across all (year, month) pairs
+  const stationIds = allInRange.map((d) => d.station.id);
+  const orFilters = ymPairs.flatMap(({ year, month }) =>
+    stationIds.map((sid) =>
+      `and(station_id.eq.${sid},year.eq.${year},month.eq.${month})`
     )
-    .join(",");
+  ).join(",");
 
   const { data: weatherRows } = await supabase
     .from("weather_monthly_stats")
@@ -238,10 +244,36 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
     };
   }
 
-  // Aggregate across months
+  // IDW-weighted aggregation across all stations
   const stats = weatherRows as WeatherStats[];
-  const peakWind = Math.max(...stats.map((s) => s.peak_wind_ms));
-  const totalExceedance = stats.reduce((a, s) => a + s.exceedance_hours, 0);
+
+  // For each (year, month), compute IDW-weighted peak wind across stations
+  let idwPeakWind = 0;
+  let totalExceedance = 0;
+
+  for (const ym of ymPairs) {
+    const monthRows = stats.filter(
+      (s: any) => s.year === ym.year && s.month === ym.month
+    );
+    if (monthRows.length === 0) continue;
+
+    // IDW weights for this month's stations
+    const weighted = monthRows.map((row: any) => {
+      const stDist = allInRange.find((d) => d.station.id === row.station_id);
+      const dist = stDist?.distKm || 1;
+      const weight = dist < 0.001 ? 1e6 : 1 / Math.pow(dist, IDW_POWER);
+      return { weight, peak_wind_ms: row.peak_wind_ms, exceedance_hours: row.exceedance_hours };
+    });
+
+    const totalW = weighted.reduce((a, b) => a + b.weight, 0);
+    const idwWind = weighted.reduce((a, b) => a + (b.weight / totalW) * b.peak_wind_ms, 0);
+    const maxExceedance = Math.max(...weighted.map((w) => w.exceedance_hours));
+
+    idwPeakWind = Math.max(idwPeakWind, idwWind);
+    totalExceedance += maxExceedance;
+  }
+
+  const peakWind = idwPeakWind > 0 ? idwPeakWind : Math.max(...stats.map((s: any) => s.peak_wind_ms));
 
   // ── NODE 4: Adjudicator (Deterministic Decision) ────────────────────────
   nodePath.push("Adjudicator");

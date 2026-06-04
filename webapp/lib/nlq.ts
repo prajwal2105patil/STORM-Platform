@@ -13,6 +13,9 @@
 import Groq from "groq-sdk";
 import { getServiceClient } from "@/lib/supabase";
 
+// Cache Groq intent extraction — same question = same result
+const intentCache = new Map<string, { station: string | null; metric: string | null; year: number | null; month: number | null }>();
+
 // 18-station registry for fuzzy matching
 const STATIONS = [
   { id: "42182", name: "Jaisalmer", lat: 26.909, lon: 70.9 },
@@ -104,6 +107,13 @@ async function extractIntents(question: string): Promise<{
     };
   }
 
+  // Check cache before calling Groq
+  const cacheKey = question.toLowerCase().trim();
+  if (intentCache.has(cacheKey)) {
+    console.log("[NLQ] Cache hit for:", cacheKey);
+    return intentCache.get(cacheKey)!;
+  }
+
   try {
     const client = new Groq({ apiKey: groqKey });
     const message = await client.chat.completions.create({
@@ -145,13 +155,14 @@ Q: "gale hours in Jaipur July 2022" → {"station":"Jaipur","metric":"gale","yea
 
     // Fallback to regex if Groq returns null station
     const station = parsed.station || fallbackStationExtraction(question);
-
-    return {
+    const result = {
       station,
       metric: parsed.metric || null,
       year: parsed.year || null,
       month: parsed.month || null,
     };
+    intentCache.set(cacheKey, result); // Cache forever — deterministic
+    return result;
   } catch (err) {
     console.error("[NLQ] Intent extraction error:", err);
     return {

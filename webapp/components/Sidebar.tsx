@@ -3,25 +3,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FileText, Users, BarChart3,
-  Zap, Shield, Settings, ChevronRight, Search,
+  Zap, Shield, ChevronRight, Search, Calculator, BookOpen,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 const nav = [
-  { href: "/",            label: "Dashboard",   icon: LayoutDashboard },
-  { href: "/claims",      label: "Claims",      icon: FileText        },
-  { href: "/adjudicate",  label: "Adjudicate",  icon: Zap             },
-  { href: "/customers",   label: "Customers",   icon: Users           },
-  { href: "/analytics",   label: "Analytics",   icon: BarChart3       },
-  { href: "/policy",      label: "Policy",      icon: Shield          },
-  { href: "/query",       label: "Weather Q&A", icon: Search          },
+  { href: "/",          label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/claims",    label: "Claims",      icon: FileText        },
+  { href: "/adjudicate",label: "Adjudicate",  icon: Zap             },
+  { href: "/customers", label: "Customers",   icon: Users           },
+  { href: "/analytics", label: "Analytics",   icon: BarChart3       },
+  { href: "/policy",    label: "Policy",      icon: Shield          },
+  { href: "/query",     label: "Weather Q&A", icon: Search          },
+  { href: "/sla",       label: "SLA Calc",    icon: Calculator      },
+  { href: "/api-docs",  label: "API Docs",    icon: BookOpen        },
 ];
 
 export default function Sidebar() {
   const path = usePathname();
   return (
     <aside className="w-60 bg-[#1A3A5C] text-white flex flex-col shrink-0">
-      {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-[#0D6B8E] flex items-center justify-center">
@@ -34,8 +35,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = path === href || (href !== "/" && path.startsWith(href));
           return (
@@ -54,7 +54,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="text-[10px] text-blue-300 space-y-0.5">
           <p className="font-semibold text-blue-200">System Status</p>

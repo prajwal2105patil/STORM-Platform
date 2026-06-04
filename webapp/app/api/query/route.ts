@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryWeather } from "@/lib/nlq";
+import { rateLimit } from "@/lib/ratelimit";
 import { z } from "zod";
 
 const QuerySchema = z.object({
@@ -7,6 +8,24 @@ const QuerySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 30 queries per minute per IP
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+  const { allowed, remaining, resetAt } = rateLimit(ip, "query", 30, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Max 30 queries per minute." },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": "30",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(Math.ceil(resetAt / 1000)),
+          "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   const body = await req.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
