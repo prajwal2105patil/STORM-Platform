@@ -261,17 +261,20 @@ export async function queryWeather(question: string, origin?: string): Promise<Q
     // Query weather API
     const weatherUrl = `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`;
 
-    // Construct full URL (use passed origin or construct from environment)
+    // Construct full URL
     let fullUrl = weatherUrl;
     if (typeof window === "undefined") {
-      const baseUrl = origin
-        || process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : `http://localhost:3000`;
-      fullUrl = origin ? `${origin}${weatherUrl}` : `${baseUrl}${weatherUrl}`;
+      // Server-side: must use full URL
+      if (origin) {
+        fullUrl = `${origin}${weatherUrl}`;
+      } else if (process.env.VERCEL_URL) {
+        fullUrl = `https://${process.env.VERCEL_URL}${weatherUrl}`;
+      } else {
+        fullUrl = `http://localhost:3000${weatherUrl}`;
+      }
     }
 
-    console.log(`[NLQ] Fetching from ${fullUrl}`);
+    console.log(`[NLQ] Fetching: ${fullUrl}`);
     const res = await fetch(fullUrl);
 
     if (!res.ok) {

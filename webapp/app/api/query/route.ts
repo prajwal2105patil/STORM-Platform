@@ -21,11 +21,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Get origin from request headers for server-side API calls
-    const origin = req.headers.get("origin") || req.headers.get("x-forwarded-proto") && req.headers.get("x-forwarded-host")
-      ? `${req.headers.get("x-forwarded-proto")}://${req.headers.get("x-forwarded-host")}`
-      : undefined;
+    // Extract origin from request headers
+    let origin: string | undefined;
+    const headerOrigin = req.headers.get("origin");
+    const proto = req.headers.get("x-forwarded-proto");
+    const host = req.headers.get("x-forwarded-host");
 
+    if (headerOrigin) {
+      origin = headerOrigin;
+    } else if (proto && host) {
+      origin = `${proto}://${host}`;
+    }
+
+    console.log("[Query API] origin:", origin);
     const result = await queryWeather(parsed.data.question, origin);
     return NextResponse.json(result, { status: 200 });
   } catch (err: any) {
