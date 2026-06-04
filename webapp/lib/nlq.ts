@@ -201,10 +201,14 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     } else if (year && !month) {
       // Only year specified → default to August
       month = 8;
+    } else if (!year || !month) {
+      // Fallback if still null
+      year = 2023;
+      month = 8;
     }
 
     // Validate year/month are in available range
-    if (year < 2022 || year > 2023 || month < 1 || month > 12) {
+    if (!year || !month || year < 2022 || year > 2023 || month < 1 || month > 12) {
       return {
         question,
         station: stationMatch.name,
@@ -220,23 +224,27 @@ export async function queryWeather(question: string): Promise<QueryResult> {
       };
     }
 
+    // At this point, year and month must be non-null (ensured by defaults above)
+    const safeYear = year as number;
+    const safeMonth = month as number;
+
     // Query Supabase
     const res = await fetch(
-      `/api/weather?station_id=${stationMatch.id}&year=${year}&month=${month}&metric=${metric.column}`
+      `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`
     );
 
     if (!res.ok) {
       return {
         question,
         station: stationMatch.name,
-        year,
-        month,
+        year: safeYear,
+        month: safeMonth,
         metric: metricKey,
         value: null,
         unit: metric.unit,
         source: "NOAA ISD (Rule 803(8))",
         confidence: "no_data",
-        message: `No data available for ${stationMatch.name} in ${month}/${year}.`,
+        message: `No data available for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
         processing_ms: Date.now() - startMs,
       };
     }
@@ -247,8 +255,8 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     return {
       question,
       station: stationMatch.name,
-      year,
-      month,
+      year: safeYear,
+      month: safeMonth,
       metric: metricKey,
       value,
       unit: metric.unit,
@@ -256,8 +264,8 @@ export async function queryWeather(question: string): Promise<QueryResult> {
       confidence: value !== null ? "exact" : "no_data",
       message:
         value !== null
-          ? `${metric.label} in ${stationMatch.name} (${month}/${year}): ${value} ${metric.unit}`
-          : `No ${metricKey} data for ${stationMatch.name} in ${month}/${year}.`,
+          ? `${metric.label} in ${stationMatch.name} (${safeMonth}/${safeYear}): ${value} ${metric.unit}`
+          : `No ${metricKey} data for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
       processing_ms: Date.now() - startMs,
     };
   } catch (err) {
