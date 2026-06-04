@@ -154,14 +154,25 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   // ── NODE 2: SQL Generator (IDW Spatial Lookup) ──────────────────────────
   nodePath.push("SQLGenerator");
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+
   let stations: Station[] | null = null;
   try {
-    const res = await fetch("/api/stations");
+    const res = await fetch(`${supabaseUrl}/rest/v1/stations`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+      },
+    });
     if (res.ok) {
       stations = await res.json();
+    } else {
+      console.error("Supabase REST error:", res.status);
     }
   } catch (err) {
-    console.error("Failed to fetch stations:", err);
+    console.error("Stations fetch error:", err);
   }
 
   if (!stations || stations.length === 0) {
