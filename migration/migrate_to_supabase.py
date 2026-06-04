@@ -41,7 +41,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 # ── Paths ──────────────────────────────────────────────────────────────────
 SCRIPT_DIR   = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-PARQUET_GLOB = str(PROJECT_ROOT / "data" / "noaa_isd" / "**" / "*.parquet")
+PARQUET_GLOB = str(PROJECT_ROOT / "data" / "sample" / "**" / "*.parquet")
 
 # ── NOAA ISD Station Registry (18 Indian stations) ────────────────────────
 STATION_REGISTRY = [

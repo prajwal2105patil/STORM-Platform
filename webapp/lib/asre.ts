@@ -154,7 +154,14 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   // ── NODE 2: SQL Generator (IDW Spatial Lookup) ──────────────────────────
   nodePath.push("SQLGenerator");
 
-  const { data: stations } = await supabase.from("stations").select("*");
+  const { data: stations, error: stationsError } = await supabase.from("stations").select("*");
+  console.error("DEBUG [ASRE] stations query:", {
+    data: stations,
+    error: stationsError,
+    stationsType: typeof stations,
+    stationsLength: Array.isArray(stations) ? stations.length : "not-array"
+  });
+
   if (!stations || stations.length === 0) {
     return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
       processing_ms: Date.now() - startMs,
