@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 
+
 export async function GET() {
   const supabase = getServiceClient();
 

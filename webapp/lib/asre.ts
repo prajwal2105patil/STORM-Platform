@@ -16,10 +16,15 @@ import { ClaimPayload, AdjudicationResult, Station, WeatherStats } from "@/types
 import Groq from "groq-sdk";
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const WIND_THRESHOLD_MS = 17.2;   // Beaufort 8 gale force (m/s)
-const EXCEEDANCE_HOURS  = 3;      // minimum hours above threshold
-const MAX_RANGE_KM      = 300.0;  // max station search radius
+const WIND_THRESHOLD_MS = 17.2;
+const EXCEEDANCE_HOURS  = 3;
+const MAX_RANGE_KM      = 300.0;
 const IDW_POWER         = 2;
+
+// Cache stations in module memory — they never change between requests
+let stationsCache: Station[] | null = null;
+let stationsCachedAt = 0;
+const STATIONS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 const VALID_CAUSES = new Set([
   "cyclone", "hurricane", "typhoon", "tornado", "storm", "gale",
@@ -143,9 +148,28 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
       legal_summary: "Claim rejected: asset coordinates are invalid or Null Island (0,0)." };
   }
 
-  // Cause validation (LLM-assisted)
-  const isWeather = await classifyCause(payload.claimed_cause);
-  if (!isWeather) {
+  // NODE 1 + NODE 2 run in PARALLEL: classify cause AND fetch stations simultaneously
+  const fetchStations = async (): Promise<Station[]> => {
+    const now = Date.now();
+    if (stationsCache && (now - stationsCachedAt) < STATIONS_CACHE_TTL_MS) {
+      return stationsCache;
+    }
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("stations")
+      .select("id, name, lat, lon, state");
+    if (error || !data) throw new Error(error?.message || "No stations found");
+    stationsCache = data as Station[];
+    stationsCachedAt = now;
+    return stationsCache;
+  };
+
+  const [isWeather, stations] = await Promise.allSettled([
+    classifyCause(payload.claimed_cause),
+    fetchStations(),
+  ]);
+
+  if (isWeather.status === "fulfilled" && !isWeather.value) {
     return { ...base, label: "REJECTED_NON_WEATHER", node_path: nodePath,
       processing_ms: Date.now() - startMs,
       legal_summary: `Claim rejected: "${payload.claimed_cause}" is not a qualifying weather event.` };
@@ -154,38 +178,16 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   // ── NODE 2: SQL Generator (IDW Spatial Lookup) ──────────────────────────
   nodePath.push("SQLGenerator");
 
-  let stations: Station[] | null = null;
-  try {
-    const supabase = getServiceClient();
-    console.log("Fetching stations from Supabase...");
-
-    const { data, error } = await supabase
-      .from("stations")
-      .select("*");
-
-    if (error) {
-      console.error("Supabase error fetching stations:", error.message);
-      return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
-        processing_ms: Date.now() - startMs,
-        legal_summary: `System error: station registry unavailable. [${error.message}]` };
-    }
-
-    stations = data as Station[];
-    console.log("Stations fetched successfully, count:", stations?.length);
-  } catch (err) {
-    console.error("Stations fetch error:", err);
+  if (stations.status === "rejected" || !stations.value || stations.value.length === 0) {
+    const errMsg = stations.status === "rejected" ? String(stations.reason) : "empty result";
     return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
       processing_ms: Date.now() - startMs,
-      legal_summary: `System error: station registry unavailable. [${String(err)}]` };
+      legal_summary: `System error: station registry unavailable. [${errMsg}]` };
   }
 
-  if (!stations || stations.length === 0) {
-    return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
-      processing_ms: Date.now() - startMs,
-      legal_summary: `System error: station registry unavailable (empty result).` };
-  }
+  const stationList = stations.value;
 
-  const nearest = nearestStation(lat, lon, stations as Station[]);
+  const nearest = nearestStation(lat, lon, stationList);
   if (!nearest) {
     return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
       processing_ms: Date.now() - startMs,

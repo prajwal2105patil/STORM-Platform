@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const supabase = getServiceClient();
     const { data: saved } = await supabase
       .from("claims")
-      .insert({
+      .insert([{
         customer_id:        payload.customer_id || null,
         petitioner:         payload.petitioner,
         respondent:         payload.respondent || null,
@@ -66,17 +66,17 @@ export async function POST(req: NextRequest) {
         processing_ms:      result.processing_ms,
         adjudication_json:  result,
         adjudicated_at:     new Date().toISOString(),
-      })
+      }] as any[])
       .select()
       .single();
 
-    // Audit log
-    await supabase.from("audit_log").insert({
+    // Audit log (fire-and-forget — don't block response)
+    supabase.from("audit_log").insert([{
       claim_id:   saved?.id,
       event_type: "adjudicated",
       actor:      "ASRE-v2",
       payload:    { label: result.label, node_path: result.node_path },
-    });
+    }] as any[]).then(() => {}).catch(console.error);
 
     return NextResponse.json({ claim_id: saved?.id, ...result }, { status: 200 });
   } catch (err: any) {

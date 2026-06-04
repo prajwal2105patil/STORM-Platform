@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // Insert customer
     const { data: customer, error } = await supabase
       .from("customers")
-      .insert({
+      .insert([{
         company_name: payload.company_name,
         contact_name: payload.contact_name || null,
         email: payload.email || null,
@@ -60,23 +60,20 @@ export async function POST(req: NextRequest) {
         account_status: payload.account_status,
         total_claims: 0,
         approved_claims: 0,
-      })
+      }] as any[])
       .select()
       .single();
 
     if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Audit log
-    await supabase.from("audit_log").insert({
+    // Audit log (fire-and-forget)
+    supabase.from("audit_log").insert([{
       claim_id: null,
       event_type: "submitted",
       actor: "CRM-UI",
-      payload: {
-        company_name: payload.company_name,
-        sector: payload.sector,
-      },
-    });
+      payload: { company_name: payload.company_name, sector: payload.sector },
+    }] as any[]).then(() => {}).catch(console.error);
 
     return NextResponse.json({ customer }, { status: 201 });
   } catch (err) {
@@ -112,7 +109,7 @@ export async function PATCH(req: NextRequest) {
 
     const { data: customer, error } = await supabase
       .from("customers")
-      .update({ account_status, updated_at: new Date().toISOString() })
+      .update({ account_status, updated_at: new Date().toISOString() } as any)
       .eq("id", id)
       .select()
       .single();
@@ -120,13 +117,13 @@ export async function PATCH(req: NextRequest) {
     if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Audit log
-    await supabase.from("audit_log").insert({
+    // Audit log (fire-and-forget)
+    supabase.from("audit_log").insert([{
       claim_id: null,
       event_type: "overridden",
       actor: "CRM-UI",
       payload: { customer_id: id, new_status: account_status },
-    });
+    }] as any[]).then(() => {}).catch(console.error);
 
     return NextResponse.json({ customer });
   } catch (err) {

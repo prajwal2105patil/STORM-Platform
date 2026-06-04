@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 
+
 export async function GET() {
   const supabase = getServiceClient();
 
+  // Run all 3 queries in parallel
   const [claimsRes, customersRes, stationsRes] = await Promise.all([
-    supabase.from("claims").select("adjudication_label, processing_ms, submitted_at"),
+    supabase.from("claims").select("adjudication_label, processing_ms, submitted_at").order("submitted_at", { ascending: false }).limit(1000),
     supabase.from("customers").select("id, account_status", { count: "exact" }),
     supabase.from("stations").select("id, name, lat, lon, state"),
   ]);
 
-  const claims    = claimsRes.data || [];
+  type Claim = { adjudication_label: string | null; processing_ms: number | null; submitted_at: string };
+  const claims    = (claimsRes.data || []) as Claim[];
   const customers = customersRes.count || 0;
-  const stations  = stationsRes.data || [];
+  const stations  = (stationsRes.data || []) as { id: string; name: string; lat: number; lon: number; state: string }[];
 
   const total     = claims.length;
   const validated = claims.filter((c) => c.adjudication_label === "VALIDATED").length;
