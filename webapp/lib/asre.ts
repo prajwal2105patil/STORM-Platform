@@ -157,28 +157,46 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const serviceKey = process.env.SUPABASE_SERVICE_KEY || "";
 
+  console.log("ASRE NODE 2 DEBUG:", {
+    supabaseUrlSet: !!supabaseUrl,
+    supabaseUrlFirst20: supabaseUrl?.substring(0, 20),
+    serviceKeySet: !!serviceKey,
+    serviceKeyFirst20: serviceKey?.substring(0, 20),
+  });
+
   let stations: Station[] | null = null;
+  let stationsError = "";
   try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/stations`, {
+    const fetchUrl = `${supabaseUrl}/rest/v1/stations`;
+    console.log("Fetching stations from:", fetchUrl);
+
+    const res = await fetch(fetchUrl, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${serviceKey}`,
         apikey: serviceKey,
       },
     });
+
+    console.log("Fetch response status:", res.status);
+
     if (res.ok) {
       stations = await res.json();
+      console.log("Stations fetched successfully, count:", stations?.length);
     } else {
-      console.error("Supabase REST error:", res.status);
+      const errorText = await res.text();
+      stationsError = `HTTP ${res.status}: ${errorText}`;
+      console.error("Supabase REST error:", stationsError);
     }
   } catch (err) {
+    stationsError = String(err);
     console.error("Stations fetch error:", err);
   }
 
   if (!stations || stations.length === 0) {
     return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
       processing_ms: Date.now() - startMs,
-      legal_summary: "System error: station registry unavailable." };
+      legal_summary: `System error: station registry unavailable. [${stationsError}]` };
   }
 
   const nearest = nearestStation(lat, lon, stations as Station[]);
