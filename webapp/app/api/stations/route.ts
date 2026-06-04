@@ -1,41 +1,20 @@
 import { NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/supabase";
 
 export async function GET() {
-  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/stations`;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
-
-  if (!url || !serviceKey) {
-    return NextResponse.json(
-      { error: "Missing environment variables" },
-      { status: 500 }
-    );
-  }
-
   try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        apikey: serviceKey,
-        "Content-Type": "application/json",
-      },
-    });
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("stations")
+      .select("id, name, lat, lon, state")
+      .order("name");
 
-    if (!res.ok) {
-      console.error("Supabase REST API error:", res.status, res.statusText);
-      return NextResponse.json(
-        { error: "Failed to fetch stations", status: res.status },
-        { status: res.status }
-      );
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data || []);
   } catch (err) {
-    console.error("Stations API error:", err);
-    return NextResponse.json(
-      { error: "Internal server error", message: String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

@@ -38,6 +38,8 @@ export default function CustomersPage() {
   const [sectorFilter, setSectorFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
+  const [addError,  setAddError]  = useState<string | null>(null);
+  const [adding,    setAdding]    = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     company_name: "",
     contact_name: "",
@@ -71,6 +73,8 @@ export default function CustomersPage() {
 
   const handleAddCustomer = async () => {
     if (!newCustomer.company_name.trim()) return;
+    setAdding(true);
+    setAddError(null);
     try {
       const res = await fetch("/api/customers", {
         method: "POST",
@@ -84,25 +88,23 @@ export default function CustomersPage() {
           account_status: "active",
         }),
       });
-      if (res.ok) {
-        setNewCustomer({
-          company_name: "",
-          contact_name: "",
-          email: "",
-          phone: "",
-          sector: "",
-        });
-        setShowModal(false);
-        setPage(1);
-        // Re-fetch
-        const params = new URLSearchParams({ page: "1", limit: "20" });
-        const fetchRes = await fetch(`/api/customers?${params}`);
-        const data = await fetchRes.json();
-        setCustomers(data.customers || []);
-        setTotal(data.total || 0);
+      const data = await res.json();
+      if (!res.ok) {
+        setAddError(data.error || "Failed to create customer");
+        return;
       }
-    } catch {
-      // Silently fail for now
+      setNewCustomer({ company_name: "", contact_name: "", email: "", phone: "", sector: "" });
+      setShowModal(false);
+      setPage(1);
+      // Re-fetch list
+      const fetchRes = await fetch(`/api/customers?page=1&limit=20`);
+      const listData = await fetchRes.json();
+      setCustomers(listData.customers || []);
+      setTotal(listData.total || 0);
+    } catch (err) {
+      setAddError("Network error. Please try again.");
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -354,19 +356,22 @@ export default function CustomersPage() {
                 <option value="infrastructure">Infrastructure</option>
               </select>
             </div>
-            <div className="flex gap-3 pt-4">
+            {addError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{addError}</p>
+            )}
+            <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setAddError(null); }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddCustomer}
-                disabled={!newCustomer.company_name.trim()}
+                disabled={!newCustomer.company_name.trim() || adding}
                 className="flex-1 px-4 py-2 bg-[#1A3A5C] text-white rounded-lg font-medium hover:bg-[#0D6B8E] disabled:opacity-50"
               >
-                Create
+                {adding ? "Creating..." : "Create"}
               </button>
             </div>
           </div>

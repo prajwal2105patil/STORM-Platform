@@ -89,15 +89,19 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    // Audit log (fire-and-forget — don't block response)
-    supabase.from("audit_log").insert([{
-      claim_id:   saved?.id,
-      event_type: "adjudicated",
-      actor:      "ASRE-v2",
-      payload:    { label: result.label, node_path: result.node_path },
-    }] as any[]).then(() => {}).catch(console.error);
+    const claimId = saved?.id || null;
 
-    return NextResponse.json({ claim_id: saved?.id, ...result }, { status: 200 });
+    // Audit log (fire-and-forget — don't block response)
+    if (claimId) {
+      supabase.from("audit_log").insert([{
+        claim_id:   claimId,
+        event_type: "adjudicated",
+        actor:      "ASRE-v2",
+        payload:    { label: result.label, node_path: result.node_path },
+      }] as any[]).then(() => {}).catch(console.error);
+    }
+
+    return NextResponse.json({ claim_id: claimId, ...result }, { status: 200 });
   } catch (err: any) {
     console.error("ASRE adjudication error:", err);
     return NextResponse.json(

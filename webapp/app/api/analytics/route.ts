@@ -36,7 +36,7 @@ export async function GET() {
 
   const byDay: Record<string, { validated: number; rejected: number }> = {};
   claims
-    .filter((c) => new Date(c.submitted_at) >= thirtyDaysAgo)
+    .filter((c) => c.submitted_at && new Date(c.submitted_at) >= thirtyDaysAgo)
     .forEach((c) => {
       const day = c.submitted_at.slice(0, 10);
       if (!byDay[day]) byDay[day] = { validated: 0, rejected: 0 };

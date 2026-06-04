@@ -254,7 +254,7 @@ export default function PolicyPage() {
                       {entry.actor}
                     </td>
                     <td className="px-6 py-4 text-gray-600 text-xs">
-                      {JSON.stringify(entry.payload).slice(0, 50)}...
+                      {entry.payload ? JSON.stringify(entry.payload).slice(0, 50) + "..." : "—"}
                     </td>
                   </tr>
                 ))
