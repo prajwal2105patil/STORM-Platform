@@ -11,6 +11,7 @@
  */
 
 import Groq from "groq-sdk";
+import { getServiceClient } from "@/lib/supabase";
 
 // 18-station registry for fuzzy matching
 const STATIONS = [
@@ -162,7 +163,7 @@ Q: "gale hours in Jaipur July 2022" → {"station":"Jaipur","metric":"gale","yea
   }
 }
 
-export async function queryWeather(question: string, origin?: string): Promise<QueryResult> {
+export async function queryWeather(question: string): Promise<QueryResult> {
   const startMs = Date.now();
 
   try {
@@ -258,46 +259,38 @@ export async function queryWeather(question: string, origin?: string): Promise<Q
     const safeYear = year as number;
     const safeMonth = month as number;
 
-    // Query weather API
-    const weatherUrl = `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`;
+    // Query Supabase directly (no HTTP fetch in serverless environment)
+    try {
+      const supabase = getServiceClient();
+      console.log(`[NLQ] Querying Supabase: station=${stationMatch.id}, year=${safeYear}, month=${safeMonth}, metric=${metric.column}`);
 
-    // Construct full URL
-    let fullUrl = weatherUrl;
-    if (typeof window === "undefined") {
-      // Server-side: must use full URL
-      if (origin) {
-        fullUrl = `${origin}${weatherUrl}`;
-      } else if (process.env.VERCEL_URL) {
-        fullUrl = `https://${process.env.VERCEL_URL}${weatherUrl}`;
-      } else {
-        fullUrl = `http://localhost:3000${weatherUrl}`;
+      const { data, error } = await supabase
+        .from("weather_monthly_stats")
+        .select(metric.column)
+        .eq("station_id", stationMatch.id)
+        .eq("year", safeYear)
+        .eq("month", safeMonth)
+        .single();
+
+      if (error || !data) {
+        console.error(`[NLQ] Supabase error:`, error?.message || "No data found");
+        return {
+          question,
+          station: stationMatch.name,
+          year: safeYear,
+          month: safeMonth,
+          metric: metricKey,
+          value: null,
+          unit: metric.unit,
+          source: "NOAA ISD (Rule 803(8))",
+          confidence: "no_data",
+          message: `No data available for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
+          processing_ms: Date.now() - startMs,
+        };
       }
-    }
 
-    console.log(`[NLQ] Fetching: ${fullUrl}`);
-    const res = await fetch(fullUrl);
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`[NLQ] Weather API error: ${res.status}`, errorText);
-      return {
-        question,
-        station: stationMatch.name,
-        year: safeYear,
-        month: safeMonth,
-        metric: metricKey,
-        value: null,
-        unit: metric.unit,
-        source: "NOAA ISD (Rule 803(8))",
-        confidence: "no_data",
-        message: `No data available for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
-        processing_ms: Date.now() - startMs,
-      };
-    }
-
-    const data = await res.json();
-    console.log(`[NLQ] Weather data received:`, data);
-    const value = data.value;
+      const value = data[metric.column as keyof typeof data];
+      console.log(`[NLQ] Weather data:`, { value, station: stationMatch.id, year: safeYear, month: safeMonth });
 
     return {
       question,
