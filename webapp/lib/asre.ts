@@ -220,6 +220,14 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
 
   // Build OR filter for ALL nearby stations across all (year, month) pairs
   const stationIds = allInRange.map((d) => d.station.id);
+
+  // Guard: if no stations or no time pairs, fail gracefully
+  if (stationIds.length === 0 || ymPairs.length === 0) {
+    return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
+      processing_ms: Date.now() - startMs,
+      legal_summary: `No stations in range or no valid time period.` };
+  }
+
   const orFilters = ymPairs.flatMap(({ year, month }) =>
     stationIds.map((sid) =>
       `and(station_id.eq.${sid},year.eq.${year},month.eq.${month})`

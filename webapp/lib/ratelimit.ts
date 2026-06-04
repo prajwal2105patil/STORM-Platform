@@ -10,14 +10,6 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-// Cleanup expired entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store.entries()) {
-    if (now > entry.resetAt) store.delete(key);
-  }
-}, 5 * 60 * 1000);
-
 export function rateLimit(
   ip: string,
   route: string,
@@ -40,4 +32,5 @@ export function rateLimit(
 
   entry.count++;
   return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt };
+  // Note: store is reset on serverless cold start — acceptable for rate limiting
 }
