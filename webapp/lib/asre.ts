@@ -154,8 +154,8 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   // ── NODE 2: SQL Generator (IDW Spatial Lookup) ──────────────────────────
   nodePath.push("SQLGenerator");
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY || "";
 
   let stations: Station[] | null = null;
   try {
