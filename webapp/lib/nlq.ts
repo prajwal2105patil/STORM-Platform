@@ -258,15 +258,24 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     const safeYear = year as number;
     const safeMonth = month as number;
 
-    // Query weather API (use full URL in server contexts)
+    // Query weather API
     const weatherUrl = `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`;
-    const fullUrl = typeof window === "undefined"
-      ? `http://localhost:3000${weatherUrl}`
-      : weatherUrl;
 
+    // Construct full URL for server-side fetch (Vercel uses VERCEL_URL)
+    let fullUrl = weatherUrl;
+    if (typeof window === "undefined") {
+      const baseUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
+      fullUrl = `${baseUrl}${weatherUrl}`;
+    }
+
+    console.log(`[NLQ] Fetching weather data from: ${fullUrl}`);
     const res = await fetch(fullUrl);
 
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`[NLQ] Weather API error: ${res.status}`, errorText);
       return {
         question,
         station: stationMatch.name,
@@ -283,6 +292,7 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     }
 
     const data = await res.json();
+    console.log(`[NLQ] Weather data received:`, data);
     const value = data.value;
 
     return {
