@@ -260,37 +260,36 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     const safeMonth = month as number;
 
     // Query Supabase directly (no HTTP fetch in serverless environment)
-    try {
-      const supabase = getServiceClient();
-      console.log(`[NLQ] Querying Supabase: station=${stationMatch.id}, year=${safeYear}, month=${safeMonth}, metric=${metric.column}`);
+    const supabase = getServiceClient();
+    console.log(`[NLQ] Querying Supabase: station=${stationMatch.id}, year=${safeYear}, month=${safeMonth}, metric=${metric.column}`);
 
-      const { data, error } = await supabase
-        .from("weather_monthly_stats")
-        .select(metric.column)
-        .eq("station_id", stationMatch.id)
-        .eq("year", safeYear)
-        .eq("month", safeMonth)
-        .single();
+    const { data, error } = await supabase
+      .from("weather_monthly_stats")
+      .select(metric.column)
+      .eq("station_id", stationMatch.id)
+      .eq("year", safeYear)
+      .eq("month", safeMonth)
+      .single();
 
-      if (error || !data) {
-        console.error(`[NLQ] Supabase error:`, error?.message || "No data found");
-        return {
-          question,
-          station: stationMatch.name,
-          year: safeYear,
-          month: safeMonth,
-          metric: metricKey,
-          value: null,
-          unit: metric.unit,
-          source: "NOAA ISD (Rule 803(8))",
-          confidence: "no_data",
-          message: `No data available for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
-          processing_ms: Date.now() - startMs,
-        };
-      }
+    if (error || !data) {
+      console.error(`[NLQ] Supabase error:`, error?.message || "No data found");
+      return {
+        question,
+        station: stationMatch.name,
+        year: safeYear,
+        month: safeMonth,
+        metric: metricKey,
+        value: null,
+        unit: metric.unit,
+        source: "NOAA ISD (Rule 803(8))",
+        confidence: "no_data",
+        message: `No data available for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
+        processing_ms: Date.now() - startMs,
+      };
+    }
 
-      const value = data[metric.column as keyof typeof data];
-      console.log(`[NLQ] Weather data:`, { value, station: stationMatch.id, year: safeYear, month: safeMonth });
+    const value = (data[metric.column as keyof typeof data] as number | null) || null;
+    console.log(`[NLQ] Weather data:`, { value, station: stationMatch.id, year: safeYear, month: safeMonth });
 
     return {
       question,
@@ -298,7 +297,7 @@ export async function queryWeather(question: string): Promise<QueryResult> {
       year: safeYear,
       month: safeMonth,
       metric: metricKey,
-      value,
+      value: typeof value === "number" ? value : null,
       unit: metric.unit,
       source: "NOAA ISD (Rule 803(8))",
       confidence: value !== null ? "exact" : "no_data",
@@ -309,6 +308,7 @@ export async function queryWeather(question: string): Promise<QueryResult> {
       processing_ms: Date.now() - startMs,
     };
   } catch (err) {
+    console.error("[NLQ] Outer error:", err);
     return {
       question,
       station: "Error",

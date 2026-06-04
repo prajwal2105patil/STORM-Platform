@@ -154,48 +154,35 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   // ── NODE 2: SQL Generator (IDW Spatial Lookup) ──────────────────────────
   nodePath.push("SQLGenerator");
 
-  const supabaseUrl = process.env.SUPABASE_URL || "";
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY || "";
-
-  if (!supabaseUrl || !serviceKey) {
-    return { ...base, label: "REJECTED_CONFIG_ERROR", node_path: nodePath,
-      processing_ms: Date.now() - startMs,
-      legal_summary: "System error: Supabase configuration missing." };
-  }
-
   let stations: Station[] | null = null;
-  let stationsError = "";
   try {
-    const fetchUrl = `${supabaseUrl}/rest/v1/stations`;
-    console.log("Fetching stations from:", fetchUrl);
+    const supabase = getServiceClient();
+    console.log("Fetching stations from Supabase...");
 
-    const res = await fetch(fetchUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        apikey: serviceKey,
-      },
-    });
+    const { data, error } = await supabase
+      .from("stations")
+      .select("*");
 
-    console.log("Fetch response status:", res.status);
-
-    if (res.ok) {
-      stations = await res.json();
-      console.log("Stations fetched successfully, count:", stations?.length);
-    } else {
-      const errorText = await res.text();
-      stationsError = `HTTP ${res.status}: ${errorText}`;
-      console.error("Supabase REST error:", stationsError);
+    if (error) {
+      console.error("Supabase error fetching stations:", error.message);
+      return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
+        processing_ms: Date.now() - startMs,
+        legal_summary: `System error: station registry unavailable. [${error.message}]` };
     }
+
+    stations = data as Station[];
+    console.log("Stations fetched successfully, count:", stations?.length);
   } catch (err) {
-    stationsError = String(err);
     console.error("Stations fetch error:", err);
+    return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
+      processing_ms: Date.now() - startMs,
+      legal_summary: `System error: station registry unavailable. [${String(err)}]` };
   }
 
   if (!stations || stations.length === 0) {
     return { ...base, label: "INSUFFICIENT_DATA", node_path: nodePath,
       processing_ms: Date.now() - startMs,
-      legal_summary: `System error: station registry unavailable. [${stationsError}]` };
+      legal_summary: `System error: station registry unavailable (empty result).` };
   }
 
   const nearest = nearestStation(lat, lon, stations as Station[]);
