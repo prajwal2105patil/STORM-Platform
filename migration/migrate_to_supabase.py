@@ -98,7 +98,10 @@ def migrate():
     # ── Step 3: Compute monthly stats and upload ───────────────────────
     print(f"\n[3/4] Computing monthly wind statistics...")
     records = []
+    valid_station_ids = {s["id"] for s in STATION_REGISTRY}
     for i, (station, year, month) in enumerate(combos):
+        if station not in valid_station_ids:
+            continue  # Skip unknown stations
         try:
             row = con.execute(f"""
                 SELECT

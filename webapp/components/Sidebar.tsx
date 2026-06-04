@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FileText, Users, BarChart3,
-  Zap, Shield, Settings, ChevronRight,
+  Zap, Shield, Settings, ChevronRight, Search,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -14,6 +14,7 @@ const nav = [
   { href: "/customers",   label: "Customers",   icon: Users           },
   { href: "/analytics",   label: "Analytics",   icon: BarChart3       },
   { href: "/policy",      label: "Policy",      icon: Shield          },
+  { href: "/query",       label: "Weather Q&A", icon: Search          },
 ];
 
 export default function Sidebar() {
