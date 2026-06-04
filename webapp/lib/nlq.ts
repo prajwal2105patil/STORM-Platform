@@ -258,10 +258,13 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     const safeYear = year as number;
     const safeMonth = month as number;
 
-    // Query Supabase
-    const res = await fetch(
-      `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`
-    );
+    // Query weather API (use full URL in server contexts)
+    const weatherUrl = `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`;
+    const fullUrl = typeof window === "undefined"
+      ? `http://localhost:3000${weatherUrl}`
+      : weatherUrl;
+
+    const res = await fetch(fullUrl);
 
     if (!res.ok) {
       return {

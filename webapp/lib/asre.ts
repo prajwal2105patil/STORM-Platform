@@ -154,15 +154,14 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   // ── NODE 2: SQL Generator (IDW Spatial Lookup) ──────────────────────────
   nodePath.push("SQLGenerator");
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const supabaseUrl = process.env.SUPABASE_URL || "";
   const serviceKey = process.env.SUPABASE_SERVICE_KEY || "";
 
-  console.log("ASRE NODE 2 DEBUG:", {
-    supabaseUrlSet: !!supabaseUrl,
-    supabaseUrlFirst20: supabaseUrl?.substring(0, 20),
-    serviceKeySet: !!serviceKey,
-    serviceKeyFirst20: serviceKey?.substring(0, 20),
-  });
+  if (!supabaseUrl || !serviceKey) {
+    return { ...base, label: "REJECTED_CONFIG_ERROR", node_path: nodePath,
+      processing_ms: Date.now() - startMs,
+      legal_summary: "System error: Supabase configuration missing." };
+  }
 
   let stations: Station[] | null = null;
   let stationsError = "";
