@@ -162,7 +162,7 @@ Q: "gale hours in Jaipur July 2022" → {"station":"Jaipur","metric":"gale","yea
   }
 }
 
-export async function queryWeather(question: string): Promise<QueryResult> {
+export async function queryWeather(question: string, origin?: string): Promise<QueryResult> {
   const startMs = Date.now();
 
   try {
@@ -261,16 +261,17 @@ export async function queryWeather(question: string): Promise<QueryResult> {
     // Query weather API
     const weatherUrl = `/api/weather?station_id=${stationMatch.id}&year=${safeYear}&month=${safeMonth}&metric=${metric.column}`;
 
-    // Construct full URL for server-side fetch (Vercel uses VERCEL_URL)
+    // Construct full URL (use passed origin or construct from environment)
     let fullUrl = weatherUrl;
     if (typeof window === "undefined") {
-      const baseUrl = process.env.VERCEL_URL
+      const baseUrl = origin
+        || process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
-      fullUrl = `${baseUrl}${weatherUrl}`;
+        : `http://localhost:3000`;
+      fullUrl = origin ? `${origin}${weatherUrl}` : `${baseUrl}${weatherUrl}`;
     }
 
-    console.log(`[NLQ] Fetching weather data from: ${fullUrl}`);
+    console.log(`[NLQ] Fetching from ${fullUrl}`);
     const res = await fetch(fullUrl);
 
     if (!res.ok) {

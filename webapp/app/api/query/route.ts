@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await queryWeather(parsed.data.question);
+    // Get origin from request headers for server-side API calls
+    const origin = req.headers.get("origin") || req.headers.get("x-forwarded-proto") && req.headers.get("x-forwarded-host")
+      ? `${req.headers.get("x-forwarded-proto")}://${req.headers.get("x-forwarded-host")}`
+      : undefined;
+
+    const result = await queryWeather(parsed.data.question, origin);
     return NextResponse.json(result, { status: 200 });
   } catch (err: any) {
     console.error("Query API error:", err);
