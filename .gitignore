@@ -1,32 +1,57 @@
-# Dependencies
-node_modules/
-webapp/node_modules/
-webapp/.next/
-
-# Environment files — NEVER commit
-.env
-.env.local
-.env.production
-webapp/.env
-webapp/.env.local
-
-# Python
+# ── Python ────────────────────────────────────────────────────────────────
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 .venv/
 venv/
-
-# Build outputs
+.Python
+*.egg-info/
 dist/
 build/
-webapp/out/
 
-# Data (large files — use Cloudflare R2 or Git LFS)
-data/noaa_isd/**/*.parquet
-*.parquet
-
-# Credentials
+# ── Environment / Secrets (NEVER commit) ─────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+webapp/.env
+webapp/.env.local
+webapp/.env.production
 *.key
 *.pem
 service-account*.json
+
+# ── Node / Next.js ────────────────────────────────────────────────────────
+node_modules/
+webapp/node_modules/
+webapp/.next/
+webapp/out/
+.npm
+.yarn-integrity
+
+# ── Data (large binary files — store in R2 / S3 / Git LFS) ───────────────
+data/noaa_isd/
+data/raw/
+*.parquet
+*.duckdb
+*.db
+
+# ── OS / Editor ───────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+~$*
+
+# ── Logs & temp ───────────────────────────────────────────────────────────
+*.log
+*.tmp
+/tmp/
+
+# ── TypeScript build info ─────────────────────────────────────────────────
+tsconfig.tsbuildinfo
+webapp/tsconfig.tsbuildinfo
