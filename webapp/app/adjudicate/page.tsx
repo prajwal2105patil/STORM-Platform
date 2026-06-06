@@ -1,33 +1,30 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Zap, CheckCircle, XCircle, AlertTriangle, FileText, Calculator, ExternalLink } from "lucide-react";
-import { clsx } from "clsx";
+import { Zap, XCircle } from "lucide-react";
 import Link from "next/link";
-import { AdjudicationResult } from "@/types";
+import { PipelineTracker }   from "@/components/ui/pipeline-tracker";
+import { VerdictResultCard } from "@/components/ui/verdict-result-card";
+import { PageHeader }        from "@/components/ui/page-header";
+import type { AdjudicationResult } from "@/types";
 
-const LABEL_META: Record<string, { color: string; icon: any; text: string; bg: string }> = {
-  VALIDATED:                  { color: "text-green-700",  bg: "bg-green-50 border-green-300",  icon: CheckCircle,   text: "Claim Validated"      },
-  REJECTED_BELOW_THRESHOLD:   { color: "text-red-700",    bg: "bg-red-50 border-red-300",      icon: XCircle,       text: "Below Wind Threshold" },
-  REJECTED_WRONG_MONTH:       { color: "text-orange-700", bg: "bg-orange-50 border-orange-300",icon: XCircle,       text: "No Data for Period"   },
-  REJECTED_NON_WEATHER:       { color: "text-purple-700", bg: "bg-purple-50 border-purple-300",icon: XCircle,       text: "Not a Weather Event"  },
-  REJECTED_MALFORMED_COORDS:  { color: "text-pink-700",   bg: "bg-pink-50 border-pink-300",    icon: AlertTriangle, text: "Invalid Coordinates"  },
-  REJECTED_MISSING_DATES:     { color: "text-amber-700",  bg: "bg-amber-50 border-amber-300",  icon: AlertTriangle, text: "Missing Dates"        },
-  INSUFFICIENT_DATA:          { color: "text-gray-700",   bg: "bg-gray-50 border-gray-300",    icon: AlertTriangle, text: "No Station in Range"  },
-};
-
-const PIPELINE_NODES = ["IntentRouter", "SQLGenerator", "ExecutionCage", "Adjudicator"];
+const INPUT_CLS =
+  "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]/20 focus:border-[#1A3A5C] transition-all hover:border-gray-300";
 
 const CAUSES = [
   "Cyclone / Hurricane", "Gale Force Wind", "Storm Surge",
   "Tornado", "Severe Weather Event", "High Wind Event",
 ];
 
+const ASSET_TYPES = [
+  "wind_farm", "solar_park", "hybrid", "transmission", "substation",
+];
+
 export default function AdjudicatePage() {
-  useEffect(() => { document.title = "Adjudicate — DREADNOUGHT ASRE"; }, []);
-  const [loading,       setLoading]       = useState(false);
-  const [activeNode,    setActiveNode]    = useState(-1);
-  const [result,        setResult]        = useState<(AdjudicationResult & { claim_id?: string }) | null>(null);
-  const [error,         setError]         = useState<string | null>(null);
+  useEffect(() => { document.title = "Adjudicate -- DREADNOUGHT ASRE"; }, []);
+
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState<(AdjudicationResult & { claim_id?: string }) | null>(null);
+  const [error,   setError]   = useState<string | null>(null);
 
   const [form, setForm] = useState({
     petitioner:        "",
@@ -43,18 +40,8 @@ export default function AdjudicatePage() {
     claimed_loss_inr:  "",
   });
 
-  const set = (k: string) => (e: any) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  // Animate pipeline nodes while loading
-  useEffect(() => {
-    if (!loading) { setActiveNode(-1); return; }
-    let i = 0;
-    const interval = setInterval(() => {
-      setActiveNode(i % PIPELINE_NODES.length);
-      i++;
-    }, 600);
-    return () => clearInterval(interval);
-  }, [loading]);
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,222 +56,161 @@ export default function AdjudicatePage() {
     };
 
     try {
-      const res  = await fetch("/api/adjudicate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const res  = await fetch("/api/adjudicate", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Adjudication failed");
       else         setResult(data);
     } catch (err: any) {
-      setError(err.message || "Network error");
+      setError(err.message || "Network error. Check API connection.");
     } finally {
       setLoading(false);
     }
   }
 
-  const meta      = result ? (LABEL_META[result.label] ?? LABEL_META["INSUFFICIENT_DATA"]) : null;
-  const isValid   = result?.label === "VALIDATED";
-
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Submit Claim for Adjudication</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          ASRE 4-node pipeline: validation → IDW spatial lookup → Supabase weather query → deterministic decision
-        </p>
-      </div>
+    <div className="p-8 space-y-6 max-w-5xl">
+
+      <PageHeader
+        title="Submit Claim for Adjudication"
+        description="ASRE 4-node pipeline: IntentRouter → SQLGenerator → ExecutionCage → Adjudicator"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Form */}
-        <form onSubmit={submit} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Claim Details</h2>
 
+        {/*  CLAIM FORM  */}
+        <form onSubmit={submit} className="bg-white border border-gray-200/80 rounded-xl p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-400 pb-1 border-b border-gray-100">
+            Claim Details
+          </p>
+
+          {/* Parties */}
           {[
-            { k: "petitioner", label: "Petitioner (Company)", req: true },
-            { k: "respondent", label: "Respondent",           req: false },
-            { k: "asset_name", label: "Asset / Project Name", req: true },
-          ].map(({ k, label, req }) => (
+            { k: "petitioner", label: "Petitioner (Company)", req: true,  ph: "e.g. Adani Green Energy" },
+            { k: "respondent", label: "Respondent",           req: false, ph: "e.g. State DISCOM" },
+            { k: "asset_name", label: "Asset / Project Name", req: true,  ph: "e.g. Mundra Wind Farm Phase II" },
+          ].map(({ k, label, req, ph }) => (
             <div key={k}>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{label}{req && " *"}</label>
-              <input required={req} type="text" value={(form as any)[k]} onChange={set(k)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]" />
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                {label}{req && " *"}
+              </label>
+              <input
+                required={req}
+                type="text"
+                placeholder={ph}
+                value={(form as any)[k]}
+                onChange={set(k)}
+                className={INPUT_CLS}
+              />
             </div>
           ))}
 
+          {/* Asset type */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Asset Type</label>
-            <select value={form.asset_type} onChange={set("asset_type")}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]">
-              {["wind_farm","solar_park","hybrid","transmission","substation"].map((t) => (
-                <option key={t} value={t}>{t.replace(/_/g," ")}</option>
+            <select value={form.asset_type} onChange={set("asset_type")} className={INPUT_CLS}>
+              {ASSET_TYPES.map((t) => (
+                <option key={t} value={t}>{t.replace(/_/g, " ")}</option>
               ))}
             </select>
           </div>
 
+          {/* Coordinates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Asset Latitude *</label>
               <input required type="number" step="0.0001" placeholder="19.0900"
-                value={form.asset_lat} onChange={set("asset_lat")}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]" />
+                value={form.asset_lat} onChange={set("asset_lat")} className={INPUT_CLS} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Asset Longitude *</label>
               <input required type="number" step="0.0001" placeholder="72.8500"
-                value={form.asset_lon} onChange={set("asset_lon")}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]" />
+                value={form.asset_lon} onChange={set("asset_lon")} className={INPUT_CLS} />
             </div>
           </div>
+          <p className="text-[10px] text-gray-400 -mt-2">
+            Mumbai: 19.09, 72.85 -- Surat: 21.20, 72.84 -- Chennai: 13.09, 80.27
+          </p>
 
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Start Date *</label>
-              <input required type="date" value={form.start_date} onChange={set("start_date")}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]" />
+              <input required type="date" value={form.start_date} onChange={set("start_date")} className={INPUT_CLS} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">End Date *</label>
-              <input required type="date" value={form.end_date} onChange={set("end_date")}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]" />
+              <input required type="date" value={form.end_date}   onChange={set("end_date")}   className={INPUT_CLS} />
             </div>
           </div>
 
+          {/* Cause */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Claimed Cause *</label>
-            <select value={form.claimed_cause} onChange={set("claimed_cause")}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]">
+            <select value={form.claimed_cause} onChange={set("claimed_cause")} className={INPUT_CLS}>
               {CAUSES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Claimed Loss (INR)</label>
-            <input type="number" placeholder="5000000" value={form.claimed_loss_inr} onChange={set("claimed_loss_inr")}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]" />
+          {/* Optional financials */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Capacity (MW)</label>
+              <input type="number" placeholder="100" value={form.asset_capacity_mw} onChange={set("asset_capacity_mw")} className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Claimed Loss (INR)</label>
+              <input type="number" placeholder="5000000" value={form.claimed_loss_inr} onChange={set("claimed_loss_inr")} className={INPUT_CLS} />
+            </div>
           </div>
 
-          <button type="submit" disabled={loading}
-            className="w-full bg-[#1A3A5C] hover:bg-[#0D6B8E] disabled:opacity-60 text-white font-semibold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#1A3A5C] to-[#0D6B8E] hover:from-[#0D6B8E] hover:to-[#1E88BE] disabled:opacity-60 text-white font-semibold py-3 rounded-lg text-sm flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 mt-2"
+          >
             {loading ? (
-              <><span className="animate-spin inline-block">⚙</span> Processing ASRE Pipeline...</>
+              <><span className="animate-spin">⚙</span> Processing ASRE Pipeline...</>
             ) : (
               <><Zap size={15} /> Submit for Adjudication</>
             )}
           </button>
         </form>
 
-        {/* Result panel */}
+        {/*  RESULT PANEL  */}
         <div className="space-y-4">
 
-          {/* Pipeline progress (shown while loading) */}
+          {/* Pipeline tracker */}
           {loading && (
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">ASRE Pipeline Running</p>
-              <div className="space-y-3">
-                {PIPELINE_NODES.map((node, i) => (
-                  <div key={node} className="flex items-center gap-3">
-                    <div className={clsx(
-                      "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300",
-                      i < activeNode  ? "bg-green-500" :
-                      i === activeNode ? "bg-[#1A3A5C] animate-pulse" :
-                      "bg-gray-200"
-                    )}>
-                      {i < activeNode
-                        ? <CheckCircle size={14} className="text-white" />
-                        : <span className="text-[10px] text-white font-bold">{i + 1}</span>
-                      }
-                    </div>
-                    <span className={clsx(
-                      "text-sm transition-all duration-300",
-                      i < activeNode  ? "text-green-700 font-medium" :
-                      i === activeNode ? "text-[#1A3A5C] font-bold" :
-                      "text-gray-400"
-                    )}>
-                      {node}
-                      {i === activeNode && <span className="ml-2 text-xs text-gray-400 animate-pulse">running...</span>}
-                      {i < activeNode  && <span className="ml-2 text-xs text-green-500">✓ complete</span>}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-5">
+                ASRE Pipeline -- Running
+              </p>
+              <PipelineTracker active={loading} />
             </div>
           )}
 
-          {/* Error state */}
-          {error && (
+          {/* Error */}
+          {error && !loading && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <XCircle size={16} className="text-red-600" />
                 <p className="font-semibold text-red-700">Adjudication Failed</p>
               </div>
-              <p className="text-sm text-red-600 mt-1">{error}</p>
-              <p className="text-xs text-red-400 mt-3">Check your coordinates and dates, then try again.</p>
+              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-xs text-red-400 mt-3">
+                Verify coordinates, date range, and API connectivity then retry.
+              </p>
             </div>
           )}
 
-          {/* Result card */}
-          {result && meta && !loading && (
-            <div className={clsx("rounded-xl border-2 p-6 space-y-4 shadow-sm", meta.bg)}>
-              {/* Verdict header */}
-              <div className="flex items-start gap-3">
-                <div className={clsx("p-2 rounded-full", isValid ? "bg-green-100" : "bg-red-100")}>
-                  <meta.icon size={22} className={meta.color} />
-                </div>
-                <div className="flex-1">
-                  <p className={clsx("font-bold text-xl", meta.color)}>{meta.text}</p>
-                  <p className="text-xs font-mono opacity-60 mt-0.5">{result.label}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Processed in</p>
-                  <p className={clsx("font-bold text-xl", meta.color)}>{result.processing_ms}ms</p>
-                </div>
-              </div>
-
-              {/* Legal summary */}
-              <div className="bg-white/70 rounded-lg p-4 text-sm space-y-1 border border-white/50">
-                <p className="font-semibold text-gray-800 text-xs uppercase tracking-wide">Legal Summary</p>
-                <p className="text-gray-700 leading-relaxed">{result.legal_summary}</p>
-              </div>
-
-              {/* Metrics grid */}
-              {result.nearest_station && (
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: "Nearest Station",  value: result.nearest_station },
-                    { label: "Distance",          value: `${result.nearest_station_km} km` },
-                    { label: "Peak Wind",         value: result.peak_wind_ms ? `${result.peak_wind_ms} m/s` : "—" },
-                    { label: "Exceedance Hours",  value: result.exceedance_hours ?? "—" },
-                    { label: "IDW Confidence",    value: result.idw_confidence ? `${(result.idw_confidence * 100).toFixed(1)}%` : "—" },
-                    { label: "Node Path",         value: result.node_path?.join(" → ") || "—" },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="bg-white/60 rounded-lg px-3 py-2 border border-white/40">
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">{label}</p>
-                      <p className="text-sm font-semibold text-gray-800 mt-0.5">{String(value)}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Action buttons */}
-              {result.claim_id && (
-                <div className="flex gap-3 pt-2">
-                  <a href={`/api/claims/${result.claim_id}/report`} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 bg-white/80 hover:bg-white border border-white/60 text-gray-800 text-sm font-medium py-2.5 rounded-lg transition-colors">
-                    <FileText size={14} />
-                    Download Evidence Report
-                  </a>
-                  {isValid && (
-                    <Link href="/sla"
-                      className="flex-1 flex items-center justify-center gap-2 bg-[#1A3A5C] hover:bg-[#0D6B8E] text-white text-sm font-medium py-2.5 rounded-lg transition-colors">
-                      <Calculator size={14} />
-                      Calculate Settlement
-                    </Link>
-                  )}
-                </div>
-              )}
-
-              {result.claim_id && (
-                <p className="text-xs opacity-40 font-mono">Claim ID: {result.claim_id}</p>
-              )}
-            </div>
+          {/* Verdict card */}
+          {result && !loading && (
+            <VerdictResultCard result={result} />
           )}
 
           {/* Empty state */}
@@ -293,25 +219,31 @@ export default function AdjudicatePage() {
               <div className="w-16 h-16 bg-[#1A3A5C]/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Zap size={28} className="text-[#1A3A5C]" />
               </div>
-              <p className="text-gray-700 font-semibold">Ready for Adjudication</p>
-              <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-                Fill in the claim details and submit.<br />
-                ASRE will return a legally admissible verdict in under 500ms.
+              <p className="font-semibold text-gray-700">Ready for Adjudication</p>
+              <p className="text-sm text-gray-400 mt-2 leading-relaxed max-w-xs mx-auto">
+                Fill in the claim details and submit. ASRE will return a legally admissible verdict in under 500ms.
               </p>
+
+              {/* Sample coordinates */}
               <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-gray-500">
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="font-semibold text-gray-700">Mumbai (will VALIDATE)</p>
-                  <p>Lat: 19.09 / Lon: 72.85</p>
-                  <p>Aug 2023</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="font-semibold text-gray-700">Surat (will VALIDATE)</p>
-                  <p>Lat: 21.20 / Lon: 72.84</p>
-                  <p>Aug 2023</p>
-                </div>
+                {[
+                  { city: "Mumbai (validates)", lat: "19.09", lon: "72.85", period: "Aug 2023" },
+                  { city: "Surat (validates)",  lat: "21.20", lon: "72.84", period: "Aug 2023" },
+                ].map(({ city, lat, lon, period }) => (
+                  <div key={city} className="bg-gray-50 rounded-lg p-3 text-left">
+                    <p className="font-semibold text-gray-700 mb-1">{city}</p>
+                    <p className="font-mono">Lat: {lat} / Lon: {lon}</p>
+                    <p className="text-gray-400 mt-0.5">{period}</p>
+                  </div>
+                ))}
               </div>
+
+              <p className="mt-5 text-[10px] text-gray-300 font-mono">
+                NOAA ISD data range: 2014–2024 · 18 stations · Threshold: 17.2 m/s
+              </p>
             </div>
           )}
+
         </div>
       </div>
     </div>

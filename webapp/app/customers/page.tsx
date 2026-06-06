@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
-import { clsx } from "clsx";
+import { Search, Plus, X, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { PageHeader }  from "@/components/ui/page-header";
+import { SkeletonRow } from "@/components/ui/skeleton";
 
 interface Customer {
   id: string;
@@ -108,147 +110,99 @@ export default function CustomersPage() {
     }
   };
 
+  const FILTER_BTN = (active: boolean) =>
+    cn("px-3 py-2 text-xs font-semibold rounded-lg border transition-colors",
+      active ? "bg-[#1A3A5C] text-white border-[#1A3A5C]" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50");
+
+  const INPUT_CLS = "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]/20 focus:border-[#1A3A5C] transition-all hover:border-gray-300";
+  const LABEL_CLS = "block text-xs font-medium text-gray-600 mb-1";
+
   return (
     <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500">{total} total customers</p>
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-[#1A3A5C] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#0D6B8E] transition-colors flex items-center gap-2"
-        >
-          <Plus size={16} /> Add Customer
-        </button>
-      </div>
+
+      <PageHeader
+        title="Customers"
+        description={`${total} total customers`}
+        actions={
+          <button onClick={() => setShowModal(true)}
+            className="bg-gradient-to-r from-[#1A3A5C] to-[#0D6B8E] hover:from-[#0D6B8E] hover:to-[#1E88BE] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+            <Plus size={15} /> Add Customer
+          </button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 max-w-xs">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            placeholder="Search company or contact..."
-            value={search}
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input placeholder="Search company or contact…" value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]"
-          />
+            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]/20 focus:border-[#1A3A5C] transition-all hover:border-gray-300" />
         </div>
-        <div className="flex gap-2">
-          {["all", "renewable_energy", "logistics", "infrastructure"].map(
-            (sector) => (
-              <button
-                key={sector}
-                onClick={() => setSectorFilter(sector)}
-                className={clsx(
-                  "px-3 py-2 text-xs font-medium rounded-lg border transition-colors capitalize",
-                  sectorFilter === sector
-                    ? "bg-[#1A3A5C] text-white border-[#1A3A5C]"
-                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                )}
-              >
-                {sector === "all" ? "All Sectors" : SECTOR_LABEL[sector]}
-              </button>
-            )
-          )}
+        <div className="flex gap-2 flex-wrap">
+          {["all", "renewable_energy", "logistics", "infrastructure"].map((s) => (
+            <button key={s} onClick={() => setSectorFilter(s)} className={FILTER_BTN(sectorFilter === s)}>
+              {s === "all" ? "All Sectors" : SECTOR_LABEL[s] ?? s}
+            </button>
+          ))}
         </div>
-        <div className="flex gap-2">
-          {["all", "active", "suspended", "closed"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={clsx(
-                "px-3 py-2 text-xs font-medium rounded-lg border transition-colors capitalize",
-                statusFilter === status
-                  ? "bg-[#1A3A5C] text-white border-[#1A3A5C]"
-                  : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-              )}
-            >
-              {status === "all" ? "All Status" : status}
+        <div className="flex gap-2 flex-wrap">
+          {["all", "active", "suspended", "closed"].map((s) => (
+            <button key={s} onClick={() => setStatusFilter(s)} className={FILTER_BTN(statusFilter === s)}>
+              {s === "all" ? "All Status" : s}
             </button>
           ))}
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Company
-              </th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Contact
-              </th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Sector
-              </th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Claims
-              </th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Approval Rate
-              </th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                Actions
-              </th>
+              {["Company", "Contact", "Sector", "Status", "Claims", "Approval", "Actions"].map((h) => (
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                  Loading...
-                </td>
-              </tr>
+              [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                  No customers found.
+                <td colSpan={7} className="px-4 py-14 text-center">
+                  <Users size={32} className="mx-auto text-gray-200 mb-3" />
+                  <p className="text-gray-500 font-medium">No customers found</p>
+                  <button onClick={() => setShowModal(true)}
+                    className="mt-3 text-xs text-[#1A3A5C] hover:text-[#0D6B8E] font-semibold">
+                    + Add your first customer
+                  </button>
                 </td>
               </tr>
             ) : (
               filtered.map((cust) => (
-                <tr key={cust.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-semibold text-gray-900">
-                    {cust.company_name}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {cust.contact_name || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {cust.sector ? SECTOR_LABEL[cust.sector] : "—"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={clsx(
-                        "px-2 py-1 rounded text-xs font-semibold capitalize",
-                        STATUS_COLOR[cust.account_status]
-                      )}
-                    >
+                <tr key={cust.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 font-semibold text-gray-900">{cust.company_name}</td>
+                  <td className="px-4 py-3 text-gray-600 text-sm">{cust.contact_name ?? "--"}</td>
+                  <td className="px-4 py-3 text-gray-600 text-sm">{cust.sector ? (SECTOR_LABEL[cust.sector] ?? cust.sector) : "--"}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold capitalize", STATUS_COLOR[cust.account_status])}>
                       {cust.account_status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {cust.total_claims}
+                  <td className="px-4 py-3 text-gray-600 tabular-nums text-sm">{cust.total_claims}</td>
+                  <td className="px-4 py-3 text-sm tabular-nums">
+                    {cust.total_claims > 0 ? (
+                      <span className={cn("font-semibold", (cust.approved_claims / cust.total_claims) >= 0.5 ? "text-green-700" : "text-red-600")}>
+                        {Math.round((cust.approved_claims / cust.total_claims) * 100)}%
+                      </span>
+                    ) : <span className="text-gray-400">--</span>}
                   </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {cust.total_claims > 0
-                      ? `${Math.round((cust.approved_claims / cust.total_claims) * 100)}%`
-                      : "—"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/claims?customer_id=${cust.id}`}
-                      className="text-[#1A3A5C] hover:text-[#0D6B8E] font-medium text-xs"
-                    >
+                  <td className="px-4 py-3">
+                    <Link href={`/claims?customer_id=${cust.id}`}
+                      className="text-xs text-[#1A3A5C] hover:text-[#0D6B8E] font-semibold transition-colors">
                       View Claims
                     </Link>
                   </td>
@@ -257,121 +211,78 @@ export default function CustomersPage() {
             )}
           </tbody>
         </table>
+
+        {total > 20 && (
+          <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
+            <span className="text-xs">Page {page} of {Math.ceil(total / 20)}</span>
+            <div className="flex gap-2">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+              <button onClick={() => setPage((p) => Math.min(Math.ceil(total / 20), p + 1))} disabled={page >= Math.ceil(total / 20)}
+                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">Next →</button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Pagination */}
-      {total > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            Page {page} of {Math.ceil(total / 20)}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() =>
-                setPage((p) => Math.min(Math.ceil(total / 20), p + 1))
-              }
-              disabled={page >= Math.ceil(total / 20)}
-              className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Add Customer Modal */}
+      {/*  Add Customer Modal  */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">Add Customer</h2>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Company Name *
-              </label>
-              <input
-                type="text"
-                value={newCustomer.company_name}
-                onChange={(e) =>
-                  setNewCustomer({
-                    ...newCustomer,
-                    company_name: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]"
-                placeholder="Acme Energy Solutions"
-              />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md space-y-0 overflow-hidden">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-base font-bold text-gray-900">Add Customer</h2>
+              <button onClick={() => { setShowModal(false); setAddError(null); }}
+                className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={18} />
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Contact Name
-              </label>
-              <input
-                type="text"
-                value={newCustomer.contact_name}
-                onChange={(e) =>
-                  setNewCustomer({
-                    ...newCustomer,
-                    contact_name: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]"
-                placeholder="John Doe"
-              />
+
+            {/* Modal form */}
+            <div className="px-6 py-5 space-y-4">
+              {[
+                { k: "company_name", label: "Company Name *", type: "text",  ph: "Adani Green Energy" },
+                { k: "contact_name", label: "Contact Name",   type: "text",  ph: "Jane Doe" },
+                { k: "email",        label: "Email",          type: "email", ph: "jane@company.com" },
+                { k: "phone",        label: "Phone",          type: "tel",   ph: "+91 98765 43210" },
+              ].map(({ k, label, type, ph }) => (
+                <div key={k}>
+                  <label className={LABEL_CLS}>{label}</label>
+                  <input type={type} placeholder={ph}
+                    value={(newCustomer as any)[k]}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, [k]: e.target.value })}
+                    className={INPUT_CLS} />
+                </div>
+              ))}
+              <div>
+                <label className={LABEL_CLS}>Sector</label>
+                <select value={newCustomer.sector}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, sector: e.target.value })}
+                  className={INPUT_CLS}>
+                  <option value="">Select sector</option>
+                  <option value="renewable_energy">Renewable Energy</option>
+                  <option value="logistics">Logistics</option>
+                  <option value="infrastructure">Infrastructure</option>
+                </select>
+              </div>
+
+              {addError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {addError}
+                </p>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={newCustomer.email}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, email: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]"
-                placeholder="john@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Sector
-              </label>
-              <select
-                value={newCustomer.sector}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, sector: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]"
-              >
-                <option value="">Select sector</option>
-                <option value="renewable_energy">Renewable Energy</option>
-                <option value="logistics">Logistics</option>
-                <option value="infrastructure">Infrastructure</option>
-              </select>
-            </div>
-            {addError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{addError}</p>
-            )}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => { setShowModal(false); setAddError(null); }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-              >
+
+            {/* Modal footer */}
+            <div className="flex gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+              <button onClick={() => { setShowModal(false); setAddError(null); }}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
                 Cancel
               </button>
-              <button
-                onClick={handleAddCustomer}
+              <button onClick={handleAddCustomer}
                 disabled={!newCustomer.company_name.trim() || adding}
-                className="flex-1 px-4 py-2 bg-[#1A3A5C] text-white rounded-lg font-medium hover:bg-[#0D6B8E] disabled:opacity-50"
-              >
-                {adding ? "Creating..." : "Create"}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[#1A3A5C] to-[#0D6B8E] hover:from-[#0D6B8E] hover:to-[#1E88BE] text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-all shadow-sm hover:shadow-md">
+                {adding ? "Creating…" : "Create Customer"}
               </button>
             </div>
           </div>

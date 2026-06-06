@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Wind, MapPin, Clock, Zap } from "lucide-react";
+import { Wind, MapPin, Clock, Zap, Shield } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton }   from "@/components/ui/skeleton";
+import { cn }         from "@/lib/utils";
 
 interface Threshold {
   wind_threshold_ms: number;
@@ -57,9 +60,17 @@ export default function PolicyPage() {
 
   if (loading || !data) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold text-gray-900">Policy & Compliance</h1>
-        <p className="text-gray-500 mt-2">Loading...</p>
+      <div className="p-8 space-y-6">
+        <PageHeader title="Policy & Compliance" description="Adjudication thresholds & audit trail" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-6">
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -71,127 +82,73 @@ export default function PolicyPage() {
   );
   const auditPages = Math.ceil(data.audit_log.length / auditPerPage);
 
+  const TH_CLS = "px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide";
+  const TD_CLS = "px-4 py-3 text-sm";
+
   return (
     <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Policy & Compliance
-        </h1>
-        <p className="text-gray-600 mt-1">Adjudication thresholds & audit trail</p>
-      </div>
 
-      {/* Thresholds section */}
+      <PageHeader title="Policy & Compliance" description="Adjudication thresholds & audit trail" />
+
+      {/*  Threshold cards  */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">
           ASRE Deterministic Thresholds
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className="flex items-start justify-between">
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { icon: Wind,   label: "Wind Threshold",        value: data.thresholds.wind_threshold_ms, unit: "m/s",   sub: "Beaufort 8",      iconColor: "text-blue-600",  bg: "bg-blue-50"  },
+            { icon: MapPin, label: "Search Radius",         value: data.thresholds.max_range_km,      unit: "km",    sub: "IDW interpolation", iconColor: "text-red-500",   bg: "bg-red-50"   },
+            { icon: Clock,  label: "Exceedance Requirement",value: `≥ ${data.thresholds.exceedance_hours}`, unit: "h", sub: "Above threshold", iconColor: "text-green-600", bg: "bg-green-50" },
+            { icon: Zap,    label: "IDW Power",             value: data.thresholds.idw_power,          unit: "",     sub: "Inverse distance",  iconColor: "text-amber-600", bg: "bg-amber-50" },
+          ].map(({ icon: Icon, label, value, unit, sub, iconColor, bg }) => (
+            <div key={label} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600">Wind Threshold</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {data.thresholds.wind_threshold_ms}
+                <p className="text-xs font-medium text-gray-500">{label}</p>
+                <p className="text-3xl font-extrabold text-gray-900 mt-2 tabular-nums">
+                  {value}<span className="text-base font-semibold text-gray-500 ml-1">{unit}</span>
                 </p>
-                <p className="text-xs text-gray-500 mt-1">m/s (Beaufort 8)</p>
+                <p className="text-[10px] text-gray-400 mt-1">{sub}</p>
               </div>
-              <Wind className="text-blue-600" size={32} />
-            </div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Search Radius</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {data.thresholds.max_range_km}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">km (IDW)</p>
+              <div className={cn("p-2 rounded-lg flex-shrink-0", bg)}>
+                <Icon size={20} className={iconColor} />
               </div>
-              <MapPin className="text-red-600" size={32} />
             </div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Exceedance Requirement</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  ≥ {data.thresholds.exceedance_hours}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">hours above threshold</p>
-              </div>
-              <Clock className="text-green-600" size={32} />
-            </div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-600">IDW Power</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {data.thresholds.idw_power}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">inverse distance</p>
-              </div>
-              <Zap className="text-amber-600" size={32} />
-            </div>
-          </div>
+          ))}
         </div>
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-900">
-            These thresholds are enforced deterministically. A claim is VALIDATED
-            only if: peak wind ≥ 17.2 m/s AND exceedance hours ≥ 3, using NOAA
-            Rule 803(8) public records within 300 km of the asset.
-          </p>
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="flex items-start gap-2">
+            <Shield size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-blue-900">
+              Thresholds are enforced <strong>deterministically</strong>. VALIDATED requires: peak wind ≥ 17.2 m/s <strong>AND</strong> exceedance ≥ 3 hours, using NOAA Rule 803(8) public records within 300 km of the asset. Zero human override.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Station Registry */}
+      {/*  Station registry  */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Station Registry ({data.stations.length} stations)
-        </h2>
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+          Station Registry -- {data.stations.length} NOAA ISD Stations
+        </p>
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Station ID
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  State
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Latitude
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Longitude
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Coverage Radius
-                </th>
+                {["Station ID", "Name", "State", "Latitude", "Longitude", "Radius"].map((h) => (
+                  <th key={h} className={TH_CLS}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data.stations.map((station) => (
-                <tr key={station.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-mono text-xs text-gray-600">
-                    {station.id}
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-gray-900">
-                    {station.name}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{station.state}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {station.lat.toFixed(2)}°
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {station.lon.toFixed(2)}°
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {data.thresholds.max_range_km} km
-                  </td>
+              {data.stations.map((s) => (
+                <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                  <td className={cn(TD_CLS, "font-mono text-xs text-gray-500")}>{s.id}</td>
+                  <td className={cn(TD_CLS, "font-semibold text-gray-900")}>{s.name}</td>
+                  <td className={cn(TD_CLS, "text-gray-600")}>{s.state}</td>
+                  <td className={cn(TD_CLS, "text-gray-600 tabular-nums")}>{s.lat.toFixed(2)}°</td>
+                  <td className={cn(TD_CLS, "text-gray-600 tabular-nums")}>{s.lon.toFixed(2)}°</td>
+                  <td className={cn(TD_CLS, "text-gray-500")}>{data.thresholds.max_range_km} km</td>
                 </tr>
               ))}
             </tbody>
@@ -199,62 +156,45 @@ export default function PolicyPage() {
         </div>
       </div>
 
-      {/* Audit Log */}
+      {/*  Audit log  */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Audit Log (latest {Math.min(100, data.audit_log.length)} events)
-        </h2>
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+          Audit Log -- {data.audit_log.length} Events
+        </p>
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Timestamp
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Event Type
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Claim / Reference
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Actor
-                </th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-600">
-                  Details
-                </th>
+                {["Timestamp", "Event Type", "Claim ID", "Actor", "Details"].map((h) => (
+                  <th key={h} className={TH_CLS}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {auditSlice.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-gray-400 text-sm">
                     No audit events yet.
                   </td>
                 </tr>
               ) : (
                 auditSlice.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-gray-600 text-xs">
-                      {new Date(entry.created_at).toLocaleString()}
+                  <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                    <td className={cn(TD_CLS, "text-gray-500 text-xs whitespace-nowrap")}>
+                      {new Date(entry.created_at).toLocaleString("en-IN")}
                     </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold capitalize ${
-                          EVENT_COLOR[entry.event_type]
-                        }`}
-                      >
+                    <td className={TD_CLS}>
+                      <span className={cn("px-2 py-1 rounded-full text-xs font-semibold capitalize", EVENT_COLOR[entry.event_type])}>
                         {entry.event_type}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600 text-xs font-mono">
-                      {entry.claim_id ? entry.claim_id.slice(0, 8) : "—"}
+                    <td className={cn(TD_CLS, "font-mono text-xs text-gray-500")}>
+                      {entry.claim_id ? entry.claim_id.slice(0, 8) + "…" : "--"}
                     </td>
-                    <td className="px-6 py-4 text-gray-600 font-semibold">
-                      {entry.actor}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600 text-xs">
-                      {entry.payload ? JSON.stringify(entry.payload).slice(0, 50) + "..." : "—"}
+                    <td className={cn(TD_CLS, "font-semibold text-gray-800")}>{entry.actor}</td>
+                    <td className={cn(TD_CLS, "text-gray-500 text-xs max-w-[200px] truncate")}
+                      title={entry.payload ? JSON.stringify(entry.payload) : ""}>
+                      {entry.payload ? JSON.stringify(entry.payload).slice(0, 60) + "…" : "--"}
                     </td>
                   </tr>
                 ))
@@ -263,38 +203,26 @@ export default function PolicyPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         {auditPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-gray-600">
-              Page {auditPage} of {auditPages}
-            </div>
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+            <span>Page {auditPage} of {auditPages}</span>
             <div className="flex gap-2">
-              <button
-                onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
-                disabled={auditPage === 1}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 disabled:opacity-50"
-              >
-                Previous
+              <button onClick={() => setAuditPage((p) => Math.max(1, p - 1))} disabled={auditPage === 1}
+                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                ← Prev
               </button>
-              <button
-                onClick={() => setAuditPage((p) => Math.min(auditPages, p + 1))}
-                disabled={auditPage >= auditPages}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 disabled:opacity-50"
-              >
-                Next
+              <button onClick={() => setAuditPage((p) => Math.min(auditPages, p + 1))} disabled={auditPage >= auditPages}
+                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                Next →
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer note */}
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
         <p className="text-xs text-gray-600">
-          <strong>Policy enforced deterministically by ASRE v2 engine.</strong> No
-          human override. All decisions are final and subject to attestation by
-          a qualified legal operator.
+          <strong>Policy enforced deterministically by ASRE v2 engine.</strong> No human override. All decisions are final and subject to attestation by a qualified legal operator.
         </p>
       </div>
     </div>

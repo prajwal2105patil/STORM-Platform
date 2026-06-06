@@ -35,12 +35,14 @@ function NavItem({ href, label, icon: Icon, onClick }: { href: string; label: st
   return (
     <Link href={href} onClick={onClick}
       className={clsx(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
-        active ? "bg-[#0D6B8E] text-white font-medium" : "text-blue-100 hover:bg-white/10"
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150",
+        active
+          ? "bg-white/15 text-white font-semibold shadow-sm border border-white/10"
+          : "text-blue-200/70 hover:text-white hover:bg-white/8"
       )}>
-      <Icon size={15} />
+      <Icon size={15} className={active ? "text-sky" : "opacity-70"} />
       <span>{label}</span>
-      {active && <ChevronRight size={13} className="ml-auto opacity-60" />}
+      {active && <ChevronRight size={12} className="ml-auto text-sky/60" />}
     </Link>
   );
 }
@@ -53,9 +55,9 @@ function NavGroup({ label, items, collapsed = false, onNavClick }: {
     <div className="mb-1">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-200 transition-colors">
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[9px] font-bold text-blue-400/55 uppercase tracking-[0.14em] hover:text-blue-300 transition-colors">
         {label}
-        <ChevronDown size={10} className={clsx("transition-transform", open ? "rotate-0" : "-rotate-90")} />
+        <ChevronDown size={9} className={clsx("transition-transform duration-200", open ? "rotate-0" : "-rotate-90")} />
       </button>
       {open && (
         <div className="space-y-0.5">
@@ -71,13 +73,13 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
     <>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#0D6B8E] flex items-center justify-center shadow-lg">
-            <Zap size={16} className="text-white" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D6B8E] to-[#1E88BE] flex items-center justify-center shadow-teal-md ring-1 ring-white/20 flex-shrink-0">
+            <Zap size={18} className="text-white" />
           </div>
           <div>
-            <p className="text-sm font-extrabold leading-tight tracking-wide">DREADNOUGHT</p>
-            <p className="text-[9px] text-blue-300 leading-tight tracking-widest">ASRE PLATFORM v2</p>
+            <p className="text-sm font-extrabold leading-tight tracking-wide text-white">DREADNOUGHT</p>
+            <p className="text-[9px] text-sky/60 leading-tight tracking-[0.14em] uppercase mt-0.5">ASRE Platform v2</p>
           </div>
         </div>
       </div>
@@ -91,17 +93,21 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       </nav>
 
       {/* Status footer */}
-      <div className="px-4 py-4 border-t border-white/10 space-y-2">
-        <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">System Status</p>
+      <div className="px-4 py-4 border-t border-white/10 bg-black/10 space-y-2.5">
+        <p className="text-[9px] font-bold text-blue-400/55 uppercase tracking-[0.12em] mb-1">System Status</p>
         {[
           { label: "ASRE Engine",  status: "Online"    },
           { label: "Supabase",     status: "Connected" },
           { label: "Groq LLM",     status: "Active"    },
         ].map(({ label, status }) => (
-          <p key={label} className="flex items-center gap-2 text-[10px] text-blue-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-            {label}: <span className="text-white font-medium">{status}</span>
-          </p>
+          <div key={label} className="flex items-center gap-2 text-[10px]">
+            <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+            </span>
+            <span className="text-blue-300/60">{label}:</span>
+            <span className="text-white/75 font-medium">{status}</span>
+          </div>
         ))}
       </div>
     </>
@@ -130,19 +136,19 @@ export default function Sidebar() {
 
       {/* Mobile drawer */}
       <aside className={clsx(
-        "md:hidden fixed top-0 left-0 h-full w-64 bg-[#1A3A5C] text-white flex flex-col z-50 transition-transform duration-300 shadow-2xl",
+        "md:hidden fixed top-0 left-0 h-full w-64 bg-sidebar-gradient text-white flex flex-col z-50 transition-transform duration-300 shadow-2xl",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 text-blue-300 hover:text-white">
+          className="absolute top-4 right-4 text-blue-300/70 hover:text-white transition-colors">
           <X size={20} />
         </button>
         <SidebarContent onNavClick={() => setMobileOpen(false)} />
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 bg-[#1A3A5C] text-white flex-col shrink-0">
+      <aside className="hidden md:flex w-60 bg-sidebar-gradient text-white flex-col shrink-0 shadow-xl">
         <SidebarContent />
       </aside>
     </>

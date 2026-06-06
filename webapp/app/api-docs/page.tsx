@@ -1,6 +1,6 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
+import { PageHeader } from "@/components/ui/page-header";
 
 const endpoints = [
   {
@@ -132,81 +132,77 @@ const methodColor: Record<string, string> = {
 
 export default function APIDocsPage() {
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 overflow-auto p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">API Reference</h1>
-            <p className="text-gray-500">DREADNOUGHT ASRE v2 — REST API Documentation</p>
-          </div>
+    <div className="p-8 max-w-4xl space-y-8">
 
-          {/* Base URL */}
-          <div className="bg-[#1A3A5C] text-white rounded-xl p-4 mb-8 font-mono text-sm">
-            <span className="text-blue-300">Base URL:</span>{" "}
-            <span>https://storm-platform.vercel.app</span>
-          </div>
+      <PageHeader
+        title="API Reference"
+        description="DREADNOUGHT ASRE v2 -- REST API Documentation"
+      />
 
-          {/* Auth */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8 text-sm text-amber-800">
-            <strong>Authentication:</strong> All API routes are currently open for demo purposes.
-            Production deployments should add <code className="bg-amber-100 px-1 rounded">Authorization: Bearer TOKEN</code> header.
-          </div>
+      {/* Base URL */}
+      <div className="bg-gradient-to-r from-[#0e2640] to-[#0D6B8E] text-white rounded-xl p-4 font-mono text-sm flex items-center gap-3">
+        <span className="text-blue-300 flex-shrink-0 text-[10px] uppercase tracking-widest font-bold">Base URL</span>
+        <span className="text-white">https://storm-platform.vercel.app</span>
+      </div>
 
-          {/* Thresholds */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-            <h2 className="font-semibold text-gray-800 mb-3">ASRE Adjudication Thresholds</h2>
-            <div className="grid grid-cols-4 gap-4 text-center">
-              {[
-                { label: "Wind Threshold", value: "17.2 m/s", sub: "Beaufort Force 8" },
-                { label: "Exceedance", value: "≥ 3 hours", sub: "Above threshold" },
-                { label: "Search Radius", value: "300 km", sub: "Max station range" },
-                { label: "IDW Power", value: "2", sub: "Inverse Distance" },
-              ].map((t) => (
-                <div key={t.label} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-lg font-bold text-[#1A3A5C]">{t.value}</p>
-                  <p className="text-xs font-medium text-gray-700 mt-1">{t.label}</p>
-                  <p className="text-xs text-gray-400">{t.sub}</p>
-                </div>
-              ))}
+      {/* Auth notice */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+        <strong>Authentication:</strong> Routes are open for demo. Production should include{" "}
+        <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">Authorization: Bearer TOKEN</code>.
+      </div>
+
+      {/* Thresholds */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h2 className="text-base font-semibold text-gray-900 mb-4">ASRE Adjudication Thresholds</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Wind Threshold", value: "17.2 m/s",  sub: "Beaufort Force 8" },
+            { label: "Exceedance",     value: "≥ 3 hours",  sub: "Above threshold"  },
+            { label: "Search Radius",  value: "300 km",     sub: "Max station range" },
+            { label: "IDW Power",      value: "2",          sub: "Inverse distance"  },
+          ].map((t) => (
+            <div key={t.label} className="p-4 bg-gray-50 rounded-xl border border-gray-100 text-center">
+              <p className="text-xl font-extrabold text-[#1A3A5C]">{t.value}</p>
+              <p className="text-xs font-semibold text-gray-700 mt-1">{t.label}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{t.sub}</p>
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Endpoints */}
-          <div className="space-y-6">
-            {endpoints.map((ep, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="flex items-center gap-3 p-4 border-b border-gray-100">
-                  <span className={`px-2.5 py-1 rounded text-xs font-bold ${methodColor[ep.method]}`}>
-                    {ep.method}
-                  </span>
-                  <code className="font-mono text-sm text-gray-800">{ep.path}</code>
-                  <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                    {ep.rateLimit}
-                  </span>
+      {/* Endpoints */}
+      <div className="space-y-5">
+        {endpoints.map((ep, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
+              <span className={`px-2.5 py-1 rounded text-xs font-extrabold tracking-wide ${methodColor[ep.method]}`}>
+                {ep.method}
+              </span>
+              <code className="font-mono text-sm text-gray-800">{ep.path}</code>
+              <span className="ml-auto text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                {ep.rateLimit}
+              </span>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-gray-600 mb-4">{ep.description}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Request</p>
+                  <pre className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-xs text-gray-700 overflow-auto leading-relaxed">{ep.body}</pre>
                 </div>
-                <div className="p-4">
-                  <p className="text-sm text-gray-600 mb-4">{ep.description}</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Request</p>
-                      <pre className="bg-gray-50 rounded-lg p-3 text-xs text-gray-700 overflow-auto">{ep.body}</pre>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Response</p>
-                      <pre className="bg-gray-50 rounded-lg p-3 text-xs text-gray-700 overflow-auto">{ep.response}</pre>
-                    </div>
-                  </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Response</p>
+                  <pre className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-xs text-gray-700 overflow-auto leading-relaxed">{ep.response}</pre>
+                </div>
+              </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-8 text-center text-sm text-gray-400">
-            DREADNOUGHT ASRE v2 — Powered by Supabase + Groq LLM + NOAA ISD
-          </div>
-        </div>
-      </main>
+      <div className="pt-2 text-center text-xs text-gray-300 font-mono">
+        DREADNOUGHT ASRE v2 · Supabase · Groq LLM · NOAA ISD · DuckDB
+      </div>
     </div>
   );
 }
