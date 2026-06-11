@@ -13,20 +13,27 @@ interface SLAResult {
   breakdown: string[];
 }
 
-const INPUT_CLS =
-  "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]/20 focus:border-[#1A3A5C] transition-all hover:border-gray-300";
+const INPUT_CLS = [
+  "w-full rounded-xl px-3.5 py-2.5 text-sm",
+  "bg-white/5 border border-white/12 text-white",
+  "placeholder:text-white/25 focus:outline-none",
+  "focus:ring-2 focus:ring-sky/30 focus:border-sky/50",
+  "hover:border-white/20 transition-all backdrop-blur-sm",
+].join(" ");
+
+const LABEL_CLS = "block text-[10px] font-semibold text-white/45 mb-1";
 
 export default function SLACalculatorPage() {
-  useEffect(() => { document.title = "SLA Calc -- DREADNOUGHT ASRE"; }, []);
+  useEffect(() => { document.title = "SLA Calc — DREADNOUGHT ASRE"; }, []);
 
   const [form, setForm] = useState({
-    capacity_mw: "",
+    capacity_mw:        "",
     tariff_inr_per_kwh: "",
-    plant_load_factor: "0.25",
-    start_date: "",
-    end_date: "",
-    coverage_pct: "80",
-    deductible_days: "1",
+    plant_load_factor:  "0.25",
+    start_date:         "",
+    end_date:           "",
+    coverage_pct:       "80",
+    deductible_days:    "1",
   });
   const [result, setResult] = useState<SLAResult | null>(null);
 
@@ -42,14 +49,14 @@ export default function SLACalculatorPage() {
 
     if (!capacityMW || !tariff || !form.start_date || !form.end_date) return;
 
-    const start          = new Date(form.start_date);
-    const end            = new Date(form.end_date);
-    const totalDays      = Math.ceil((end.getTime() - start.getTime()) / 86_400_000) + 1;
-    const fmDays         = Math.max(0, totalDays - deductible);
-    const dailyKWh       = capacityMW * plf * 24 * 1000;
-    const dailyRevenue   = dailyKWh * tariff;
-    const totalLoss      = dailyRevenue * fmDays;
-    const settlement     = totalLoss * coveragePct;
+    const start        = new Date(form.start_date);
+    const end          = new Date(form.end_date);
+    const totalDays    = Math.ceil((end.getTime() - start.getTime()) / 86_400_000) + 1;
+    const fmDays       = Math.max(0, totalDays - deductible);
+    const dailyKWh     = capacityMW * plf * 24 * 1000;
+    const dailyRevenue = dailyKWh * tariff;
+    const totalLoss    = dailyRevenue * fmDays;
+    const settlement   = totalLoss * coveragePct;
 
     setResult({
       force_majeure_days:         fmDays,
@@ -74,7 +81,6 @@ export default function SLACalculatorPage() {
 
   return (
     <div className="p-8 max-w-4xl space-y-6">
-
       <PageHeader
         title="SLA Breach Calculator"
         description="Estimate recommended settlement for validated force majeure claims"
@@ -82,21 +88,21 @@ export default function SLACalculatorPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/*  Form  */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 pb-1 border-b border-gray-100">
-            Asset & Contract Parameters
+        {/* Form */}
+        <div className="glass-card-dark rounded-2xl p-6 shadow-glass-lg space-y-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-sky/50 pb-3 border-b border-white/8">
+            Asset &amp; Contract Parameters
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { k: "capacity_mw",        label: "Capacity (MW)",        ph: "100",  type: "number", step: "1"    },
-              { k: "tariff_inr_per_kwh", label: "Tariff (₹/kWh)",       ph: "3.50", type: "number", step: "0.01" },
-              { k: "plant_load_factor",  label: "Plant Load Factor",     ph: "0.25", type: "number", step: "0.01" },
-              { k: "coverage_pct",       label: "Policy Coverage (%)",   ph: "80",   type: "number", step: "1"    },
+              { k: "capacity_mw",        label: "Capacity (MW)",       ph: "100",  type: "number", step: "1"    },
+              { k: "tariff_inr_per_kwh", label: "Tariff (₹/kWh)",      ph: "3.50", type: "number", step: "0.01" },
+              { k: "plant_load_factor",  label: "Plant Load Factor",    ph: "0.25", type: "number", step: "0.01" },
+              { k: "coverage_pct",       label: "Policy Coverage (%)",  ph: "80",   type: "number", step: "1"    },
             ].map(({ k, label, ph, type, step }) => (
               <div key={k}>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                <label className={LABEL_CLS}>{label}</label>
                 <input type={type} step={step} placeholder={ph}
                   value={(form as any)[k]} onChange={set(k)} className={INPUT_CLS} />
               </div>
@@ -105,88 +111,82 @@ export default function SLACalculatorPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">FM Start Date</label>
+              <label className={LABEL_CLS}>FM Start Date</label>
               <input type="date" value={form.start_date} onChange={set("start_date")} className={INPUT_CLS} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">FM End Date</label>
-              <input type="date" value={form.end_date}   onChange={set("end_date")}   className={INPUT_CLS} />
+              <label className={LABEL_CLS}>FM End Date</label>
+              <input type="date" value={form.end_date} onChange={set("end_date")} className={INPUT_CLS} />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Deductible (days)</label>
+            <label className={LABEL_CLS}>Deductible (days)</label>
             <input type="number" placeholder="1" min="0"
               value={form.deductible_days} onChange={set("deductible_days")} className={INPUT_CLS} />
           </div>
 
           <button onClick={calculate}
-            className="w-full bg-gradient-to-r from-[#1A3A5C] to-[#0D6B8E] hover:from-[#0D6B8E] hover:to-[#1E88BE] text-white font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2 mt-2 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+            className="btn-primary-3d w-full justify-center mt-2">
             <Calculator size={15} /> Calculate Settlement
           </button>
         </div>
 
-        {/*  Results  */}
+        {/* Results */}
         <div className="space-y-4">
           {result ? (
             <>
               {/* Hero metrics */}
-              <div className="grid grid-cols-1 gap-3">
-                <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4 shadow-sm">
-                  <div className="p-2.5 bg-[#1A3A5C] rounded-lg"><Clock size={18} className="text-white" /></div>
-                  <div>
-                    <p className="text-2xl font-extrabold text-[#1A3A5C] tabular-nums">
-                      {result.force_majeure_days} <span className="text-base font-semibold">days</span>
-                    </p>
-                    <p className="text-sm text-gray-500">Force Majeure Days Covered</p>
+              <div className="space-y-3">
+                {[
+                  { icon: Clock,       label: "Force Majeure Days Covered", value: `${result.force_majeure_days} days`, color: "text-sky",      bg: "bg-[#0D6B8E]"  },
+                  { icon: TrendingDown,label: "Gross Revenue Loss",         value: fmt(result.revenue_loss_inr),       color: "text-red-400",  bg: "bg-red-600"    },
+                  { icon: TrendingUp,  label: `Recommended Settlement (${result.coverage_pct}% coverage)`,
+                                                                             value: fmt(result.recommended_settlement_inr), color: "text-green-400", bg: "bg-green-600" },
+                ].map(({ icon: Icon, label, value, color, bg }) => (
+                  <div key={label} className="glass-card-dark rounded-xl p-5 flex items-center gap-4 shadow-glass-sm">
+                    <div className={`p-2.5 ${bg} rounded-lg flex-shrink-0`}><Icon size={18} className="text-white" /></div>
+                    <div>
+                      <p className={`text-2xl font-extrabold tabular-nums ${color}`}>{value}</p>
+                      <p className="text-sm text-white/40 mt-0.5">{label}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="bg-white rounded-xl border border-red-200 p-5 flex items-center gap-4 shadow-sm">
-                  <div className="p-2.5 bg-red-500 rounded-lg"><TrendingDown size={18} className="text-white" /></div>
-                  <div>
-                    <p className="text-2xl font-extrabold text-red-700 tabular-nums">{fmt(result.revenue_loss_inr)}</p>
-                    <p className="text-sm text-gray-500">Gross Revenue Loss</p>
-                  </div>
-                </div>
-                <div className="bg-green-50 rounded-xl border border-green-200 p-5 flex items-center gap-4 shadow-sm">
-                  <div className="p-2.5 bg-green-600 rounded-lg"><TrendingUp size={18} className="text-white" /></div>
-                  <div>
-                    <p className="text-2xl font-extrabold text-green-700 tabular-nums">
-                      {fmt(result.recommended_settlement_inr)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Recommended Settlement ({result.coverage_pct}% coverage)
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Breakdown */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+              <div className="glass-card-dark rounded-xl p-5 shadow-glass-sm">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-sky/50 mb-3">
                   Calculation Breakdown
                 </p>
                 <ul className="space-y-2">
                   {result.breakdown.map((line, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-[#0D6B8E] font-bold mt-0.5 flex-shrink-0">→</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-white/65">
+                      <span className="text-sky font-bold mt-0.5 flex-shrink-0">→</span>
                       {line}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 leading-relaxed">
-                <strong>Disclaimer:</strong> Indicative only. Final settlement subject to policy terms, legal review, and ASRE adjudication verdict.
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-xs text-amber-300/80 leading-relaxed">
+                <strong className="text-amber-300">Disclaimer:</strong> Indicative only. Final settlement subject to policy terms, legal review, and ASRE adjudication verdict.
               </div>
             </>
           ) : (
-            <div className="bg-white border border-gray-200 rounded-xl p-10 text-center shadow-sm flex flex-col items-center justify-center min-h-[320px]">
-              <div className="w-14 h-14 bg-[#1A3A5C]/10 rounded-full flex items-center justify-center mb-4">
-                <Calculator size={26} className="text-[#1A3A5C]" />
+            <div className="glass-card-dark rounded-2xl p-10 text-center shadow-glass-md flex flex-col items-center justify-center min-h-[320px]">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+                style={{
+                  background: "linear-gradient(135deg, rgba(13,107,142,0.25) 0%, rgba(96,184,224,0.1) 100%)",
+                  border:     "1px solid rgba(96,184,224,0.2)",
+                  boxShadow:  "0 0 20px rgba(96,184,224,0.15)",
+                }}
+              >
+                <Calculator size={26} className="text-sky/70" />
               </div>
-              <p className="font-semibold text-gray-700">Enter Parameters to Calculate</p>
-              <p className="text-sm text-gray-400 mt-2 max-w-xs leading-relaxed">
+              <p className="font-semibold text-white/80">Enter Parameters to Calculate</p>
+              <p className="text-sm text-white/35 mt-2 max-w-xs leading-relaxed">
                 Fill in asset capacity, tariff, dates, and coverage to generate the settlement estimate.
               </p>
             </div>

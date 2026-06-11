@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import Sidebar      from "@/components/Sidebar";
+import { Providers } from "@/components/Providers";
+import { GlobalBackground } from "@/components/ui/global-background";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,14 +23,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-gray-50 text-gray-900`}>
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-[#040810] text-white`}>
+        <GlobalBackground />
+        <Providers>
+          <div className="relative z-10 flex h-screen overflow-hidden">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto">
+              {children}
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

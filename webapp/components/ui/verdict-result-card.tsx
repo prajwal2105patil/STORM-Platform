@@ -1,37 +1,40 @@
 "use client";
-import { CheckCircle, XCircle, AlertTriangle, Clock, Download, Calculator } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Clock, Download, Calculator, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AdjudicationResult } from "@/types";
 import Link from "next/link";
 
-const VERDICT_STYLES: Record<string, { bg: string; border: string; text: string; icon: any; iconBg: string }> = {
+const VERDICT_STYLES: Record<string, {
+  bg: string; border: string; text: string;
+  icon: any; iconBg: string; glow: string; accentBar: string;
+}> = {
   VALIDATED: {
-    bg: "bg-green-50", border: "border-green-300", text: "text-green-800",
-    icon: CheckCircle, iconBg: "bg-green-500",
+    bg: "bg-green-500/8", border: "border-green-500/30", text: "text-green-400",
+    icon: CheckCircle, iconBg: "bg-green-500", glow: "rgba(34,197,94,0.2)", accentBar: "bg-green-500",
   },
   REJECTED_BELOW_THRESHOLD: {
-    bg: "bg-red-50", border: "border-red-300", text: "text-red-800",
-    icon: XCircle, iconBg: "bg-red-500",
+    bg: "bg-red-500/8", border: "border-red-500/30", text: "text-red-400",
+    icon: XCircle, iconBg: "bg-red-500", glow: "rgba(220,38,38,0.2)", accentBar: "bg-red-500",
   },
   REJECTED_WRONG_MONTH: {
-    bg: "bg-orange-50", border: "border-orange-300", text: "text-orange-800",
-    icon: XCircle, iconBg: "bg-orange-500",
+    bg: "bg-orange-500/8", border: "border-orange-500/30", text: "text-orange-400",
+    icon: XCircle, iconBg: "bg-orange-500", glow: "rgba(234,88,12,0.2)", accentBar: "bg-orange-500",
   },
   REJECTED_NON_WEATHER: {
-    bg: "bg-purple-50", border: "border-purple-300", text: "text-purple-800",
-    icon: XCircle, iconBg: "bg-purple-500",
+    bg: "bg-purple-500/8", border: "border-purple-500/30", text: "text-purple-400",
+    icon: XCircle, iconBg: "bg-purple-500", glow: "rgba(124,58,237,0.2)", accentBar: "bg-purple-500",
   },
   REJECTED_MALFORMED_COORDS: {
-    bg: "bg-pink-50", border: "border-pink-300", text: "text-pink-800",
-    icon: AlertTriangle, iconBg: "bg-pink-500",
+    bg: "bg-pink-500/8", border: "border-pink-500/30", text: "text-pink-400",
+    icon: AlertTriangle, iconBg: "bg-pink-500", glow: "rgba(219,39,119,0.2)", accentBar: "bg-pink-500",
   },
   REJECTED_MISSING_DATES: {
-    bg: "bg-amber-50", border: "border-amber-300", text: "text-amber-800",
-    icon: AlertTriangle, iconBg: "bg-amber-500",
+    bg: "bg-amber-500/8", border: "border-amber-500/30", text: "text-amber-400",
+    icon: AlertTriangle, iconBg: "bg-amber-500", glow: "rgba(217,119,6,0.2)", accentBar: "bg-amber-500",
   },
   INSUFFICIENT_DATA: {
-    bg: "bg-gray-50", border: "border-gray-300", text: "text-gray-700",
-    icon: AlertTriangle, iconBg: "bg-gray-500",
+    bg: "bg-white/4", border: "border-white/15", text: "text-white/60",
+    icon: AlertTriangle, iconBg: "bg-gray-600", glow: "rgba(107,114,128,0.15)", accentBar: "bg-gray-600",
   },
 };
 
@@ -55,48 +58,57 @@ export function VerdictResultCard({ result }: VerdictResultCardProps) {
   const isValid = result.label === "VALIDATED";
 
   return (
-    <div className="bg-white border border-gray-200/80 rounded-xl shadow-sm hover:shadow-md overflow-hidden animate-[fade-up_0.4s_ease-out] transition-shadow duration-200">
+    <div
+      className={cn(
+        "verdict-3d-enter glass-card-dark rounded-2xl overflow-hidden border shadow-glass-lg",
+        style.border,
+      )}
+      style={{ boxShadow: `0 0 40px ${style.glow}, 0 8px 32px rgba(0,0,0,0.45)` }}
+    >
+      {/* Accent top bar */}
+      <div className={cn("h-1 w-full", style.accentBar)} />
+
       {/* Verdict banner */}
-      <div className={cn("px-6 py-5 border-b flex items-center justify-between gap-4", style.bg, style.border)}>
+      <div className={cn("px-6 py-5 border-b flex items-center justify-between gap-4", style.bg, "border-white/8")}>
         <div className="flex items-center gap-3">
-          <div className={cn("p-2 rounded-lg", style.iconBg)}>
+          <div className={cn("p-2.5 rounded-xl shadow-glass-sm", style.iconBg)}>
             <VIcon size={20} className="text-white" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-500">ASRE Verdict</p>
-            <p className={cn("text-xl font-extrabold leading-tight", style.text)}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">ASRE Verdict</p>
+            <p className={cn("text-2xl font-extrabold leading-tight mt-0.5", style.text)}>
               {VERDICT_LABELS[result.label] ?? result.label}
             </p>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-xs text-gray-500 flex items-center gap-1 justify-end">
-            <Clock size={11} /> {result.processing_ms}ms
+          <p className="text-[10px] text-white/35 flex items-center gap-1 justify-end">
+            <Clock size={10} /> {result.processing_ms}ms
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">NOAA Rule 803(8)</p>
+          <p className="text-[9px] text-white/25 mt-0.5">NOAA Rule 803(8)</p>
         </div>
       </div>
 
       {/* Legal summary */}
-      <div className="px-6 py-4 bg-blue-50/50 border-b border-blue-100">
-        <p className="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1.5">Legal Summary</p>
-        <p className="text-sm text-gray-700 leading-relaxed">{result.legal_summary}</p>
+      <div className="px-6 py-4 border-b border-white/6 bg-sky/5">
+        <p className="text-[9px] font-bold uppercase tracking-wider text-sky/60 mb-1.5">Legal Summary</p>
+        <p className="text-sm text-white/70 leading-relaxed">{result.legal_summary}</p>
       </div>
 
       {/* Metric grid */}
-      <div className="px-6 py-4">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+      <div className="px-6 py-5">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
           {[
-            { label: "NEAREST STATION",   value: result.nearest_station    ?? "N/A" },
-            { label: "DISTANCE",          value: result.nearest_station_km != null ? `${result.nearest_station_km.toFixed(1)} km` : "N/A" },
-            { label: "PEAK WIND",         value: result.peak_wind_ms       != null ? `${result.peak_wind_ms.toFixed(1)} m/s`     : "N/A" },
-            { label: "EXCEEDANCE HOURS",  value: result.exceedance_hours   != null ? `${result.exceedance_hours}h`               : "N/A" },
-            { label: "IDW CONFIDENCE",    value: result.idw_confidence     != null ? `${(result.idw_confidence * 100).toFixed(1)}%` : "N/A" },
-            { label: "NODE PATH",         value: result.node_path?.join(" → ") ?? "N/A" },
+            { label: "NEAREST STATION",  value: result.nearest_station    ?? "N/A" },
+            { label: "DISTANCE",         value: result.nearest_station_km != null ? `${result.nearest_station_km.toFixed(1)} km` : "N/A" },
+            { label: "PEAK WIND",        value: result.peak_wind_ms       != null ? `${result.peak_wind_ms.toFixed(1)} m/s`     : "N/A" },
+            { label: "EXCEEDANCE HOURS", value: result.exceedance_hours   != null ? `${result.exceedance_hours}h`               : "N/A" },
+            { label: "IDW CONFIDENCE",   value: result.idw_confidence     != null ? `${(result.idw_confidence * 100).toFixed(1)}%` : "N/A" },
+            { label: "NODE PATH",        value: result.node_path?.join(" → ") ?? "N/A" },
           ].map(({ label, value }) => (
             <div key={label}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-              <p className="text-sm font-semibold text-gray-800 font-mono mt-0.5 truncate" title={value}>{value}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">{label}</p>
+              <p className="text-sm font-semibold text-white/80 font-mono mt-0.5 truncate" title={value}>{value}</p>
             </div>
           ))}
         </div>
@@ -104,22 +116,23 @@ export function VerdictResultCard({ result }: VerdictResultCardProps) {
 
       {/* Actions */}
       {isValid && (
-        <div className="px-6 pb-5 flex gap-3 border-t border-gray-100 pt-4">
-          <button className="flex items-center gap-2 text-xs font-semibold text-[#1A3A5C] hover:text-[#0D6B8E] border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors">
-            <Download size={13} /> Evidence Report
+        <div className="px-6 pb-5 flex gap-3 border-t border-white/8 pt-4">
+          <button className="flex items-center gap-2 text-xs font-semibold text-sky/80 hover:text-sky border border-sky/20 hover:border-sky/40 rounded-lg px-3 py-2 bg-sky/5 hover:bg-sky/10 transition-all">
+            <Download size={12} /> Evidence Report
           </button>
-          <Link href="/sla" className="flex items-center gap-2 text-xs font-semibold text-green-700 hover:text-green-800 border border-green-200 rounded-lg px-3 py-2 hover:bg-green-50 transition-colors">
-            <Calculator size={13} /> Calculate Settlement
+          <Link href="/sla" className="flex items-center gap-2 text-xs font-semibold text-green-400/80 hover:text-green-400 border border-green-500/20 hover:border-green-500/40 rounded-lg px-3 py-2 bg-green-500/5 hover:bg-green-500/10 transition-all">
+            <Calculator size={12} /> Calculate Settlement
           </Link>
         </div>
       )}
 
-      {/* Claim ID */}
-      {result.claim_id && (
-        <p className="px-6 pb-4 text-[10px] text-gray-300 font-mono">
-          Claim ID: {result.claim_id}
+      {/* NOAA badge */}
+      <div className="px-6 pb-5 flex items-center gap-2">
+        <Shield size={10} className="text-white/25" />
+        <p className="text-[9px] text-white/25 font-mono">
+          {result.claim_id ? `Claim: ${result.claim_id} · ` : ""}NOAA ISD · Indian Evidence Act s74/s78 · IT Act s65B
         </p>
-      )}
+      </div>
     </div>
   );
 }

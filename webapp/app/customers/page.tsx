@@ -21,33 +21,47 @@ interface Customer {
 
 const SECTOR_LABEL: Record<string, string> = {
   renewable_energy: "Renewable Energy",
-  logistics: "Logistics",
-  infrastructure: "Infrastructure",
+  logistics:        "Logistics",
+  infrastructure:   "Infrastructure",
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  suspended: "bg-amber-100 text-amber-700",
-  closed: "bg-gray-100 text-gray-600",
+  active:    "bg-green-500/15 text-green-400 border border-green-500/20",
+  suspended: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+  closed:    "bg-white/8 text-white/40 border border-white/12",
 };
 
+const FILTER_BTN = (active: boolean) =>
+  cn(
+    "px-3 py-2 text-xs font-semibold rounded-lg border transition-colors",
+    active
+      ? "bg-[#1A3A5C] text-white border-[#1A3A5C]"
+      : "bg-white/5 text-white/55 border-white/12 hover:bg-white/8 hover:text-white"
+  );
+
+const INPUT_CLS = [
+  "w-full rounded-xl px-3.5 py-2.5 text-sm",
+  "bg-white/5 border border-white/12 text-white",
+  "placeholder:text-white/25 focus:outline-none",
+  "focus:ring-2 focus:ring-sky/30 focus:border-sky/50",
+  "hover:border-white/20 transition-all backdrop-blur-sm",
+].join(" ");
+
+const LABEL_CLS = "block text-xs font-medium text-white/45 mb-1";
+
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [customers,    setCustomers]    = useState<Customer[]>([]);
+  const [total,        setTotal]        = useState(0);
+  const [page,         setPage]         = useState(1);
+  const [loading,      setLoading]      = useState(true);
+  const [search,       setSearch]       = useState("");
   const [sectorFilter, setSectorFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
-  const [addError,  setAddError]  = useState<string | null>(null);
-  const [adding,    setAdding]    = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    company_name: "",
-    contact_name: "",
-    email: "",
-    phone: "",
-    sector: "",
+  const [showModal,    setShowModal]    = useState(false);
+  const [addError,     setAddError]     = useState<string | null>(null);
+  const [adding,       setAdding]       = useState(false);
+  const [newCustomer,  setNewCustomer]  = useState({
+    company_name: "", contact_name: "", email: "", phone: "", sector: "",
   });
 
   useEffect(() => {
@@ -57,11 +71,7 @@ export default function CustomersPage() {
     if (statusFilter !== "all") params.set("account_status", statusFilter);
     fetch(`/api/customers?${params}`)
       .then((r) => r.json())
-      .then((d) => {
-        setCustomers(d.customers || []);
-        setTotal(d.total || 0);
-        setLoading(false);
-      })
+      .then((d) => { setCustomers(d.customers || []); setTotal(d.total || 0); setLoading(false); })
       .catch(() => setLoading(false));
   }, [page, sectorFilter, statusFilter]);
 
@@ -75,8 +85,7 @@ export default function CustomersPage() {
 
   const handleAddCustomer = async () => {
     if (!newCustomer.company_name.trim()) return;
-    setAdding(true);
-    setAddError(null);
+    setAdding(true); setAddError(null);
     try {
       const res = await fetch("/api/customers", {
         method: "POST",
@@ -84,38 +93,27 @@ export default function CustomersPage() {
         body: JSON.stringify({
           company_name: newCustomer.company_name,
           contact_name: newCustomer.contact_name || undefined,
-          email: newCustomer.email || undefined,
-          phone: newCustomer.phone || undefined,
-          sector: newCustomer.sector || undefined,
+          email:        newCustomer.email        || undefined,
+          phone:        newCustomer.phone        || undefined,
+          sector:       newCustomer.sector       || undefined,
           account_status: "active",
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setAddError(data.error || "Failed to create customer");
-        return;
-      }
+      if (!res.ok) { setAddError(data.error || "Failed to create customer"); return; }
       setNewCustomer({ company_name: "", contact_name: "", email: "", phone: "", sector: "" });
       setShowModal(false);
       setPage(1);
-      // Re-fetch list
-      const fetchRes = await fetch(`/api/customers?page=1&limit=20`);
-      const listData = await fetchRes.json();
+      const fetchRes  = await fetch(`/api/customers?page=1&limit=20`);
+      const listData  = await fetchRes.json();
       setCustomers(listData.customers || []);
       setTotal(listData.total || 0);
-    } catch (err) {
+    } catch {
       setAddError("Network error. Please try again.");
     } finally {
       setAdding(false);
     }
   };
-
-  const FILTER_BTN = (active: boolean) =>
-    cn("px-3 py-2 text-xs font-semibold rounded-lg border transition-colors",
-      active ? "bg-[#1A3A5C] text-white border-[#1A3A5C]" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50");
-
-  const INPUT_CLS = "w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]/20 focus:border-[#1A3A5C] transition-all hover:border-gray-300";
-  const LABEL_CLS = "block text-xs font-medium text-gray-600 mb-1";
 
   return (
     <div className="p-8 space-y-6">
@@ -124,8 +122,7 @@ export default function CustomersPage() {
         title="Customers"
         description={`${total} total customers`}
         actions={
-          <button onClick={() => setShowModal(true)}
-            className="bg-gradient-to-r from-[#1A3A5C] to-[#0D6B8E] hover:from-[#0D6B8E] hover:to-[#1E88BE] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+          <button onClick={() => setShowModal(true)} className="btn-primary-3d">
             <Plus size={15} /> Add Customer
           </button>
         }
@@ -134,10 +131,10 @@ export default function CustomersPage() {
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input placeholder="Search company or contact…" value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A3A5C]/20 focus:border-[#1A3A5C] transition-all hover:border-gray-300" />
+            className="w-full pl-8 pr-3 py-2 text-sm bg-white/5 border border-white/12 text-white rounded-xl placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-sky/30 focus:border-sky/50 hover:border-white/20 transition-all backdrop-blur-sm" />
         </div>
         <div className="flex gap-2 flex-wrap">
           {["all", "renewable_energy", "logistics", "infrastructure"].map((s) => (
@@ -156,53 +153,53 @@ export default function CustomersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="glass-card-dark rounded-2xl overflow-hidden shadow-glass-lg">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-white/3 border-b border-white/8">
             <tr>
-              {["Company", "Contact", "Sector", "Status", "Claims", "Approval", "Actions"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {["Company","Contact","Sector","Status","Claims","Approval","Actions"].map((h) => (
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wide">
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-white/6">
             {loading ? (
               [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-14 text-center">
-                  <Users size={32} className="mx-auto text-gray-200 mb-3" />
-                  <p className="text-gray-500 font-medium">No customers found</p>
+                  <Users size={32} className="mx-auto text-white/15 mb-3" />
+                  <p className="text-white/50 font-medium">No customers found</p>
                   <button onClick={() => setShowModal(true)}
-                    className="mt-3 text-xs text-[#1A3A5C] hover:text-[#0D6B8E] font-semibold">
+                    className="mt-3 text-xs text-sky/70 hover:text-sky font-semibold transition-colors">
                     + Add your first customer
                   </button>
                 </td>
               </tr>
             ) : (
               filtered.map((cust) => (
-                <tr key={cust.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-gray-900">{cust.company_name}</td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">{cust.contact_name ?? "--"}</td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">{cust.sector ? (SECTOR_LABEL[cust.sector] ?? cust.sector) : "--"}</td>
+                <tr key={cust.id} className="hover:bg-white/4 transition-colors">
+                  <td className="px-4 py-3 font-semibold text-white">{cust.company_name}</td>
+                  <td className="px-4 py-3 text-white/60 text-sm">{cust.contact_name ?? "--"}</td>
+                  <td className="px-4 py-3 text-white/60 text-sm">{cust.sector ? (SECTOR_LABEL[cust.sector] ?? cust.sector) : "--"}</td>
                   <td className="px-4 py-3">
                     <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold capitalize", STATUS_COLOR[cust.account_status])}>
                       {cust.account_status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 tabular-nums text-sm">{cust.total_claims}</td>
+                  <td className="px-4 py-3 text-white/60 tabular-nums text-sm">{cust.total_claims}</td>
                   <td className="px-4 py-3 text-sm tabular-nums">
                     {cust.total_claims > 0 ? (
-                      <span className={cn("font-semibold", (cust.approved_claims / cust.total_claims) >= 0.5 ? "text-green-700" : "text-red-600")}>
+                      <span className={cn("font-semibold", (cust.approved_claims / cust.total_claims) >= 0.5 ? "text-green-400" : "text-red-400")}>
                         {Math.round((cust.approved_claims / cust.total_claims) * 100)}%
                       </span>
-                    ) : <span className="text-gray-400">--</span>}
+                    ) : <span className="text-white/25">--</span>}
                   </td>
                   <td className="px-4 py-3">
                     <Link href={`/claims?customer_id=${cust.id}`}
-                      className="text-xs text-[#1A3A5C] hover:text-[#0D6B8E] font-semibold transition-colors">
+                      className="text-xs text-sky/70 hover:text-sky font-semibold transition-colors">
                       View Claims
                     </Link>
                   </td>
@@ -213,27 +210,27 @@ export default function CustomersPage() {
         </table>
 
         {total > 20 && (
-          <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
-            <span className="text-xs">Page {page} of {Math.ceil(total / 20)}</span>
+          <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between">
+            <span className="text-xs text-white/35">Page {page} of {Math.ceil(total / 20)}</span>
             <div className="flex gap-2">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">← Prev</button>
+                className="px-3 py-1.5 text-xs font-medium border border-white/12 bg-white/5 text-white/60 rounded-lg disabled:opacity-40 hover:bg-white/8 transition-colors">← Prev</button>
               <button onClick={() => setPage((p) => Math.min(Math.ceil(total / 20), p + 1))} disabled={page >= Math.ceil(total / 20)}
-                className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">Next →</button>
+                className="px-3 py-1.5 text-xs font-medium border border-white/12 bg-white/5 text-white/60 rounded-lg disabled:opacity-40 hover:bg-white/8 transition-colors">Next →</button>
             </div>
           </div>
         )}
       </div>
 
-      {/*  Add Customer Modal  */}
+      {/* Add Customer Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md space-y-0 overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="glass-card-dark rounded-2xl shadow-glass-lg w-full max-w-md overflow-hidden border border-white/12">
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-bold text-gray-900">Add Customer</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+              <h2 className="text-base font-bold text-white">Add Customer</h2>
               <button onClick={() => { setShowModal(false); setAddError(null); }}
-                className="text-gray-400 hover:text-gray-600 transition-colors">
+                className="text-white/35 hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -258,30 +255,30 @@ export default function CustomersPage() {
                 <label className={LABEL_CLS}>Sector</label>
                 <select value={newCustomer.sector}
                   onChange={(e) => setNewCustomer({ ...newCustomer, sector: e.target.value })}
-                  className={INPUT_CLS}>
-                  <option value="">Select sector</option>
-                  <option value="renewable_energy">Renewable Energy</option>
-                  <option value="logistics">Logistics</option>
-                  <option value="infrastructure">Infrastructure</option>
+                  className={INPUT_CLS + " cursor-pointer"}>
+                  <option value="" className="bg-[#0e2640]">Select sector</option>
+                  <option value="renewable_energy" className="bg-[#0e2640]">Renewable Energy</option>
+                  <option value="logistics"        className="bg-[#0e2640]">Logistics</option>
+                  <option value="infrastructure"   className="bg-[#0e2640]">Infrastructure</option>
                 </select>
               </div>
 
               {addError && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
                   {addError}
                 </p>
               )}
             </div>
 
             {/* Modal footer */}
-            <div className="flex gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+            <div className="flex gap-3 px-6 py-4 border-t border-white/8 bg-white/2">
               <button onClick={() => { setShowModal(false); setAddError(null); }}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                className="flex-1 px-4 py-2.5 border border-white/12 bg-white/5 rounded-xl text-sm font-semibold text-white/60 hover:bg-white/8 hover:text-white transition-colors">
                 Cancel
               </button>
               <button onClick={handleAddCustomer}
                 disabled={!newCustomer.company_name.trim() || adding}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-[#1A3A5C] to-[#0D6B8E] hover:from-[#0D6B8E] hover:to-[#1E88BE] text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-all shadow-sm hover:shadow-md">
+                className="flex-1 btn-primary-3d justify-center disabled:opacity-50">
                 {adding ? "Creating…" : "Create Customer"}
               </button>
             </div>

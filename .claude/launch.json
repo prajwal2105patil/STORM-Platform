@@ -1,12 +1,13 @@
-{
+﻿{
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dreadnought-asre",
+      "name": "webapp",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
+      "cwd": "E:\\STORM-PLATFORM\\webapp",
       "port": 3000,
-      "cwd": "webapp"
+      "autoPort": false
     }
   ]
 }
