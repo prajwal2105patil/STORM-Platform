@@ -1,0 +1,36 @@
+name: Weekly Supabase Backup
+
+# Free-tier Supabase has no automated backups / PITR. This runs the $0 logical
+# backup script on a schedule and keeps each snapshot as a downloadable
+# artifact (90-day retention). Also runnable on demand via "Run workflow".
+#
+# Requires repo secrets: SUPABASE_URL, SUPABASE_SERVICE_KEY
+# (the same ones the previous deploy workflow referenced).
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # Sundays 02:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    name: Dump critical tables
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install supabase python-dotenv
+      - name: Run backup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/supabase_backup.py --all
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backups/
+          retention-days: 90
+          if-no-files-found: error

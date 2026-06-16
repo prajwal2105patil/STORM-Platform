@@ -59,6 +59,7 @@ describe("adjudicate", () => {
     const r = await adjudicate(claim());
     expect(r.label).toBe("VALIDATED");
     expect(r.peak_wind_ms!).toBeGreaterThanOrEqual(17.2);
+    expect(r.nearest_station_id).toBe("428400"); // persisted, not null
   });
 
   it("REJECTED_BELOW_THRESHOLD when wind is below the gale threshold", async () => {

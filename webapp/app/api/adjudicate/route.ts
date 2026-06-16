@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
         claimed_loss_inr:   payload.claimed_loss_inr || null,
         status:             "adjudicated",
         adjudication_label: result.label,
-        nearest_station_id: null,  // resolved in background
+        nearest_station_id: result.nearest_station_id || null,
         nearest_station_km: result.nearest_station_km || null,
         peak_wind_ms:       result.peak_wind_ms || null,
         exceedance_hours:   result.exceedance_hours || null,

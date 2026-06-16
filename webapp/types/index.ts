@@ -60,6 +60,7 @@ export interface AdjudicationResult {
   node_path: string[];
   legal_summary: string;
   timestamp: string;
+  nearest_station_id?: string;
 }
 
 export interface Claim {
