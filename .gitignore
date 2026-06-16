@@ -21,6 +21,9 @@ webapp/.env.production
 *.pem
 service-account*.json
 
+# ── Database backups (contain customer PII / claims — NEVER commit) ──────────
+backups/
+
 # ── Node / Next.js ────────────────────────────────────────────────────────
 node_modules/
 webapp/node_modules/
