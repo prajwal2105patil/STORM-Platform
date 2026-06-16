@@ -105,7 +105,9 @@ async function classifyCause(claimedCause: string): Promise<boolean> {
       ],
     });
     const result = (message.choices[0].message.content?.trim().toUpperCase() || "").startsWith("YES");
-    causeCache.set(normalised, result); // Cache forever — deterministic
+    // Cache deterministically, but cap size so the map can't grow without bound.
+    if (causeCache.size > 2000) causeCache.clear();
+    causeCache.set(normalised, result);
     return result;
   } catch {
     return false;

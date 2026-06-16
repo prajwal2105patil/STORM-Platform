@@ -1,51 +1,62 @@
 /**
- * nlq.ts — Natural Language Query Engine
+ * nlq.ts — Natural Language Query Engine (data-driven)
  *
- * Converts plain English questions about weather into structured Supabase queries.
- * Uses Groq Llama 3.1 for intent extraction (free tier, no cost).
+ * Converts plain-English weather questions into Supabase lookups against the
+ * LIVE station registry and the real weather_monthly_stats schema.
  *
- * Example inputs:
- *   "What was the peak wind in Mumbai in July 2022?"
- *   "Average temperature in Surat during August 2023?"
- *   "How many hours exceeded gale force in Mumbai last August?"
+ * Design note: this used to hardcode a stale 18-station list with fake 5-digit
+ * IDs and a 2022–2023 window. After the NOAA rebuild (408 stations, 6-digit
+ * USAF IDs, 2015–2024, wind-only schema) that broke every query. It now reads
+ * stations live (like asre.ts) and only references columns that actually exist.
  */
 
 import Groq from "groq-sdk";
 import { getServiceClient } from "@/lib/supabase";
 
-// Cache Groq intent extraction — same question = same result
-const intentCache = new Map<string, { station: string | null; metric: string | null; year: number | null; month: number | null }>();
+// ── Live station cache (5-min TTL), mirrors asre.ts ──────────────────────────
+interface Stn { id: string; name: string }
+let stationCache: Stn[] | null = null;
+let stationCachedAt = 0;
+const STATION_TTL_MS = 5 * 60 * 1000;
 
-// 18-station registry for fuzzy matching
-const STATIONS = [
-  { id: "42182", name: "Jaisalmer", lat: 26.909, lon: 70.9 },
-  { id: "42339", name: "Bikaner", lat: 28.07, lon: 73.3 },
-  { id: "42367", name: "Jodhpur", lat: 26.3, lon: 73.02 },
-  { id: "42492", name: "Jaipur", lat: 26.82, lon: 75.8 },
-  { id: "42647", name: "Ahmedabad", lat: 23.07, lon: 72.63 },
-  { id: "42680", name: "Rajkot", lat: 22.3, lon: 70.77 },
-  { id: "42701", name: "Bhuj", lat: 23.25, lon: 69.67 },
-  { id: "42867", name: "Surat", lat: 21.2, lon: 72.84 },
-  { id: "43003", name: "Mumbai", lat: 19.09, lon: 72.85 },
-  { id: "43057", name: "Pune", lat: 18.53, lon: 73.86 },
-  { id: "43150", name: "Nagpur", lat: 21.1, lon: 79.05 },
-  { id: "43285", name: "Hyderabad", lat: 17.45, lon: 78.47 },
-  { id: "43346", name: "Chennai", lat: 13.0, lon: 80.18 },
-  { id: "43430", name: "Bangalore", lat: 12.97, lon: 77.58 },
-  { id: "43466", name: "Kochi", lat: 9.97, lon: 76.28 },
-  { id: "42650", name: "Vadodara", lat: 22.36, lon: 73.23 },
-  { id: "42971", name: "Bhopal", lat: 23.28, lon: 77.35 },
-  { id: "43128", name: "Kolhapur", lat: 16.71, lon: 74.24 },
-];
+async function getStations(): Promise<Stn[]> {
+  const now = Date.now();
+  if (stationCache && now - stationCachedAt < STATION_TTL_MS) return stationCache;
+  const supabase = getServiceClient();
+  const { data, error } = await supabase.from("stations").select("id, name");
+  if (error || !data) throw new Error(error?.message || "stations unavailable");
+  stationCache = data as Stn[];
+  stationCachedAt = now;
+  return stationCache;
+}
 
-// Supported metrics and their database columns
-const METRICS = {
-  wind: { column: "peak_wind_ms", unit: "m/s", label: "Peak Wind Speed" },
-  "gale force": { column: "exceedance_hours", unit: "hours", label: "Gale Force Hours" },
-  temperature: { column: "avg_temp_c", unit: "°C", label: "Average Temperature" },
-  pressure: { column: "avg_pressure_hpa", unit: "hPa", label: "Average Pressure" },
-  humidity: { column: "avg_humidity_pct", unit: "%", label: "Average Humidity" },
+// Common city aliases → a token that appears in the NOAA station name.
+const ALIASES: Record<string, string> = {
+  mumbai: "bombay", bombay: "bombay",
+  bengaluru: "bangalore", bangalore: "bangalore",
+  kolkata: "calcutta", calcutta: "calcutta",
+  madras: "chennai", chennai: "chennai",
+  delhi: "delhi", "new delhi": "delhi",
 };
+
+// Only metrics that EXIST in weather_monthly_stats.
+const METRICS: Record<string, { column: string; unit: string; label: string }> = {
+  wind:            { column: "peak_wind_ms",     unit: "m/s",   label: "Peak Wind Speed" },
+  "peak wind":     { column: "peak_wind_ms",     unit: "m/s",   label: "Peak Wind Speed" },
+  "average wind":  { column: "avg_wind_ms",      unit: "m/s",   label: "Average Wind Speed" },
+  "p95 wind":      { column: "p95_wind_ms",      unit: "m/s",   label: "95th-percentile Wind" },
+  "gale force":    { column: "exceedance_hours", unit: "hours", label: "Gale-Force Hours" },
+};
+
+const MONTHS: Record<string, number> = {
+  january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3, april: 4, apr: 4,
+  may: 5, june: 6, jun: 6, july: 7, jul: 7, august: 8, aug: 8,
+  september: 9, sep: 9, sept: 9, october: 10, oct: 10, november: 11, nov: 11,
+  december: 12, dec: 12,
+};
+
+const YEAR_MIN = 2015;
+const YEAR_MAX = 2024;
 
 export interface QueryResult {
   question: string;
@@ -56,282 +67,169 @@ export interface QueryResult {
   value: number | null;
   unit: string;
   source: string;
-  confidence: "exact" | "partial" | "no_data";
-  message: string;
+  confidence: number; // 0..1 (page renders confidence * 100)
+  answer: string;     // human-readable message (page reads `answer`)
+  message: string;    // kept for backwards-compat
   processing_ms: number;
 }
 
-// Fuzzy match station name to station ID
-function fuzzyMatchStation(input: string): { id: string; name: string } | null {
-  const normalized = input.toLowerCase().trim();
+// ── Deterministic extraction ─────────────────────────────────────────────────
+function detectMetric(q: string): string {
+  const s = q.toLowerCase();
+  if (/\b(average|avg|mean)\s+wind/.test(s)) return "average wind";
+  if (/\bp95|95th/.test(s)) return "p95 wind";
+  if (/\bgale|exceedance|storm\s*hours?/.test(s)) return "gale force";
+  return "wind"; // default: peak wind
+}
 
-  for (const station of STATIONS) {
-    if (
-      station.name.toLowerCase() === normalized ||
-      station.name.toLowerCase().includes(normalized) ||
-      normalized.includes(station.name.toLowerCase())
-    ) {
-      return { id: station.id, name: station.name };
-    }
+function detectYear(q: string): number | null {
+  const m = q.match(/\b(20(?:1[5-9]|2[0-4]))\b/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function detectMonth(q: string): number | null {
+  const s = q.toLowerCase();
+  for (const [name, num] of Object.entries(MONTHS)) {
+    if (new RegExp(`\\b${name}\\b`).test(s)) return num;
   }
+  const ym = s.match(/\b20\d{2}[-/](\d{1,2})\b/) || s.match(/\b(\d{1,2})[-/]20\d{2}\b/);
+  if (ym) { const n = parseInt(ym[1], 10); if (n >= 1 && n <= 12) return n; }
   return null;
 }
 
-// Fallback regex-based station extraction if Groq fails
-function fallbackStationExtraction(question: string): string | null {
-  const stationNames = STATIONS.map((s) => s.name.toLowerCase());
-  const qLower = question.toLowerCase();
-  for (const name of stationNames) {
-    if (qLower.includes(name)) {
-      return STATIONS.find((s) => s.name.toLowerCase() === name)?.name || null;
+function resolveStation(input: string, stations: Stn[]): Stn | null {
+  let norm = input.toLowerCase().trim();
+  norm = ALIASES[norm] || norm;
+  if (!norm) return null;
+  // exact name, then substring either direction (longest name token wins)
+  let best: Stn | null = null;
+  for (const st of stations) {
+    const name = st.name.toLowerCase();
+    if (name === norm) return st;
+    if (name.includes(norm) || norm.includes(name.split(/[\s/]/)[0])) {
+      if (!best || st.name.length < best.name.length) best = st;
     }
   }
-  return null;
+  return best;
 }
 
-// Extract year/month from question using Groq
-async function extractIntents(question: string): Promise<{
-  station: string | null;
-  metric: string | null;
-  year: number | null;
-  month: number | null;
-}> {
-  const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) {
-    console.warn("GROQ_API_KEY not found, using fallback extraction");
-    return {
-      station: fallbackStationExtraction(question),
-      metric: null,
-      year: null,
-      month: null,
-    };
+// Scan the whole question against live station names (handles "wind in Surat").
+function extractStationFromQuestion(q: string, stations: Stn[]): Stn | null {
+  const s = q.toLowerCase();
+  // alias tokens first
+  for (const [alias, token] of Object.entries(ALIASES)) {
+    if (new RegExp(`\\b${alias}\\b`).test(s)) {
+      const hit = resolveStation(token, stations);
+      if (hit) return hit;
+    }
   }
-
-  // Check cache before calling Groq
-  const cacheKey = question.toLowerCase().trim();
-  if (intentCache.has(cacheKey)) {
-    console.log("[NLQ] Cache hit for:", cacheKey);
-    return intentCache.get(cacheKey)!;
+  let best: Stn | null = null;
+  for (const st of stations) {
+    const first = st.name.toLowerCase().split(/[\s/]/)[0];
+    if (first.length >= 4 && new RegExp(`\\b${first}\\b`).test(s)) {
+      if (!best || first.length > best.name.split(/[\s/]/)[0].length) best = st;
+    }
   }
+  return best;
+}
 
+async function groqStationFallback(question: string): Promise<string | null> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return null;
   try {
-    const client = new Groq({ apiKey: groqKey });
-    const message = await client.chat.completions.create({
+    const client = new Groq({ apiKey: key });
+    const r = await client.chat.completions.create({
       model: "llama-3.1-8b-instant",
-      max_tokens: 200,
+      max_tokens: 12,
       messages: [
-        {
-          role: "system",
-          content: `You are a JSON extraction tool. Your ONLY job is to extract weather query parameters.
-
-CRITICAL: Return ONLY valid JSON on a single line. No explanation. No markdown.
-
-Extract these fields:
-{
-  "station": "exact city name from question or null",
-  "metric": "wind" | "gale" | "temperature" | "pressure" | "humidity" or null,
-  "year": year number (2022-2023) or null,
-  "month": month number 1-12 or null
-}
-
-Station names available: Mumbai, Surat, Jaipur, Pune, Bangalore, Chennai, Hyderabad, Kolkata
-
-Examples:
-Q: "peak wind in Mumbai August 2023" → {"station":"Mumbai","metric":"wind","year":2023,"month":8}
-Q: "average temperature in Surat" → {"station":"Surat","metric":"temperature","year":2023,"month":8}
-Q: "gale hours in Jaipur July 2022" → {"station":"Jaipur","metric":"gale","year":2022,"month":7}`,
-        },
-        {
-          role: "user",
-          content: `Extract: ${question}`,
-        },
+        { role: "system", content: "Extract ONLY the Indian city name from the weather question. Reply with the city name alone, or NONE." },
+        { role: "user", content: question },
       ],
     });
-
-    const reply = (message.choices[0].message.content || "{}").trim();
-    console.log("[NLQ] Groq response:", reply);
-
-    const parsed = JSON.parse(reply);
-
-    // Fallback to regex if Groq returns null station
-    const station = parsed.station || fallbackStationExtraction(question);
-    const result = {
-      station,
-      metric: parsed.metric || null,
-      year: parsed.year || null,
-      month: parsed.month || null,
-    };
-    intentCache.set(cacheKey, result); // Cache forever — deterministic
-    return result;
-  } catch (err) {
-    console.error("[NLQ] Intent extraction error:", err);
-    return {
-      station: fallbackStationExtraction(question),
-      metric: null,
-      year: null,
-      month: null,
-    };
+    const city = (r.choices[0].message.content || "").trim();
+    return city && city.toUpperCase() !== "NONE" ? city : null;
+  } catch {
+    return null;
   }
 }
 
+const noData = (question: string, station: string, year: number, month: number, metric: string, unit: string, msg: string, t0: number): QueryResult => ({
+  question, station, year, month, metric, value: null, unit,
+  source: "NOAA ISD (Rule 803(8))", confidence: 0, answer: msg, message: msg,
+  processing_ms: Date.now() - t0,
+});
+
 export async function queryWeather(question: string): Promise<QueryResult> {
-  const startMs = Date.now();
-
+  const t0 = Date.now();
   try {
-    const intents = await extractIntents(question);
+    const stations = await getStations();
 
-    // Match station
-    const stationMatch = intents.station
-      ? fuzzyMatchStation(intents.station)
-      : null;
-    if (!stationMatch) {
-      return {
-        question,
-        station: "Unknown",
-        year: 0,
-        month: 0,
-        metric: "unknown",
-        value: null,
-        unit: "",
-        source: "NOAA ISD (Rule 803(8))",
-        confidence: "no_data",
-        message: `Station "${intents.station}" not found. Try: Mumbai, Surat, Jaipur, Chennai, Bangalore.`,
-        processing_ms: Date.now() - startMs,
-      };
+    // Station: deterministic scan → Groq fallback → give up
+    let station = extractStationFromQuestion(question, stations);
+    if (!station) {
+      const guess = await groqStationFallback(question);
+      if (guess) station = resolveStation(guess, stations);
+    }
+    if (!station) {
+      return noData(question, "Unknown", 0, 0, "unknown", "",
+        "Couldn't identify a station. Try a city like Surat, Pune, Jaipur, Chennai, or Bombay.", t0);
     }
 
-    // Match metric
-    let metricKey = intents.metric;
+    const metricKey = detectMetric(question);
+    const metric = METRICS[metricKey];
+    const year = detectYear(question);
+    const month = detectMonth(question);
 
-    // Handle aliases
-    if (metricKey === "gale") metricKey = "gale force";
-    if (metricKey === "temp") metricKey = "temperature";
-    if (metricKey === "wind speed") metricKey = "wind";
-    if (metricKey === "humidity level") metricKey = "humidity";
-
-    if (!metricKey || !METRICS[metricKey as keyof typeof METRICS]) {
-      return {
-        question,
-        station: stationMatch.name,
-        year: intents.year || 0,
-        month: intents.month || 0,
-        metric: intents.metric || "unknown",
-        value: null,
-        unit: "",
-        source: "NOAA ISD (Rule 803(8))",
-        confidence: "no_data",
-        message: `Metric "${intents.metric}" not recognized. Try: wind, gale force, temperature, pressure, humidity.`,
-        processing_ms: Date.now() - startMs,
-      };
-    }
-
-    const metric = METRICS[metricKey as keyof typeof METRICS];
-
-    // Default to most recent available data (Aug 2023 for Mumbai/Surat)
-    // Our sample data has: 2022 (Jul, Aug, Sep) and 2023 (Aug)
-    let year = intents.year;
-    let month = intents.month;
-
-    // Smart defaulting
-    if (!year && !month) {
-      // No date specified → use most recent (Aug 2023)
-      year = 2023;
-      month = 8;
-    } else if (!year && month) {
-      // Only month specified → assume 2023 (most recent)
-      year = 2023;
-    } else if (year && !month) {
-      // Only year specified → default to August
-      month = 8;
-    } else if (!year || !month) {
-      // Fallback if still null
-      year = 2023;
-      month = 8;
-    }
-
-    // Validate year/month are in available range
-    if (!year || !month || year < 2022 || year > 2023 || month < 1 || month > 12) {
-      return {
-        question,
-        station: stationMatch.name,
-        year: year || 0,
-        month: month || 0,
-        metric: metricKey,
-        value: null,
-        unit: metric.unit,
-        source: "NOAA ISD (Rule 803(8))",
-        confidence: "no_data",
-        message: `Data available for ${stationMatch.name} only in: July-September 2022, August 2023.`,
-        processing_ms: Date.now() - startMs,
-      };
-    }
-
-    // At this point, year and month must be non-null (ensured by defaults above)
-    const safeYear = year as number;
-    const safeMonth = month as number;
-
-    // Query Supabase directly (no HTTP fetch in serverless environment)
+    // Build the lookup. If year/month are missing, fall back to the most recent
+    // available record for this station+metric instead of guessing a window.
     const supabase = getServiceClient();
-    console.log(`[NLQ] Querying Supabase: station=${stationMatch.id}, year=${safeYear}, month=${safeMonth}, metric=${metric.column}`);
-
-    const { data, error } = await supabase
+    let q = supabase
       .from("weather_monthly_stats")
-      .select(metric.column)
-      .eq("station_id", stationMatch.id)
-      .eq("year", safeYear)
-      .eq("month", safeMonth)
-      .single();
+      .select(`${metric.column}, year, month`)
+      .eq("station_id", station.id);
+    if (year) q = q.eq("year", year);
+    if (month) q = q.eq("month", month);
+    q = q.order("year", { ascending: false }).order("month", { ascending: false }).limit(1);
 
-    if (error || !data) {
-      console.error(`[NLQ] Supabase error:`, error?.message || "No data found");
-      return {
-        question,
-        station: stationMatch.name,
-        year: safeYear,
-        month: safeMonth,
-        metric: metricKey,
-        value: null,
-        unit: metric.unit,
-        source: "NOAA ISD (Rule 803(8))",
-        confidence: "no_data",
-        message: `No data available for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
-        processing_ms: Date.now() - startMs,
-      };
+    const { data, error } = await q;
+    if (error) {
+      return noData(question, station.name, year ?? 0, month ?? 0, metricKey, metric.unit,
+        `Lookup failed for ${station.name}. Please try again.`, t0);
+    }
+    const row: any = data?.[0];
+    if (!row) {
+      const span = year || month ? ` for ${month ?? "?"}/${year ?? "?"}` : "";
+      return noData(question, station.name, year ?? 0, month ?? 0, metricKey, metric.unit,
+        `No ${metric.label.toLowerCase()} on record for ${station.name}${span}. Data covers ${YEAR_MIN}–${YEAR_MAX}.`, t0);
     }
 
-    const value = (data[metric.column as keyof typeof data] as number | null) || null;
-    console.log(`[NLQ] Weather data:`, { value, station: stationMatch.id, year: safeYear, month: safeMonth });
+    const value = typeof row[metric.column] === "number" ? row[metric.column] : null;
+    const ry = row.year as number;
+    const rm = row.month as number;
+    const dated = year && month ? "" : " (most recent on record)";
 
     return {
       question,
-      station: stationMatch.name,
-      year: safeYear,
-      month: safeMonth,
+      station: station.name,
+      year: ry,
+      month: rm,
       metric: metricKey,
-      value: typeof value === "number" ? value : null,
+      value,
       unit: metric.unit,
       source: "NOAA ISD (Rule 803(8))",
-      confidence: value !== null ? "exact" : "no_data",
+      confidence: value !== null ? 1 : 0,
+      answer:
+        value !== null
+          ? `${metric.label} at ${station.name} (${rm}/${ry})${dated}: ${value} ${metric.unit}.`
+          : `No ${metric.label.toLowerCase()} value recorded for ${station.name} (${rm}/${ry}).`,
       message:
         value !== null
-          ? `${metric.label} in ${stationMatch.name} (${safeMonth}/${safeYear}): ${value} ${metric.unit}`
-          : `No ${metricKey} data for ${stationMatch.name} in ${safeMonth}/${safeYear}.`,
-      processing_ms: Date.now() - startMs,
+          ? `${metric.label} at ${station.name} (${rm}/${ry}): ${value} ${metric.unit}`
+          : `No data for ${station.name} (${rm}/${ry}).`,
+      processing_ms: Date.now() - t0,
     };
   } catch (err) {
-    console.error("[NLQ] Outer error:", err);
-    return {
-      question,
-      station: "Error",
-      year: 0,
-      month: 0,
-      metric: "error",
-      value: null,
-      unit: "",
-      source: "NOAA ISD (Rule 803(8))",
-      confidence: "no_data",
-      message: `Error processing query: ${String(err).substring(0, 100)}`,
-      processing_ms: Date.now() - startMs,
-    };
+    return noData(question, "Error", 0, 0, "error", "",
+      `Error processing query: ${String(err).slice(0, 120)}`, t0);
   }
 }
