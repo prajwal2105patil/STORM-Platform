@@ -6,6 +6,7 @@ import { PipelineTracker }   from "@/components/ui/pipeline-tracker";
 import { VerdictResultCard } from "@/components/ui/verdict-result-card";
 import { PageHeader }        from "@/components/ui/page-header";
 import { TiltCard }          from "@/components/ui/tilt-card";
+import { FloatingPaths } from "@/components/ui/background-paths";
 import type { AdjudicationResult } from "@/types";
 
 const INPUT_CLS = [
@@ -102,16 +103,18 @@ export default function AdjudicatePage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
       {/* Page header */}
-      <div className="px-8 pt-10 pb-6 border-b border-white/8">
+      <div className="relative z-[1] px-8 pt-10 pb-6 border-b border-white/8">
         <PageHeader
           title="Submit Claim for Adjudication"
           description="ASRE 4-node pipeline: IntentRouter → SQLGenerator → ExecutionCage → Adjudicator"
         />
       </div>
 
-      <div className="p-8 max-w-6xl">
+      <div className="relative z-[1] p-8 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* ── CLAIM FORM ── */}
@@ -339,7 +342,7 @@ export default function AdjudicatePage() {
                 </div>
 
                 <p className="mt-5 text-[9px] text-white/20 font-mono">
-                  NOAA ISD 2014–2024 · 18 stations · Threshold 17.2 m/s (Beaufort 8)
+                  NOAA ISD 2015–2024 · 408 stations · Threshold 17.2 m/s (Beaufort 8)
                 </p>
               </div>
             )}

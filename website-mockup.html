@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DREADNOUGHT — ASRE Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3A5C;
+  --teal:#0D6B8E;
+  --sky:#60B8E0;
+  --white:#FFFFFF;
+  --offwhite:#F9FAFB;
+  --green:#16A34A;
+  --green-bg:#DCFCE7;
+  --green-text:#15803D;
+  --red:#DC2626;
+  --red-bg:#FEE2E2;
+  --red-text:#B91C1C;
+  --amber:#D97706;
+  --amber-bg:#FEF3C7;
+  --amber-text:#92400E;
+  --gray:#6B7280;
+  --gray-100:#F3F4F6;
+  --gray-200:#E5E7EB;
+  --gray-300:#D1D5DB;
+  --gray-500:#6B7280;
+  --gray-700:#374151;
+  --gray-900:#111827;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','Fira Code','SF Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--gray-900);background:var(--offwhite);display:flex}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar{
+  width:240px;min-width:240px;height:100vh;
+  background:var(--navy);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  position:relative;z-index:10;
+}
+.sidebar-logo{
+  display:flex;align-items:center;gap:10px;
+  padding:20px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.logo-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--teal);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.logo-icon svg{color:#fff;width:18px;height:18px}
+.logo-text{line-height:1.2}
+.logo-name{font-size:13px;font-weight:700;color:#fff;letter-spacing:0.02em}
+.logo-sub{font-size:9.5px;font-weight:500;color:rgba(255,255,255,0.45);letter-spacing:0.08em;text-transform:uppercase}
+
+.nav-group{padding:16px 12px 4px}
+.nav-group-label{
+  font-size:9.5px;font-weight:600;color:rgba(148,163,184,0.7);
+  letter-spacing:0.1em;text-transform:uppercase;
+  padding:0 8px;margin-bottom:4px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 8px;border-radius:7px;
+  color:rgba(255,255,255,0.65);font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.15s;
+  margin-bottom:1px;
+  position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
+.nav-item.active{background:var(--teal);color:#fff}
+.nav-item.active::after{
+  content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;background:var(--sky);border-radius:2px 0 0 2px;
+}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;background:rgba(96,184,224,0.2);
+  color:var(--sky);font-size:10px;font-weight:600;
+  padding:1px 6px;border-radius:10px;
+}
+
+.sidebar-footer{
+  margin-top:auto;padding:16px 20px;
+  border-top:1px solid rgba(255,255,255,0.08);
+}
+.status-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.status-row:last-child{margin-bottom:0}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--green);
+  animation:pulse 2.5s ease-in-out infinite;
+  flex-shrink:0;
+}
+.status-dot.warn{background:var(--amber)}
+.status-label{font-size:11px;color:rgba(255,255,255,0.5)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── MAIN CONTENT ─────────────────────────────────────────── */
+.main{flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+
+/* ── TOP BAR ─────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:52px;
+  background:var(--white);
+  border-bottom:1px solid var(--gray-200);
+  flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.breadcrumb{font-size:12px;color:var(--gray-500)}
+.breadcrumb span{color:var(--gray-900);font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:7px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;border:none;
+}
+.topbar-btn.primary{background:linear-gradient(to right,var(--navy),var(--teal));color:#fff}
+.topbar-btn.primary:hover{background:linear-gradient(to right,var(--teal),#1E88BE)}
+.topbar-btn.ghost{background:transparent;border:1px solid var(--gray-200);color:var(--gray-700)}
+.topbar-btn.ghost:hover{background:var(--gray-100)}
+.topbar-btn svg{width:14px;height:14px}
+.avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;cursor:pointer;
+}
+
+/* ── PAGE CONTENT ─────────────────────────────────────────── */
+.page{display:none;flex:1}
+.page.active{display:block}
+.page-scroll{height:calc(100vh - 52px);overflow-y:auto}
+
+/* ── HERO SECTION ─────────────────────────────────────────── */
+.hero{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--teal) 100%);
+  padding:40px 32px 32px;color:#fff;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);
+  border-radius:999px;padding:4px 12px;
+  font-size:11px;font-weight:500;margin-bottom:20px;
+}
+.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 2.5s ease-in-out infinite}
+.hero-h1{font-size:40px;font-weight:800;line-height:1.1;margin-bottom:10px;letter-spacing:-0.02em}
+.hero-h1 span{color:var(--sky)}
+.hero-sub{font-size:15px;color:rgba(255,255,255,0.75);max-width:540px;margin-bottom:24px;line-height:1.6}
+.hero-ctas{display:flex;gap:12px;margin-bottom:32px}
+.hero-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:8px;
+  font-size:13px;font-weight:600;cursor:pointer;border:none;
+  transition:all 0.15s;
+}
+.hero-btn.primary{background:#fff;color:var(--navy)}
+.hero-btn.primary:hover{background:var(--sky);color:var(--navy)}
+.hero-btn.secondary{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.25)}
+.hero-btn.secondary:hover{background:rgba(255,255,255,0.2)}
+.hero-btn svg{width:15px;height:15px}
+.hero-stats{
+  display:flex;gap:32px;
+  padding-top:24px;
+  border-top:1px solid rgba(255,255,255,0.15);
+}
+.hero-stat{}
+.hero-stat-val{font-size:22px;font-weight:700;color:#fff}
+.hero-stat-lbl{font-size:11px;color:rgba(255,255,255,0.55);margin-top:1px}
+
+/* ── CARDS GRID ─────────────────────────────────────────── */
+.section{padding:24px 32px}
+.section-title{font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+
+.card{
+  background:var(--white);border:1px solid var(--gray-200);
+  border-radius:12px;padding:20px;
+}
+.card.hover:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);cursor:pointer;transform:translateY(-1px);transition:all 0.2s}
+.card-icon{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+}
+.card-icon svg{width:18px;height:18px}
+.card-icon.navy{background:rgba(26,58,92,0.1)}
+.card-icon.navy svg{color:var(--navy)}
+.card-icon.green{background:var(--green-bg)}
+.card-icon.green svg{color:var(--green)}
+.card-icon.red{background:var(--red-bg)}
+.card-icon.red svg{color:var(--red)}
+.card-icon.amber{background:var(--amber-bg)}
+.card-icon.amber svg{color:var(--amber)}
+.card-icon.teal{background:rgba(13,107,142,0.1)}
+.card-icon.teal svg{color:var(--teal)}
+.kpi-val{font-size:28px;font-weight:800;color:var(--gray-900);line-height:1}
+.kpi-label{font-size:12px;font-weight:500;color:var(--gray-500);margin-top:4px}
+.kpi-sub{font-size:11px;color:var(--gray-500);margin-top:2px}
+
+/* ── TRUST CARDS ─────────────────────────────────────────── */
+.trust-card{
+  background:var(--white);border:1px solid var(--gray-200);
+  border-radius:12px;padding:20px;
+  display:flex;align-items:flex-start;gap:14px;
+}
+.trust-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:rgba(26,58,92,0.08);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.trust-icon svg{width:20px;height:20px;color:var(--navy)}
+.trust-title{font-size:13px;font-weight:600;color:var(--gray-900);margin-bottom:4px}
+.trust-body{font-size:12px;color:var(--gray-500);line-height:1.5}
+
+/* ── CHART CARDS ─────────────────────────────────────────── */
+.chart-card{
+  background:var(--white);border:1px solid var(--gray-200);
+  border-radius:12px;padding:20px;
+}
+.chart-card-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+}
+.chart-card-title{font-size:13px;font-weight:600;color:var(--gray-900)}
+.chart-card-sub{font-size:11px;color:var(--gray-500);margin-top:2px}
+.chart-wrap{position:relative;height:180px}
+
+/* ── VERDICT BADGES ─────────────────────────────────────── */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:999px;
+  font-size:11px;font-weight:600;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%}
+.badge.validated{background:var(--green-bg);color:var(--green-text)}
+.badge.validated .badge-dot{background:var(--green)}
+.badge.rejected{background:var(--red-bg);color:var(--red-text)}
+.badge.rejected .badge-dot{background:var(--red)}
+.badge.pending{background:var(--amber-bg);color:var(--amber-text)}
+.badge.pending .badge-dot{background:var(--amber)}
+.badge.insufficient{background:var(--gray-100);color:var(--gray-500)}
+.badge.insufficient .badge-dot{background:var(--gray-300)}
+
+/* ── TABLES ─────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--gray-200);border-radius:12px}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--gray-100)}
+th{
+  padding:10px 16px;
+  font-size:11px;font-weight:600;color:var(--gray-500);
+  text-transform:uppercase;letter-spacing:0.06em;
+  text-align:left;white-space:nowrap;
+}
+td{
+  padding:12px 16px;
+  font-size:13px;color:var(--gray-700);
+  border-top:1px solid var(--gray-100);
+}
+tr:hover td{background:#FAFBFF}
+.mono{font-family:var(--mono);font-size:11px;color:var(--gray-500)}
+.green-val{color:var(--green);font-weight:600}
+.red-val{color:var(--red);font-weight:600}
+.row-validated td:first-child{border-left:3px solid var(--green)}
+.row-rejected td:first-child{border-left:3px solid var(--red)}
+
+/* ── ADJUDICATE PAGE ─────────────────────────────────────── */
+.adj-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 32px;min-height:calc(100vh - 52px)}
+.adj-card{background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:24px}
+.adj-card-title{font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:4px}
+.adj-card-sub{font-size:12px;color:var(--gray-500);margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{
+  display:block;font-size:11px;font-weight:600;color:var(--gray-500);
+  text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;
+}
+.form-group label span.req{color:var(--red);margin-left:2px}
+.form-input{
+  width:100%;border:1px solid var(--gray-300);border-radius:8px;
+  padding:9px 12px;font-size:13px;color:var(--gray-900);
+  font-family:var(--sans);background:var(--white);
+  transition:border-color 0.15s,box-shadow 0.15s;outline:none;
+}
+.form-input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,92,0.1)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--gray-500);margin-top:4px}
+.submit-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px;border-radius:8px;
+  background:linear-gradient(to right,var(--navy),var(--teal));color:#fff;
+  font-size:14px;font-weight:600;border:none;cursor:pointer;
+  transition:filter 0.15s;margin-top:8px;
+}
+.submit-btn:hover{background:linear-gradient(to right,var(--teal),#1E88BE)}
+.submit-btn svg{width:16px;height:16px}
+
+/* Result Panel States */
+.result-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;min-height:400px;text-align:center;
+}
+.result-empty svg{color:var(--gray-300);width:48px;height:48px;margin-bottom:16px}
+.result-empty-title{font-size:16px;font-weight:600;color:var(--gray-500);margin-bottom:6px}
+.result-empty-sub{font-size:12px;color:var(--gray-400);max-width:220px;line-height:1.5}
+
+.result-verdict{border-radius:10px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px}
+.result-verdict.validated{background:var(--green-bg)}
+.result-verdict.rejected{background:var(--red-bg)}
+.result-verdict svg{width:28px;height:28px;flex-shrink:0;margin-top:2px}
+.result-verdict.validated svg{color:var(--green)}
+.result-verdict.rejected svg{color:var(--red)}
+.verdict-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2px}
+.validated .verdict-label{color:var(--green-text)}
+.rejected .verdict-label{color:var(--red-text)}
+.verdict-title{font-size:22px;font-weight:800;line-height:1.1;margin-bottom:4px}
+.validated .verdict-title{color:var(--green-text)}
+.rejected .verdict-title{color:var(--red-text)}
+.verdict-time{font-size:11px;color:var(--gray-500)}
+
+.legal-box{
+  background:var(--gray-100);border-radius:8px;padding:14px;
+  font-size:12px;color:var(--gray-700);line-height:1.6;margin-bottom:16px;
+}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.metric-cell{background:var(--gray-100);border-radius:8px;padding:12px}
+.metric-cell-label{font-size:10px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.metric-cell-val{font-size:15px;font-weight:700;color:var(--gray-900)}
+.metric-cell-unit{font-size:10px;color:var(--gray-500);margin-top:1px}
+
+.action-row{display:flex;gap:10px;margin-bottom:12px}
+.action-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;
+  transition:all 0.15s;
+}
+.action-btn.primary{background:linear-gradient(to right,var(--navy),var(--teal));color:#fff}
+.action-btn.primary:hover{background:linear-gradient(to right,var(--teal),#1E88BE)}
+.action-btn.ghost{background:transparent;border:1px solid var(--gray-200);color:var(--gray-700)}
+.action-btn.ghost:hover{background:var(--gray-100)}
+.action-btn svg{width:14px;height:14px}
+.claim-id{font-size:10px;font-family:var(--mono);color:var(--gray-400);text-align:center}
+
+/* ── PAGE HEADERS ─────────────────────────────────────────── */
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:24px 32px 0;
+}
+.page-header-title{font-size:24px;font-weight:700;color:var(--gray-900)}
+.page-header-sub{font-size:13px;color:var(--gray-500);margin-top:2px}
+.page-header-right{display:flex;align-items:center;gap:10px}
+
+/* ── ANALYTICS PAGE ─────────────────────────────────────── */
+.hallucination-hero{
+  background:linear-gradient(135deg,#92400E 0%,#D97706 100%);
+  border-radius:12px;padding:24px;color:#fff;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.h-hero-left{}
+.h-hero-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;margin-bottom:8px}
+.h-hero-val{font-size:52px;font-weight:800;line-height:1;margin-bottom:4px}
+.h-hero-sub{font-size:13px;opacity:0.75}
+.h-hero-right{text-align:right;opacity:0.8}
+.h-hero-stat-val{font-size:22px;font-weight:700}
+.h-hero-stat-lbl{font-size:11px;margin-top:2px}
+
+.benchmark-row{
+  background:var(--white);border:1px solid var(--gray-200);border-radius:12px;
+  overflow:hidden;margin-top:16px;
+}
+.bench-header{
+  display:grid;grid-template-columns:2fr 1fr 1fr;
+  background:var(--gray-100);padding:10px 20px;
+  font-size:11px;font-weight:600;color:var(--gray-500);
+  text-transform:uppercase;letter-spacing:0.06em;
+}
+.bench-row{
+  display:grid;grid-template-columns:2fr 1fr 1fr;
+  padding:14px 20px;border-top:1px solid var(--gray-100);
+}
+.bench-system{font-size:13px;font-weight:600;color:var(--gray-900)}
+.bench-metric{font-size:13px;font-weight:700}
+.bench-metric.good{color:var(--green)}
+.bench-metric.bad{color:var(--red)}
+
+/* ── WEATHER QA PAGE ─────────────────────────────────────── */
+.qa-section{padding:24px 32px;display:flex;flex-direction:column;height:calc(100vh - 52px - 88px)}
+.qa-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.qa-chip{
+  background:rgba(26,58,92,0.07);color:var(--navy);
+  border:1px solid rgba(26,58,92,0.15);
+  border-radius:999px;padding:6px 14px;
+  font-size:12px;font-weight:500;cursor:pointer;
+  transition:all 0.15s;
+}
+.qa-chip:hover{background:rgba(26,58,92,0.12)}
+.qa-input-row{
+  display:flex;gap:10px;padding:16px 32px;
+  background:var(--white);border-top:1px solid var(--gray-200);
+}
+.qa-input-row input{
+  flex:1;border:1px solid var(--gray-300);border-radius:8px;
+  padding:10px 14px;font-size:13px;font-family:var(--sans);outline:none;
+  transition:border-color 0.15s,box-shadow 0.15s;
+}
+.qa-input-row input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,92,0.1)}
+.qa-ask-btn{
+  padding:10px 20px;background:linear-gradient(to right,var(--navy),var(--teal));color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:filter 0.15s;
+}
+.qa-ask-btn:hover{background:linear-gradient(to right,var(--teal),#1E88BE)}
+.qa-results{flex:1;overflow-y:auto}
+.qa-result-card{
+  background:var(--white);border:1px solid var(--gray-200);border-radius:12px;
+  padding:16px 20px;margin-bottom:12px;
+}
+.qa-question{font-size:12px;color:var(--gray-500);margin-bottom:8px}
+.qa-answer{font-size:24px;font-weight:700;color:var(--green);margin-bottom:8px}
+.qa-meta{display:flex;gap:16px}
+.qa-meta-item{font-size:11px;color:var(--gray-400)}
+.qa-meta-item strong{color:var(--gray-600)}
+
+/* ── SLA CALC PAGE ─────────────────────────────────────────── */
+.sla-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:24px 32px}
+.sla-results{display:flex;flex-direction:column;gap:12px}
+.sla-metric-hero{
+  border-radius:10px;padding:16px 20px;
+}
+.sla-metric-hero.fm{background:linear-gradient(to right,var(--navy),var(--teal));color:#fff}
+.sla-metric-hero.loss{background:var(--red-bg)}
+.sla-metric-hero.settlement{background:var(--green-bg)}
+.sla-mh-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;opacity:0.7;margin-bottom:4px}
+.sla-mh-val{font-size:32px;font-weight:800}
+.sla-mh-val.loss-val{color:var(--red)}
+.sla-mh-val.settle-val{color:var(--green)}
+.sla-disclaimer{
+  background:var(--amber-bg);border:1px solid rgba(217,119,6,0.2);
+  border-radius:8px;padding:12px 14px;
+  font-size:11px;color:var(--amber-text);line-height:1.5;
+}
+
+/* ── CUSTOMERS PAGE ─────────────────────────────────────────── */
+.filter-row{
+  display:flex;align-items:center;gap:10px;padding:0 32px 16px;
+}
+.search-input{
+  width:240px;border:1px solid var(--gray-300);border-radius:8px;
+  padding:8px 12px 8px 34px;font-size:13px;font-family:var(--sans);outline:none;
+  background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236B7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+  transition:border-color 0.15s;
+}
+.search-input:focus{border-color:var(--navy);outline:none}
+.filter-btn{
+  padding:7px 14px;border:1px solid var(--gray-200);border-radius:8px;
+  background:var(--white);font-size:12px;font-weight:500;color:var(--gray-700);cursor:pointer;
+  transition:all 0.15s;
+}
+.filter-btn:hover,.filter-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* ── PILLS ROW (claims summary) ─────────────────────────── */
+.pills-row{display:flex;gap:8px;padding:0 32px 16px}
+.summary-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:999px;border:1px solid;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;
+}
+.summary-pill.all{border-color:var(--gray-200);color:var(--gray-700);background:var(--white)}
+.summary-pill.val{border-color:rgba(22,163,74,0.3);color:var(--green-text);background:var(--green-bg)}
+.summary-pill.rej{border-color:rgba(220,38,38,0.3);color:var(--red-text);background:var(--red-bg)}
+.summary-pill.pen{border-color:rgba(217,119,6,0.3);color:var(--amber-text);background:var(--amber-bg)}
+
+/* ── POLICY PAGE ─────────────────────────────────────────── */
+.policy-threshold{
+  background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:20px;
+  display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden;
+}
+.policy-threshold-icon{
+  position:absolute;top:16px;right:16px;
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.policy-val{font-size:36px;font-weight:800;color:var(--gray-900)}
+.policy-unit{font-size:13px;font-weight:500;color:var(--gray-500)}
+.policy-label{font-size:12px;font-weight:500;color:var(--gray-500);margin-top:4px}
+.info-box{
+  background:rgba(13,107,142,0.06);border:1px solid rgba(13,107,142,0.15);
+  border-radius:8px;padding:12px 14px;
+  font-size:12px;color:var(--teal);line-height:1.5;
+  margin-top:12px;
+}
+
+/* ── QUICK ACTIONS ─────────────────────────────────────────── */
+.qa-action-card{
+  background:var(--white);border:1px solid var(--gray-200);
+  border-radius:12px;padding:20px;cursor:pointer;
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+.qa-action-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);border-color:rgba(26,58,92,0.2)}
+.qa-action-card:hover .qa-arrow{transform:translateX(4px)}
+.qa-action-card-title{font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:6px}
+.qa-action-card-body{font-size:12px;color:var(--gray-500);line-height:1.5}
+.qa-arrow{
+  position:absolute;bottom:16px;right:20px;
+  width:20px;height:20px;color:var(--navy);
+  transition:transform 0.2s;
+}
+
+/* ── TAG/METHOD BADGE ─────────────────────────────────────── */
+.method{
+  display:inline-flex;padding:2px 8px;border-radius:4px;
+  font-size:10px;font-weight:700;font-family:var(--mono);
+}
+.method.post{background:rgba(22,163,74,0.1);color:var(--green)}
+.method.get{background:rgba(13,107,142,0.1);color:var(--teal)}
+
+/* ── UTILS ─────────────────────────────────────────────────── */
+.divider{height:1px;background:var(--gray-200);margin:0 32px}
+.text-right{text-align:right}
+.gap-section{height:0px}
+.text-mono{font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-name">DREADNOUGHT</div>
+      <div class="logo-sub">ASRE Platform v2.1</div>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Operations</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('adjudicate',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Adjudicate
+      <span class="nav-badge">CTA</span>
+    </div>
+    <div class="nav-item" onclick="showPage('claims',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Claims
+      <span class="nav-badge">7</span>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Intelligence</div>
+    <div class="nav-item" onclick="showPage('analytics',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item" onclick="showPage('weatherqa',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      Weather Q&amp;A
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">CRM</div>
+    <div class="nav-item" onclick="showPage('customers',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Customers
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Tools</div>
+    <div class="nav-item" onclick="showPage('sla',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      SLA Calculator
+    </div>
+    <div class="nav-item" onclick="showPage('apidocs',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      API Docs
+    </div>
+    <div class="nav-item" onclick="showPage('policy',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Policy
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="status-row"><div class="status-dot"></div><span class="status-label">ASRE Engine</span></div>
+    <div class="status-row"><div class="status-dot"></div><span class="status-label">Supabase DB</span></div>
+    <div class="status-row"><div class="status-dot"></div><span class="status-label">Groq LLM</span></div>
+  </div>
+</nav>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="breadcrumb">Operations <span id="bread-current">/ Dashboard</span></span>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn ghost" onclick="showPage('adjudicate',null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        New Claim
+      </button>
+      <button class="topbar-btn primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <div class="avatar">PP</div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: DASHBOARD ══════════ -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-scroll">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          ASRE Engine Online — NOAA Rule 803(8) Grounded
+        </div>
+        <h1 class="hero-h1">Force Majeure Adjudication<br><span>in under 500ms.</span></h1>
+        <p class="hero-sub">Storm-event verification on 10 years of NOAA ISD records (2015–2024). Deterministic — identical inputs always produce an identical verdict. Built on admissible public federal data.</p>
+        <div class="hero-ctas">
+          <button class="hero-btn primary" onclick="showPage('adjudicate',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Submit a Claim
+          </button>
+          <button class="hero-btn secondary" onclick="showPage('weatherqa',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Ask Weather Q&amp;A
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-val">7</div><div class="hero-stat-lbl">Claims Processed</div></div>
+          <div class="hero-stat"><div class="hero-stat-val">266ms</div><div class="hero-stat-lbl">Avg Latency</div></div>
+          <div class="hero-stat"><div class="hero-stat-val">2</div><div class="hero-stat-lbl">Hallucinations Prevented</div></div>
+          <div class="hero-stat"><div class="hero-stat-val">+21.8%</div><div class="hero-stat-lbl">vs Baseline Model</div></div>
+        </div>
+      </div>
+
+      <!-- Trust signals -->
+      <div class="section">
+        <div class="section-title">Trust Signals</div>
+        <div class="grid-3">
+          <div class="trust-card">
+            <div class="trust-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div><div class="trust-title">NOAA Rule 803(8)</div><div class="trust-body">All adjudications grounded in NOAA public federal records — admissible under US Federal Rule of Evidence 803(8), with analogous public-record provisions in other jurisdictions.</div></div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+            <div><div class="trust-title">6.9M Observations</div><div class="trust-body">Medallion pipeline aggregates hourly NOAA ISD records from 408 Indian stations (2015–2024) into queryable monthly statistics.</div></div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+            <div><div class="trust-title">408 Active Stations</div><div class="trust-body">Covering all major Indian coastal and inland zones. IDW interpolation for precise event location coverage.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="section" style="padding-top:0">
+        <div class="section-title">System KPIs</div>
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="kpi-val">2</div>
+            <div class="kpi-label">Claims Validated</div>
+            <div class="kpi-sub">28.6% approval rate</div>
+          </div>
+          <div class="card">
+            <div class="card-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+            <div class="kpi-val">5</div>
+            <div class="kpi-label">Claims Rejected</div>
+            <div class="kpi-sub">Majority below threshold</div>
+          </div>
+          <div class="card">
+            <div class="card-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="kpi-val">266ms</div>
+            <div class="kpi-label">Avg Processing Time</div>
+            <div class="kpi-sub">Target: &lt;500ms</div>
+          </div>
+          <div class="card">
+            <div class="card-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="kpi-val">2</div>
+            <div class="kpi-label">Hallucinations Blocked</div>
+            <div class="kpi-sub">0 across 7-claim pilot</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="section" style="padding-top:0">
+        <div class="grid-2">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Claim Volume by Month</div>
+                <div class="chart-card-sub">Validated vs Rejected</div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="claimChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Processing Latency Trend</div>
+                <div class="chart-card-sub">Milliseconds per claim</div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="latencyChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section" style="padding-top:0">
+        <div class="section-title">Quick Actions</div>
+        <div class="grid-3">
+          <div class="qa-action-card" onclick="showPage('adjudicate',null)">
+            <div class="card-icon teal" style="margin-bottom:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+            <div class="qa-action-card-title">Submit a Claim</div>
+            <div class="qa-action-card-body">Paste a force majeure narrative and get a verdict backed by admissible public records in under 500ms.</div>
+            <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <div class="qa-action-card" onclick="showPage('weatherqa',null)">
+            <div class="card-icon navy" style="margin-bottom:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg></div>
+            <div class="qa-action-card-title">Weather Intelligence Q&amp;A</div>
+            <div class="qa-action-card-body">Ask plain-English weather questions. Get exact values from NOAA stations with source citations.</div>
+            <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <div class="qa-action-card" onclick="showPage('sla',null)">
+            <div class="card-icon amber" style="margin-bottom:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="qa-action-card-title">SLA Settlement Calculator</div>
+            <div class="qa-action-card-body">Input plant capacity, tariff, and FM days. Get recommended settlement amount instantly.</div>
+            <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: ADJUDICATE ══════════ -->
+  <div id="page-adjudicate" class="page">
+    <div class="adj-layout">
+      <!-- LEFT: Form -->
+      <div class="adj-card">
+        <div class="adj-card-title">Force Majeure Claim</div>
+        <div class="adj-card-sub">Paste or type the claim narrative. ASRE will extract all parameters automatically.</div>
+
+        <div class="form-group">
+          <label>Operator / Company Name <span class="req">*</span></label>
+          <input class="form-input" type="text" placeholder="e.g. Adani Green Energy Ltd." value="Adani Green Energy Ltd." />
+        </div>
+
+        <div class="form-group">
+          <label>Claim Narrative <span class="req">*</span></label>
+          <textarea class="form-input form-textarea">Cyclone Biparjoy made landfall near Mandvi, Gujarat on June 15, 2023 with sustained winds exceeding 150 km/h. Our solar plant at 23.0°N, 68.9°E experienced complete shutdown for approximately 36 hours due to extreme wind conditions well above the force majeure threshold stipulated in the PPA contract.</textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Latitude <span class="req">*</span></label>
+            <input class="form-input" type="text" value="23.0" />
+          </div>
+          <div class="form-group">
+            <label>Longitude <span class="req">*</span></label>
+            <input class="form-input" type="text" value="68.9" />
+          </div>
+        </div>
+        <div class="form-hint" style="margin-top:-10px;margin-bottom:16px">Mumbai: 19.09, 72.85 | Surat: 21.20, 72.84 | Mandvi: 22.83, 69.36</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Event Start Date <span class="req">*</span></label>
+            <input class="form-input" type="date" value="2023-06-14" />
+          </div>
+          <div class="form-group">
+            <label>Event End Date <span class="req">*</span></label>
+            <input class="form-input" type="date" value="2023-06-16" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>SLA Type</label>
+          <select class="form-input">
+            <option>Weather / Force Majeure</option>
+            <option>Equipment Failure</option>
+            <option>Grid Curtailment</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Estimated Loss (INR)</label>
+          <input class="form-input" type="text" placeholder="e.g. 4,50,000" />
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="topbar-btn ghost" style="flex:1;justify-content:center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Hurricane Preset
+          </button>
+          <button class="topbar-btn ghost" style="flex:1;justify-content:center">Invalid Claim Preset</button>
+        </div>
+
+        <button class="submit-btn" onclick="showResult()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Adjudicate Claim
+        </button>
+      </div>
+
+      <!-- RIGHT: Result -->
+      <div class="adj-card" id="result-panel">
+        <div class="result-empty" id="result-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div class="result-empty-title">Ready for Adjudication</div>
+          <div class="result-empty-sub">Fill in the claim form and click "Adjudicate" to receive a verdict with full evidentiary breakdown.</div>
+          <div style="margin-top:16px;padding:12px 16px;background:var(--gray-100);border-radius:8px;font-size:11px;color:var(--gray-500);line-height:1.6;text-align:left">
+            <strong style="color:var(--gray-700);display:block;margin-bottom:4px">Sample coordinates:</strong>
+            Mumbai: 19.0760, 72.8777<br>
+            Surat: 21.1702, 72.8311<br>
+            Chennai: 13.0827, 80.2707
+          </div>
+        </div>
+
+        <div id="result-content" style="display:none">
+          <div class="result-verdict validated" style="margin-bottom:16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div style="flex:1">
+              <div class="verdict-label">Force Majeure Event</div>
+              <div class="verdict-title">VALIDATED</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:700;color:var(--green-text)">287ms</div>
+              <div style="font-size:10px;color:var(--gray-500)">processing time</div>
+            </div>
+          </div>
+
+          <div class="legal-box">
+            <strong>Legal Summary:</strong> Station VOMD (Mandvi, Gujarat) recorded sustained wind speeds of 51.6 m/s on 2023-06-15, exceeding the SLA threshold of 17.2 m/s for 28 continuous hours. Event verified under NOAA ISD public records, admissible under Federal Rules of Evidence Rule 803(8).
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-cell">
+              <div class="metric-cell-label">Nearest Station</div>
+              <div class="metric-cell-val" style="font-size:13px">VOMD</div>
+              <div class="metric-cell-unit">Mandvi, GJ</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-cell-label">Distance</div>
+              <div class="metric-cell-val">18.4</div>
+              <div class="metric-cell-unit">km from event</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-cell-label">Peak Wind Speed</div>
+              <div class="metric-cell-val" style="color:var(--green)">51.6</div>
+              <div class="metric-cell-unit">m/s sustained</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-cell-label">Hours Exceeded</div>
+              <div class="metric-cell-val">28h</div>
+              <div class="metric-cell-unit">above 17.2 m/s</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-cell-label">IDW Confidence</div>
+              <div class="metric-cell-val">94.2%</div>
+              <div class="metric-cell-unit">IDW, p=2</div>
+            </div>
+            <div class="metric-cell">
+              <div class="metric-cell-label">Node Path</div>
+              <div class="metric-cell-val" style="font-size:11px">4/4</div>
+              <div class="metric-cell-unit">nodes passed</div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="action-btn primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Evidence Report
+            </button>
+            <button class="action-btn ghost">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+              Calculate Settlement
+            </button>
+          </div>
+          <div class="claim-id">Claim ID: CLM-2023-00007 · ASRE v2.1 · NOAA ISD 2023</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: CLAIMS ══════════ -->
+  <div id="page-claims" class="page">
+    <div class="page-scroll">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Claims</div>
+          <div class="page-header-sub">7 total claims processed</div>
+        </div>
+        <div class="page-header-right">
+          <button class="topbar-btn primary" onclick="showPage('adjudicate',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Claim
+          </button>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+
+      <div class="pills-row">
+        <div class="summary-pill all">All 7</div>
+        <div class="summary-pill val">✓ 2 Validated</div>
+        <div class="summary-pill rej">✗ 5 Rejected</div>
+        <div class="summary-pill pen">◷ 0 Pending</div>
+      </div>
+
+      <div class="filter-row">
+        <input class="search-input" type="text" placeholder="Search claims..." />
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">Validated</button>
+        <button class="filter-btn">Rejected</button>
+        <button class="filter-btn">Pending</button>
+      </div>
+
+      <div style="padding:0 32px 32px">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Claim ID</th>
+                <th>Operator</th>
+                <th>Location</th>
+                <th>Event Date</th>
+                <th>Verdict</th>
+                <th class="text-right">Peak Wind</th>
+                <th>Station</th>
+                <th>Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="row-validated">
+                <td><span class="mono">CLM-2023-00007</span></td>
+                <td style="font-weight:500">Adani Green Energy</td>
+                <td>23.00°N, 68.90°E</td>
+                <td>Jun 15, 2023</td>
+                <td><span class="badge validated"><span class="badge-dot"></span>VALIDATED</span></td>
+                <td class="text-right green-val">51.6 m/s</td>
+                <td><span class="mono">VOMD</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+              <tr class="row-validated">
+                <td><span class="mono">CLM-2023-00006</span></td>
+                <td style="font-weight:500">TATA Power Solar</td>
+                <td>21.20°N, 72.84°E</td>
+                <td>Jun 14, 2023</td>
+                <td><span class="badge validated"><span class="badge-dot"></span>VALIDATED</span></td>
+                <td class="text-right green-val">38.4 m/s</td>
+                <td><span class="mono">VASU</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+              <tr class="row-rejected">
+                <td><span class="mono">CLM-2023-00005</span></td>
+                <td style="font-weight:500">ReNew Power</td>
+                <td>19.09°N, 72.88°E</td>
+                <td>May 02, 2023</td>
+                <td><span class="badge rejected"><span class="badge-dot"></span>REJECTED</span></td>
+                <td class="text-right red-val">9.2 m/s</td>
+                <td><span class="mono">VABB</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+              <tr class="row-rejected">
+                <td><span class="mono">CLM-2023-00004</span></td>
+                <td style="font-weight:500">Greenko Group</td>
+                <td>13.08°N, 80.27°E</td>
+                <td>Apr 19, 2023</td>
+                <td><span class="badge rejected"><span class="badge-dot"></span>REJECTED</span></td>
+                <td class="text-right red-val">6.8 m/s</td>
+                <td><span class="mono">VOMM</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+              <tr class="row-rejected">
+                <td><span class="mono">CLM-2023-00003</span></td>
+                <td style="font-weight:500">Azure Power</td>
+                <td>26.45°N, 80.33°E</td>
+                <td>Mar 07, 2023</td>
+                <td><span class="badge rejected"><span class="badge-dot"></span>REJECTED</span></td>
+                <td class="text-right red-val">7.1 m/s</td>
+                <td><span class="mono">VILK</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+              <tr class="row-rejected">
+                <td><span class="mono">CLM-2023-00002</span></td>
+                <td style="font-weight:500">NHPC Ltd.</td>
+                <td>28.61°N, 77.20°E</td>
+                <td>Feb 14, 2023</td>
+                <td><span class="badge rejected"><span class="badge-dot"></span>REJECTED</span></td>
+                <td class="text-right red-val">5.4 m/s</td>
+                <td><span class="mono">VIDP</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+              <tr class="row-rejected">
+                <td><span class="mono">CLM-2023-00001</span></td>
+                <td style="font-weight:500">CESC Limited</td>
+                <td>22.57°N, 88.36°E</td>
+                <td>Jan 28, 2023</td>
+                <td><span class="badge rejected"><span class="badge-dot"></span>REJECTED</span></td>
+                <td class="text-right red-val">11.2 m/s</td>
+                <td><span class="mono">VECC</span></td>
+                <td><a style="color:var(--teal);font-size:12px;display:flex;align-items:center;gap:4px">Report <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: ANALYTICS ══════════ -->
+  <div id="page-analytics" class="page">
+    <div class="page-scroll">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Analytics</div>
+          <div class="page-header-sub">Performance intelligence and benchmark comparison</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="hallucination-hero">
+          <div class="h-hero-left">
+            <div class="h-hero-label">Hallucinations Prevented</div>
+            <div class="h-hero-val">2</div>
+            <div class="h-hero-sub">Structurally invalid claims rejected at intent routing stage — zero database cost incurred</div>
+          </div>
+          <div class="h-hero-right">
+            <div class="h-hero-stat-val">₹0.00</div>
+            <div class="h-hero-stat-lbl">Cost incurred on rejected</div>
+            <div style="margin-top:12px">
+              <div class="h-hero-stat-val">100%</div>
+              <div class="h-hero-stat-lbl">Rejection accuracy · 7-claim pilot</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="card"><div class="kpi-val">7</div><div class="kpi-label">Total Claims</div></div>
+          <div class="card"><div class="kpi-val">28.6%</div><div class="kpi-label">Approval Rate</div></div>
+          <div class="card"><div class="kpi-val">266ms</div><div class="kpi-label">Avg Processing</div></div>
+          <div class="card"><div class="kpi-val">3</div><div class="kpi-label">Active Customers</div></div>
+        </div>
+
+        <div class="benchmark-row">
+          <div class="bench-header">
+            <div>System</div><div>F1 Score</div><div>Avg Latency</div>
+          </div>
+          <div class="bench-row">
+            <div>
+              <div class="bench-system">DREADNOUGHT ASRE v2.1</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px">Deterministic + LangGraph pipeline</div>
+            </div>
+            <div class="bench-metric good">1.000</div>
+            <div class="bench-metric good">266ms</div>
+          </div>
+          <div class="bench-row" style="background:rgba(249,250,251,0.5)">
+            <div>
+              <div class="bench-system" style="color:var(--gray-500)">Baseline LLM (GPT-4o)</div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Zero-shot prompt, no retrieval</div>
+            </div>
+            <div class="bench-metric bad">0.782</div>
+            <div class="bench-metric bad">4,200ms</div>
+          </div>
+          <div class="bench-row" style="background:rgba(249,250,251,0.5)">
+            <div>
+              <div class="bench-system" style="color:var(--gray-500)">Traditional Legal Process</div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Manual analyst review</div>
+            </div>
+            <div class="bench-metric bad">—</div>
+            <div class="bench-metric bad">60 days</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--gray-500);margin-top:10px;line-height:1.5">
+          F1 measured on the 7-claim pilot set; baseline run zero-shot with no retrieval. ASRE latency is the mean across all 7 pilot claims (2–445ms range). Methodology reproducible in the project README.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: WEATHER Q&A ══════════ -->
+  <div id="page-weatherqa" class="page">
+    <div style="height:calc(100vh - 52px);display:flex;flex-direction:column">
+      <div class="page-header" style="padding-bottom:16px">
+        <div>
+          <div class="page-header-title">Weather Intelligence Q&amp;A</div>
+          <div class="page-header-sub">18 NOAA ISD stations · 2015–2024 · Rule 803(8) grounded</div>
+        </div>
+      </div>
+      <div style="padding:0 32px 12px">
+        <div class="qa-chips">
+          <div class="qa-chip">What was the peak wind speed in Mandvi on June 15, 2023?</div>
+          <div class="qa-chip">How many hours did winds exceed 17.2 m/s in Surat in 2023?</div>
+          <div class="qa-chip">Was there a Category 3+ event near Mumbai in Q2 2022?</div>
+          <div class="qa-chip">Average wind speed at VABB station in July 2022?</div>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 32px">
+        <div class="qa-result-card">
+          <div class="qa-question">Q: What was the peak wind speed in Mandvi on June 15, 2023?</div>
+          <div class="qa-answer">51.6 m/s</div>
+          <div style="font-size:12px;color:var(--gray-600);margin-bottom:8px">Station VOMD (Mandvi, Gujarat) recorded maximum sustained wind of 51.6 m/s at 14:30 UTC on 2023-06-15. This exceeds the SLA threshold of 17.2 m/s.</div>
+          <div class="qa-meta">
+            <div class="qa-meta-item"><strong>Source:</strong> NOAA ISD · VOMD</div>
+            <div class="qa-meta-item"><strong>Confidence:</strong> 100%</div>
+            <div class="qa-meta-item"><strong>Time:</strong> 44ms</div>
+          </div>
+        </div>
+        <div class="qa-result-card">
+          <div class="qa-question">Q: How many hours did winds exceed 17.2 m/s in Surat in Q2 2023?</div>
+          <div class="qa-answer">62 hours</div>
+          <div style="font-size:12px;color:var(--gray-600);margin-bottom:8px">VASU (Surat) recorded 62 total hours with wind speeds ≥17.2 m/s during April–June 2023 across 4 distinct weather events.</div>
+          <div class="qa-meta">
+            <div class="qa-meta-item"><strong>Source:</strong> NOAA ISD · VASU</div>
+            <div class="qa-meta-item"><strong>Confidence:</strong> 99.8%</div>
+            <div class="qa-meta-item"><strong>Time:</strong> 127ms</div>
+          </div>
+        </div>
+      </div>
+      <div class="qa-input-row">
+        <input type="text" placeholder="Ask a weather question using plain English..." />
+        <button class="qa-ask-btn">Ask</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: CUSTOMERS ══════════ -->
+  <div id="page-customers" class="page">
+    <div class="page-scroll">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">Customers</div>
+          <div class="page-header-sub">3 active accounts</div>
+        </div>
+        <div class="page-header-right">
+          <button class="topbar-btn primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Customer
+          </button>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+      <div class="filter-row">
+        <input class="search-input" type="text" placeholder="Search customers..." />
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">Active</button>
+        <button class="filter-btn">Pilot</button>
+      </div>
+      <div style="padding:0 32px 32px">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Industry</th>
+                <th>Contact</th>
+                <th>Claims</th>
+                <th>Status</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600">Adani Green Energy Ltd.</td>
+                <td>Renewable Energy</td>
+                <td style="color:var(--teal)">ops@adanigreen.com</td>
+                <td>3</td>
+                <td><span class="badge validated"><span class="badge-dot"></span>Active</span></td>
+                <td>Apr 2023</td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">TATA Power Solar</td>
+                <td>Solar Generation</td>
+                <td style="color:var(--teal)">legal@tatapower.com</td>
+                <td>2</td>
+                <td><span class="badge validated"><span class="badge-dot"></span>Active</span></td>
+                <td>May 2023</td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">ReNew Power</td>
+                <td>Wind + Solar</td>
+                <td style="color:var(--teal)">contracts@renewpower.in</td>
+                <td>2</td>
+                <td><span class="badge pending"><span class="badge-dot"></span>Pilot</span></td>
+                <td>Jun 2023</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: SLA CALCULATOR ══════════ -->
+  <div id="page-sla" class="page">
+    <div class="sla-layout">
+      <!-- LEFT: Form -->
+      <div class="adj-card">
+        <div class="adj-card-title">SLA Settlement Calculator</div>
+        <div class="adj-card-sub">Calculate recommended settlement based on force majeure event parameters.</div>
+        <div class="form-group">
+          <label>Plant Capacity (MW)</label>
+          <input class="form-input" type="number" value="50" />
+        </div>
+        <div class="form-group">
+          <label>Contracted Tariff (₹/kWh)</label>
+          <input class="form-input" type="number" value="2.85" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label>Plant Load Factor (%)</label>
+          <input class="form-input" type="number" value="22" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>FM Event Start</label>
+            <input class="form-input" type="date" value="2023-06-14" />
+          </div>
+          <div class="form-group">
+            <label>FM Event End</label>
+            <input class="form-input" type="date" value="2023-06-16" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>FM Coverage (%)</label>
+          <input class="form-input" type="number" value="85" />
+        </div>
+        <div class="form-group">
+          <label>Deductible (₹)</label>
+          <input class="form-input" type="number" value="50000" />
+        </div>
+        <button class="submit-btn">Calculate Settlement</button>
+      </div>
+
+      <!-- RIGHT: Results -->
+      <div>
+        <div class="sla-results">
+          <div class="sla-metric-hero fm">
+            <div class="sla-mh-label">Force Majeure Days</div>
+            <div class="sla-mh-val">2.0 days</div>
+          </div>
+          <div class="sla-metric-hero loss">
+            <div class="sla-mh-label">Gross Revenue Loss</div>
+            <div class="sla-mh-val loss-val">₹15,04,800</div>
+          </div>
+          <div class="sla-metric-hero settlement">
+            <div class="sla-mh-label">Recommended Settlement</div>
+            <div class="sla-mh-val settle-val">₹10,37,218</div>
+          </div>
+          <div class="card">
+            <div class="section-title" style="padding:0;margin-bottom:10px">Calculation Breakdown</div>
+            <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--gray-600)">
+              <div style="display:flex;justify-content:space-between"><span>Expected generation (48h × 50MW × 22% PLF)</span><span style="font-weight:600;color:var(--gray-900)">528 MWh</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Gross revenue loss (528 MWh × ₹2.85/kWh)</span><span style="font-weight:600;color:var(--gray-900)">₹15,04,800</span></div>
+              <div style="display:flex;justify-content:space-between"><span>FM-covered portion (85%)</span><span style="font-weight:600;color:var(--gray-900)">₹12,79,080</span></div>
+              <div style="height:1px;background:var(--gray-200);margin:2px 0"></div>
+              <div style="display:flex;justify-content:space-between"><span>Less deductible</span><span style="font-weight:600;color:var(--red)">− ₹50,000</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Less DISCOM penalty (15% of covered)</span><span style="font-weight:600;color:var(--red)">− ₹1,91,862</span></div>
+              <div style="height:1px;background:var(--gray-200);margin:2px 0"></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:700;color:var(--gray-900)">Recommended Settlement</span><span style="font-weight:800;color:var(--green)">₹10,37,218</span></div>
+            </div>
+          </div>
+          <div class="sla-disclaimer">
+            ⚠ This calculation is for indicative purposes only and does not constitute legal advice. Final settlement is subject to contract terms, DISCOM review, and ASRE adjudication verdict.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: API DOCS ══════════ -->
+  <div id="page-apidocs" class="page">
+    <div class="page-scroll">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">API Reference</div>
+          <div class="page-header-sub">ASRE REST API — v2.1</div>
+        </div>
+      </div>
+      <div class="section">
+        <div style="background:var(--gray-900);border-radius:10px;padding:14px 18px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:#60B8E0">
+          Base URL: https://asre-api.dreadnought.io/v2
+        </div>
+        <div style="background:var(--amber-bg);border:1px solid rgba(217,119,6,0.2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--amber-text);margin-bottom:20px">
+          🔑 Authentication: Bearer token required. Include <code style="font-family:var(--mono);background:rgba(217,119,6,0.1);padding:1px 4px;border-radius:3px">Authorization: Bearer &lt;token&gt;</code> in all requests.
+        </div>
+
+        <div class="card" style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="method post">POST</span>
+            <code style="font-family:var(--mono);font-size:12px;color:var(--gray-700)">/adjudicate</code>
+            <span style="font-size:12px;color:var(--gray-500)">Submit a force majeure claim for adjudication</span>
+          </div>
+          <div class="grid-2" style="gap:12px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Request</div>
+              <pre style="background:var(--gray-100);padding:12px;border-radius:8px;font-size:11px;font-family:var(--mono);color:var(--gray-700);overflow-x:auto">{"claim_text": "...",
+ "lat": 23.0,
+ "lon": 68.9,
+ "start_date": "2023-06-14",
+ "end_date": "2023-06-16"}</pre>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Response</div>
+              <pre style="background:var(--gray-100);padding:12px;border-radius:8px;font-size:11px;font-family:var(--mono);color:var(--gray-700);overflow-x:auto">{"verdict": "VALIDATED",
+ "peak_wind_ms": 51.6,
+ "station": "VOMD",
+ "confidence": 0.942,
+ "latency_ms": 287}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="method post">POST</span>
+            <code style="font-family:var(--mono);font-size:12px;color:var(--gray-700)">/query</code>
+            <span style="font-size:12px;color:var(--gray-500)">Natural language weather intelligence query</span>
+          </div>
+          <div class="grid-2" style="gap:12px">
+            <div>
+              <pre style="background:var(--gray-100);padding:12px;border-radius:8px;font-size:11px;font-family:var(--mono);color:var(--gray-700)">{"question": "Peak wind at VOMD on 2023-06-15?"}</pre>
+            </div>
+            <div>
+              <pre style="background:var(--gray-100);padding:12px;border-radius:8px;font-size:11px;font-family:var(--mono);color:var(--gray-700)">{"answer": "51.6 m/s",
+ "source": "NOAA ISD",
+ "confidence": 1.0,
+ "latency_ms": 44}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="method get">GET</span>
+            <code style="font-family:var(--mono);font-size:12px;color:var(--gray-700)">/claims/{id}</code>
+            <span style="font-size:12px;color:var(--gray-500)">Retrieve a specific claim by ID</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PAGE: POLICY ══════════ -->
+  <div id="page-policy" class="page">
+    <div class="page-scroll">
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">System Policy</div>
+          <div class="page-header-sub">Deterministic thresholds and station registry</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Adjudication Thresholds</div>
+        <div class="grid-4">
+          <div class="policy-threshold">
+            <div class="policy-threshold-icon" style="background:rgba(13,107,142,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#0D6B8E" stroke-width="2" width="16" height="16"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg></div>
+            <div class="policy-val">17.2</div>
+            <div class="policy-unit">m/s</div>
+            <div class="policy-label">Wind Speed Threshold</div>
+          </div>
+          <div class="policy-threshold">
+            <div class="policy-threshold-icon" style="background:rgba(26,58,92,0.08)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A3A5C" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg></div>
+            <div class="policy-val">150</div>
+            <div class="policy-unit">km</div>
+            <div class="policy-label">Station Search Radius</div>
+          </div>
+          <div class="policy-threshold">
+            <div class="policy-threshold-icon" style="background:rgba(217,119,6,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="policy-val">6h</div>
+            <div class="policy-unit">minimum</div>
+            <div class="policy-label">Exceedance Duration</div>
+          </div>
+          <div class="policy-threshold">
+            <div class="policy-threshold-icon" style="background:rgba(22,163,74,0.1)"><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div class="policy-val">2.0</div>
+            <div class="policy-unit">IDW power</div>
+            <div class="policy-label">Interpolation Exponent</div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          These thresholds are deterministically enforced by the ASRE Execution Cage. They cannot be overridden by the AI layer. All queries are parameterized — SQL injection is structurally impossible. Maximum bytes billed per BigQuery query: 10GB.
+        </div>
+
+        <div style="height:20px"></div>
+        <div class="section-title">Station Registry (408 Active Stations — representative sample shown)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ICAO ID</th><th>Station Name</th><th>State</th><th class="text-right">Latitude</th><th class="text-right">Longitude</th><th class="text-right">Radius (km)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">VOMD</td><td>Mandvi / Kutch Airport</td><td>Gujarat</td><td class="text-right mono">22.833</td><td class="text-right mono">69.367</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VABB</td><td>Chhatrapati Shivaji International</td><td>Maharashtra</td><td class="text-right mono">19.088</td><td class="text-right mono">72.868</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VASU</td><td>Surat Airport</td><td>Gujarat</td><td class="text-right mono">21.114</td><td class="text-right mono">72.741</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOMM</td><td>Chennai International Airport</td><td>Tamil Nadu</td><td class="text-right mono">12.994</td><td class="text-right mono">80.181</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VIDP</td><td>Indira Gandhi International</td><td>Delhi</td><td class="text-right mono">28.566</td><td class="text-right mono">77.103</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VECC</td><td>Netaji Subhas Chandra Bose Int'l</td><td>West Bengal</td><td class="text-right mono">22.655</td><td class="text-right mono">88.447</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOHS</td><td>Rajiv Gandhi International</td><td>Telangana</td><td class="text-right mono">17.231</td><td class="text-right mono">78.429</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOBL</td><td>Kempegowda International</td><td>Karnataka</td><td class="text-right mono">13.198</td><td class="text-right mono">77.706</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VAAH</td><td>Sardar Vallabhbhai Patel Int'l</td><td>Gujarat</td><td class="text-right mono">23.077</td><td class="text-right mono">72.635</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOTV</td><td>Thiruvananthapuram Int'l</td><td>Kerala</td><td class="text-right mono">8.482</td><td class="text-right mono">76.920</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOCI</td><td>Cochin International</td><td>Kerala</td><td class="text-right mono">10.152</td><td class="text-right mono">76.401</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOGO</td><td>Dabolim / Goa</td><td>Goa</td><td class="text-right mono">15.380</td><td class="text-right mono">73.831</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOVZ</td><td>Visakhapatnam International</td><td>Andhra Pradesh</td><td class="text-right mono">17.721</td><td class="text-right mono">83.224</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VOBZ</td><td>Vijayawada / Gannavaram</td><td>Andhra Pradesh</td><td class="text-right mono">16.530</td><td class="text-right mono">80.797</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VEBS</td><td>Biju Patnaik International</td><td>Odisha</td><td class="text-right mono">20.244</td><td class="text-right mono">85.817</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VEGT</td><td>Lokpriya Gopinath Bordoloi Int'l</td><td>Assam</td><td class="text-right mono">26.106</td><td class="text-right mono">91.586</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VANP</td><td>Dr. Babasaheb Ambedkar Int'l</td><td>Maharashtra</td><td class="text-right mono">21.092</td><td class="text-right mono">79.047</td><td class="text-right">150</td></tr>
+              <tr><td class="mono">VAPO</td><td>Pune Airport</td><td>Maharashtra</td><td class="text-right mono">18.582</td><td class="text-right mono">73.920</td><td class="text-right">150</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── Navigation
+const pages = {
+  dashboard: '/ Dashboard',
+  adjudicate: '/ Adjudicate',
+  claims: '/ Claims',
+  analytics: '/ Analytics',
+  weatherqa: '/ Weather Q&A',
+  customers: '/ Customers',
+  sla: '/ SLA Calculator',
+  apidocs: '/ API Docs',
+  policy: '/ Policy',
+};
+
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('bread-current').textContent = pages[id] || '';
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) {
+        n.classList.add('active');
+      }
+    });
+  }
+
+  // scroll to top
+  const ps = document.querySelector('#page-' + id + ' .page-scroll');
+  if (ps) ps.scrollTop = 0;
+}
+
+// ── Adjudicate result toggle
+function showResult() {
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').style.display = 'block';
+}
+
+// ── Charts (Dashboard)
+window.addEventListener('load', () => {
+  // Claim Chart
+  const claimCtx = document.getElementById('claimChart');
+  if (claimCtx) {
+    new Chart(claimCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [
+          { label:'Validated', data:[0,0,0,0,0,2], backgroundColor:'#16A34A', borderRadius:4 },
+          { label:'Rejected',  data:[1,1,1,1,1,1], backgroundColor:'#DC2626', borderRadius:4 }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:'#6B7280' } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:11},color:'#6B7280'} },
+          y:{ grid:{color:'#F3F4F6'}, ticks:{font:{size:11},color:'#6B7280', stepSize:1} }
+        }
+      }
+    });
+  }
+
+  // Latency Chart
+  const latCtx = document.getElementById('latencyChart');
+  if (latCtx) {
+    new Chart(latCtx, {
+      type: 'line',
+      data: {
+        labels: ['CLM-001','CLM-002','CLM-003','CLM-004','CLM-005','CLM-006','CLM-007'],
+        datasets: [{
+          label:'Latency (ms)',
+          data: [2, 415, 390, 445, 8, 312, 287],
+          borderColor: '#0D6B8E',
+          backgroundColor: 'rgba(13,107,142,0.08)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#0D6B8E',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:10},color:'#6B7280'} },
+          y:{ grid:{color:'#F3F4F6'}, ticks:{font:{size:11},color:'#6B7280'}, min:0 }
+        }
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

@@ -43,8 +43,8 @@
     "claim_id": 73,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 5.91,
     "ground_truth": "VALIDATED"
@@ -743,8 +743,8 @@
     "claim_id": 82,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 9.93,
     "ground_truth": "VALIDATED"
@@ -833,8 +833,8 @@
     "claim_id": 162,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 7.14,
     "ground_truth": "VALIDATED"
@@ -1574,7 +1574,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 6.5,
     "ground_truth": "VALIDATED"
@@ -1603,8 +1603,8 @@
     "claim_id": 102,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 5.26,
     "ground_truth": "VALIDATED"
@@ -1724,7 +1724,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 5.02,
     "ground_truth": "VALIDATED"
@@ -1874,7 +1874,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 3.96,
     "ground_truth": "VALIDATED"
@@ -2533,8 +2533,8 @@
     "claim_id": 96,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 2.79,
     "ground_truth": "VALIDATED"
@@ -2691,10 +2691,10 @@
   },
   {
     "claim_id": 137,
-    "predicted_label": "VALIDATED",
+    "predicted_label": "REJECTED_BELOW_THRESHOLD",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 21.8,
-    "exceedance_hours": 3,
+    "exceedance_hours": 2,
     "station_id": "43279",
     "station_dist_km": 9.47,
     "ground_truth": "VALIDATED"
@@ -2984,7 +2984,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 8.37,
     "ground_truth": "VALIDATED"
@@ -3024,7 +3024,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 6.64,
     "ground_truth": "VALIDATED"
@@ -3094,7 +3094,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 6.52,
     "ground_truth": "VALIDATED"
@@ -3901,10 +3901,10 @@
   },
   {
     "claim_id": 30,
-    "predicted_label": "VALIDATED",
+    "predicted_label": "REJECTED_BELOW_THRESHOLD",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 21.8,
-    "exceedance_hours": 3,
+    "exceedance_hours": 2,
     "station_id": "43279",
     "station_dist_km": 7.35,
     "ground_truth": "VALIDATED"
@@ -3933,8 +3933,8 @@
     "claim_id": 160,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 7.22,
     "ground_truth": "VALIDATED"
@@ -4154,7 +4154,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 5.81,
     "ground_truth": "VALIDATED"
@@ -4434,7 +4434,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 10.59,
     "ground_truth": "VALIDATED"
@@ -5061,10 +5061,10 @@
   },
   {
     "claim_id": 38,
-    "predicted_label": "VALIDATED",
+    "predicted_label": "REJECTED_BELOW_THRESHOLD",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 21.8,
-    "exceedance_hours": 3,
+    "exceedance_hours": 2,
     "station_id": "43279",
     "station_dist_km": 6.38,
     "ground_truth": "VALIDATED"
@@ -5483,8 +5483,8 @@
     "claim_id": 156,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 9.21,
     "ground_truth": "VALIDATED"
@@ -6534,7 +6534,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 4.56,
     "ground_truth": "VALIDATED"
@@ -6634,7 +6634,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 7.93,
     "ground_truth": "VALIDATED"
@@ -6964,7 +6964,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 5.12,
     "ground_truth": "VALIDATED"
@@ -6994,7 +6994,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 5.69,
     "ground_truth": "VALIDATED"
@@ -7943,8 +7943,8 @@
     "claim_id": 126,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 4.94,
     "ground_truth": "VALIDATED"
@@ -8884,7 +8884,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 10.42,
     "ground_truth": "VALIDATED"
@@ -8924,7 +8924,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 6.88,
     "ground_truth": "VALIDATED"
@@ -9054,7 +9054,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 2.87,
     "ground_truth": "VALIDATED"
@@ -9634,7 +9634,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 22.6,
-    "exceedance_hours": 4,
+    "exceedance_hours": 3,
     "station_id": "42809",
     "station_dist_km": 4.19,
     "ground_truth": "VALIDATED"
@@ -9703,8 +9703,8 @@
     "claim_id": 118,
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
-    "wind_peak_ms": 19.5,
-    "exceedance_hours": 4,
+    "wind_peak_ms": 18.8,
+    "exceedance_hours": 3,
     "station_id": "43014",
     "station_dist_km": 4.28,
     "ground_truth": "VALIDATED"
@@ -9954,7 +9954,7 @@
     "predicted_label": "VALIDATED",
     "routing_path": "IntentRouter\u2192SQLGen\u2192ExecCage\u2192Adjudicator",
     "wind_peak_ms": 18.9,
-    "exceedance_hours": 5,
+    "exceedance_hours": 4,
     "station_id": "43356",
     "station_dist_km": 3.43,
     "ground_truth": "VALIDATED"

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PageHeader }  from "@/components/ui/page-header";
 import { SkeletonRow } from "@/components/ui/skeleton";
+import { FloatingPaths } from "@/components/ui/background-paths";
 
 interface Customer {
   id: string;
@@ -116,7 +117,10 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-10 p-8 space-y-6">
 
       <PageHeader
         title="Customers"
@@ -285,6 +289,7 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

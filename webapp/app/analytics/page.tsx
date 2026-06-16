@@ -12,6 +12,7 @@ import { AnimatedCounter }                from "@/components/ui/animated-counter
 import { StatCard }                       from "@/components/ui/stat-card";
 import { PageHeader }                     from "@/components/ui/page-header";
 import { SkeletonCard, SkeletonChart }    from "@/components/ui/skeleton";
+import { FloatingPaths }                 from "@/components/ui/background-paths";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -225,7 +226,10 @@ export default function AnalyticsPage() {
 
   if (loading || !data) {
     return (
-      <div className="p-8 space-y-6">
+      <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+        <FloatingPaths position={1} />
+        <FloatingPaths position={-1} />
+      <div className="relative z-10 p-8 space-y-6">
         <PageHeader title="Analytics" description="System performance and credibility metrics" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
@@ -239,6 +243,7 @@ export default function AnalyticsPage() {
             <div className="h-5 w-40 bg-white/8 rounded animate-pulse mb-4" /><SkeletonChart />
           </div>
         </div>
+      </div>
       </div>
     );
   }
@@ -273,7 +278,10 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-10 p-8 space-y-8">
 
       <PageHeader title="Analytics" description="System performance and credibility metrics" />
 
@@ -509,6 +517,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+    </div>
     </div>
   );
 }

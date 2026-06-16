@@ -13,20 +13,20 @@
       "REJECTED_MISSING_DATES": 150
     },
     "validated_combos": 36,
-    "generated_at": "2026-05-28T10:21:18.411209Z"
+    "generated_at": "2026-06-16T04:11:29.080537Z"
   },
   "asre": {
     "system": "DS-PAF (ASRE)",
     "rows": [
       {
         "label": "VALIDATED",
-        "TP": 200,
+        "TP": 197,
         "FP": 0,
-        "FN": 0,
+        "FN": 3,
         "support": 200,
         "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
+        "recall": 0.985,
+        "f1": 0.9924
       },
       {
         "label": "REJECTED_WRONG_MONTH",
@@ -80,11 +80,11 @@
       }
     ],
     "macro_p": 1.0,
-    "macro_r": 1.0,
-    "macro_f1": 1.0,
-    "accuracy": 1.0,
+    "macro_r": 0.9975,
+    "macro_f1": 0.9987,
+    "accuracy": 0.997,
     "total": 1000,
-    "total_tp": 1000
+    "total_tp": 997
   },
   "baseline": {
     "system": "Unconstrained LLM",
@@ -158,7 +158,7 @@
     "total_tp": 737
   },
   "delta": {
-    "macro_f1": 0.2178,
-    "accuracy": 0.263
+    "macro_f1": 0.2165,
+    "accuracy": 0.26
   }
 }
