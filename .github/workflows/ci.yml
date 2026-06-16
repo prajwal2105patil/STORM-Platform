@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Deployment is handled by Vercel's native Git integration (the Vercel GitHub
+# App), which builds and deploys on every push to `main` using the environment
+# variables configured in the Vercel project dashboard.
+#
+# This workflow ONLY verifies the code — it does not deploy. There is therefore
+# no Vercel token or duplicated secret to keep in sync. (The previous
+# token-based `vercel deploy` step failed whenever VERCEL_TOKEN was unset; that
+# entire failure class is now gone.)
+# ─────────────────────────────────────────────────────────────────────────────
+
+jobs:
+  verify:
+    name: Type-check & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: webapp/package-lock.json
+      - run: npm ci
+      - run: npm run type-check
+      - run: npm run build
+        env:
+          # The build statically renders client pages and does NOT call Supabase
+          # at build time. These public placeholders satisfy module-load reads so
+          # CI never fails on missing env. Real values live in the Vercel
+          # dashboard and are injected by Vercel at deploy time.
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
