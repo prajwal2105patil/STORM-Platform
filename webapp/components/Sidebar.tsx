@@ -7,7 +7,7 @@ import {
   Map as MapIcon, LogIn, Award, Scale, Database,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const PRIMARY_NAV = [
   { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
@@ -107,6 +107,52 @@ function NavGroup({
   );
 }
 
+interface Health { asre: boolean; supabase: boolean; groq: boolean }
+
+function StatusFooter() {
+  const [health, setHealth] = useState<Health | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((d) => { if (alive) setHealth(d); })
+      .catch(() => { if (alive) setHealth({ asre: false, supabase: false, groq: false }); });
+    return () => { alive = false; };
+  }, []);
+
+  const rows: { label: string; ok: boolean | null; up: string; down: string }[] = [
+    { label: "ASRE Engine", ok: health?.asre ?? null,     up: "Online",    down: "Offline"  },
+    { label: "Supabase",    ok: health?.supabase ?? null, up: "Connected", down: "Down"     },
+    { label: "Groq LLM",    ok: health?.groq ?? null,     up: "Active",    down: "Inactive" },
+  ];
+
+  return (
+    <div className="px-4 py-4 border-t border-white/8 bg-black/15 space-y-2.5">
+      <p className="text-[9px] font-extrabold text-blue-400/40 uppercase tracking-[0.14em] mb-2">
+        System Status
+      </p>
+      {rows.map(({ label, ok, up, down }) => {
+        const checking = ok === null;
+        const color = checking ? "bg-amber-400" : ok ? "bg-green-400" : "bg-red-400";
+        const text = checking ? "Checking…" : ok ? up : down;
+        return (
+          <div key={label} className="flex items-center gap-2 text-[10px]">
+            <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+              {(checking || ok) && (
+                <span className={clsx("animate-ping absolute inline-flex h-full w-full rounded-full opacity-60", color)} />
+              )}
+              <span className={clsx("relative inline-flex rounded-full h-1.5 w-1.5", color)} />
+            </span>
+            <span className="text-blue-300/45">{label}:</span>
+            <span className="text-white/65 font-semibold">{text}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   return (
     <>
@@ -145,26 +191,8 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         <NavGroup label="Account"      items={ACCOUNT_NAV}      collapsed={false} onNavClick={onNavClick} />
       </nav>
 
-      {/* Status footer */}
-      <div className="px-4 py-4 border-t border-white/8 bg-black/15 space-y-2.5">
-        <p className="text-[9px] font-extrabold text-blue-400/40 uppercase tracking-[0.14em] mb-2">
-          System Status
-        </p>
-        {[
-          { label: "ASRE Engine",  status: "Online"    },
-          { label: "Supabase",     status: "Connected" },
-          { label: "Groq LLM",     status: "Active"    },
-        ].map(({ label, status }) => (
-          <div key={label} className="flex items-center gap-2 text-[10px]">
-            <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-            </span>
-            <span className="text-blue-300/45">{label}:</span>
-            <span className="text-white/65 font-semibold">{status}</span>
-          </div>
-        ))}
-      </div>
+      {/* Status footer — reflects real /api/health state */}
+      <StatusFooter />
     </>
   );
 }

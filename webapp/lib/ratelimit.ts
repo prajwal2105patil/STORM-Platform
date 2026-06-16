@@ -1,6 +1,16 @@
 /**
- * ratelimit.ts — In-memory rate limiter for API routes
- * Sliding window counter per IP address.
+ * ratelimit.ts — Best-effort in-memory rate limiter for API routes.
+ * Fixed-window counter per IP address.
+ *
+ * SERVERLESS CAVEAT: on Vercel each lambda instance has its own `store`, so the
+ * limit is enforced PER INSTANCE, not globally. Under high concurrency a client
+ * can exceed the nominal limit by (limit × number of warm instances). This is
+ * acceptable abuse-dampening for a pilot, not a hard quota.
+ *
+ * To make limits global (a future upgrade, only if abuse appears):
+ *   - Upstash Redis + @upstash/ratelimit (free tier, set UPSTASH_REDIS_* env), OR
+ *   - a Supabase counter table with an atomic-increment RPC ($0, +1 round-trip).
+ * Swap the body of rateLimit() for one of those; the signature stays the same.
  */
 
 interface RateLimitEntry {

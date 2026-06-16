@@ -76,14 +76,30 @@ function nearestStation(
   return { station: nearest.station, distKm: nearest.distKm, confidence };
 }
 
+// Negation cues: a claim that explicitly denies a weather event cannot be a
+// qualifying force-majeure cause ("there was no storm").
+const NEGATION_RE = /\b(no|not|without|absence of|lack of|never|none)\b/;
+
+// Build a word-boundary matcher per valid cause so "brainstorm" does NOT match
+// "storm" and "snowstorm" does. Multi-word causes allow flexible whitespace.
+function hasWeatherKeyword(text: string): boolean {
+  for (const valid of VALID_CAUSES) {
+    const pattern = valid.replace(/\s+/g, "\\s+");
+    if (new RegExp(`(^|[^a-z])${pattern}([^a-z]|$)`).test(text)) return true;
+  }
+  return false;
+}
+
 // ── Groq LLM cause classification ────────────────────────────────────────────
 async function classifyCause(claimedCause: string): Promise<boolean> {
   const normalised = claimedCause.toLowerCase().trim();
+  const negated = NEGATION_RE.test(normalised);
 
-  // Fast path 1: exact keyword match (no LLM needed)
-  for (const valid of VALID_CAUSES) {
-    if (normalised.includes(valid)) return true;
-  }
+  // A negated cause is never a qualifying event — deterministic, no LLM.
+  if (negated) return false;
+
+  // Fast path 1: word-boundary keyword match (no LLM needed)
+  if (hasWeatherKeyword(normalised)) return true;
 
   // Fast path 2: in-memory cache (same cause = same result always)
   if (causeCache.has(normalised)) {
@@ -230,16 +246,24 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
       legal_summary: `No stations in range or no valid time period.` };
   }
 
-  const orFilters = ymPairs.flatMap(({ year, month }) =>
+  const clauses = ymPairs.flatMap(({ year, month }) =>
     stationIds.map((sid) =>
       `and(station_id.eq.${sid},year.eq.${year},month.eq.${month})`
     )
-  ).join(",");
+  );
 
-  const { data: weatherRows } = await supabase
-    .from("weather_monthly_stats")
-    .select("*")
-    .or(orFilters);
+  // Chunk the OR-clauses so a long claim window (many months × 5 stations)
+  // can't blow past PostgREST's request-URL length limit. Batches run in
+  // parallel and results are merged.
+  const OR_CHUNK = 40;
+  const batches: string[] = [];
+  for (let i = 0; i < clauses.length; i += OR_CHUNK) {
+    batches.push(clauses.slice(i, i + OR_CHUNK).join(","));
+  }
+  const batchResults = await Promise.all(
+    batches.map((b) => supabase.from("weather_monthly_stats").select("*").or(b))
+  );
+  const weatherRows = batchResults.flatMap((r) => r.data || []);
 
   if (!weatherRows || weatherRows.length === 0) {
     const ymDisplay = ymPairs.map((p) => `${p.year}/${p.month}`).join(", ");
