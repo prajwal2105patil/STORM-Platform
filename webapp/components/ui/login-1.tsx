@@ -125,10 +125,15 @@ export default function LoginCard() {
 
   const isSignup = mode === "signup";
 
-  // Simulated auth — no backend call, no paid API. Shows loading then
-  // lands the user on the dashboard.
-  const completeAuth = (via: "form" | "google") => {
+  // Pilot auth: the typed password IS the admin write-key (shared secret).
+  // It is stored only in this browser's sessionStorage and sent as a Bearer
+  // token on admin writes — never bundled into the build. The server compares
+  // it against ADMIN_API_SECRET. Reads stay public; only writes are gated.
+  const completeAuth = (via: "form" | "google", adminKey?: string) => {
     if (loading) return;
+    if (adminKey && typeof window !== "undefined") {
+      sessionStorage.setItem("asre_admin_key", adminKey);
+    }
     setLoading(via);
     setTimeout(() => router.push("/dashboard"), 900);
   };
@@ -235,7 +240,11 @@ export default function LoginCard() {
             {/* Fields */}
             <form
               className="flex flex-col gap-3.5"
-              onSubmit={(e) => { e.preventDefault(); completeAuth("form"); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const pw = (new FormData(e.currentTarget).get("password") as string) || "";
+                completeAuth("form", pw);
+              }}
             >
               <AnimatePresence initial={false}>
                 {isSignup && (

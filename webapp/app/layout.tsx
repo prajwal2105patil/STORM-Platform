@@ -7,18 +7,31 @@ import { GlobalBackground } from "@/components/ui/global-background";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default:  "DREADNOUGHT ASRE | Force Majeure Adjudication Platform",
     template: "%s — DREADNOUGHT ASRE",
   },
-  description: "AI-powered force majeure claim adjudication in under 500ms. NOAA Rule 803(8) certified. 100% accuracy vs 78.2% baseline.",
-  keywords: ["force majeure", "claim adjudication", "NOAA ISD", "weather data", "insurance", "ASRE"],
+  description:
+    "Deterministic force-majeure claim adjudication in under 500ms — 99.7% accuracy with a 0% hallucination rate, backed by NOAA Rule 803(8) public records.",
+  keywords: ["force majeure", "claim adjudication", "NOAA ISD", "weather data", "insurance", "ASRE", "Rule 803(8)"],
   openGraph: {
     title:       "DREADNOUGHT ASRE | Force Majeure Adjudication",
-    description: "AI-powered storm-related event adjudication in under 500ms.",
+    description: "Deterministic storm-event adjudication in under 500ms. 99.7% accuracy, 0% hallucination, NOAA-sourced.",
     type:        "website",
+    siteName:    "DREADNOUGHT ASRE",
   },
+  twitter: {
+    card:        "summary_large_image",
+    title:       "DREADNOUGHT ASRE | Force Majeure Adjudication",
+    description: "Deterministic storm-event adjudication. 99.7% accuracy, 0% hallucination, NOAA Rule 803(8).",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

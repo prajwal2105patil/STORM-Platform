@@ -8,15 +8,21 @@ All VALIDATED combos pre-verified against DuckDB Parquet sample.
 Zero cloud spend. seed=42 for full reproducibility.
 """
 
-import math, random, json, datetime
+import sys, math, random, json, datetime
 from pathlib import Path
 import duckdb
 
 # ── Config ────────────────────────────────────────────────────────────────
+# Paths are resolved relative to the repo root so the benchmark runs on any
+# machine (was previously hardcoded to a now-dead Cloud Shell session path).
+_REPO_ROOT        = Path(__file__).resolve().parent.parent
 RANDOM_SEED       = 42
-PARQUET_GLOB      = "/sessions/elegant-festive-euler/mnt/STORM-PLATFORM/data/sample/**/*.parquet"
-OUT_DIR           = Path("/sessions/elegant-festive-euler/mnt/STORM-PLATFORM/benchmarks")
+PARQUET_GLOB      = str(_REPO_ROOT / "data" / "sample" / "**" / "*.parquet")
+OUT_DIR           = _REPO_ROOT / "benchmarks"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
+# Force UTF-8 stdout so the box-drawing characters below don't crash on Windows cp1252
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 random.seed(RANDOM_SEED)
 
 WIND_THRESHOLD_MS = 17.2   # Beaufort 8 (gale force)

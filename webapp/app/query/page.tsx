@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AlertTriangle, Clock, Database, Zap } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
+import { FloatingPaths }  from "@/components/ui/background-paths";
 
 type QueryResult = Record<string, any>;
 
@@ -38,7 +39,10 @@ export default function QueryPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl space-y-6">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-10 p-8 max-w-3xl space-y-6">
       <PageHeader
         title="Weather Intelligence Query"
         description="18 Indian NOAA ISD stations · 2014–2024 · Rule 803(8) certified"
@@ -115,13 +119,14 @@ export default function QueryPage() {
           </div>
           <p className="font-semibold text-white/80">Ask Anything About NOAA Weather</p>
           <p className="text-sm text-white/35 mt-2 max-w-sm mx-auto leading-relaxed">
-            Peak wind, gale hours, pressure, temperature — any metric across 18 stations from 2014 to 2024.
+            Peak wind, gale hours, pressure, temperature — any metric across 408 stations from 2015 to 2024.
           </p>
           <p className="text-[10px] text-white/20 font-mono mt-6 uppercase tracking-widest">
             Groq llama-3.1-8b · DuckDB partition scan · &lt;500ms
           </p>
         </div>
       )}
+    </div>
     </div>
   );
 }

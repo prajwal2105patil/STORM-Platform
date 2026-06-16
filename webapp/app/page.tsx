@@ -11,7 +11,7 @@ const LandingMap = dynamic(
 );
 
 const STATS = [
-  { value: "18",     label: "NOAA Stations"   },
+  { value: "408",    label: "NOAA Stations"   },
   { value: "300km",  label: "IDW Radius"       },
   { value: "<500ms", label: "Adjudication"     },
   { value: "10yr",   label: "Data Archive"     },
@@ -63,7 +63,7 @@ export default function LandingPage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
             </span>
             <span className="text-[10px] font-extrabold tracking-[0.2em] text-white/70 uppercase">
-              DREADNOUGHT ASRE · NOAA Rule 803(8) Certified
+              DREADNOUGHT ASRE · NOAA Rule 803(8) Grounded
             </span>
           </div>
         </motion.div>
@@ -88,8 +88,8 @@ export default function LandingPage() {
           transition={{ delay: 0.35, duration: 1.2 }}
           className="text-base md:text-lg text-white/45 mb-10 max-w-lg leading-relaxed pointer-events-auto"
         >
-          AI-powered storm-event verification backed by 11 years of NOAA ISD data.
-          Legally admissible · Deterministic · Zero human bias.
+          AI-powered storm-event verification backed by 10 years of NOAA ISD data.
+          Admissible under US FRE 803(8) · Deterministic · Reproducible.
         </motion.p>
 
         {/* CTA buttons */}
@@ -160,7 +160,7 @@ export default function LandingPage() {
           <div className="h-6 w-px bg-white/10 mx-2 hidden sm:block" />
           <div className="flex items-center gap-2 px-4">
             <Shield size={12} className="text-sky-400/60" />
-            <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2014–2024 · Rule 803(8)</span>
+            <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2015–2024 · Rule 803(8)</span>
           </div>
         </div>
       </motion.div>

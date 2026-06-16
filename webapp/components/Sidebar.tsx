@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FileText, Users, BarChart3, Zap, Shield,
   ChevronRight, Search, Calculator, BookOpen, ChevronDown, Menu, X,
-  Map as MapIcon, LogIn,
+  Map as MapIcon, LogIn, Award, Scale, Database,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useState } from "react";
@@ -18,6 +18,12 @@ const PRIMARY_NAV = [
 const INTELLIGENCE_NAV = [
   { href: "/analytics", label: "Analytics",   icon: BarChart3 },
   { href: "/query",     label: "Weather Q&A", icon: Search    },
+];
+
+const EVIDENCE_NAV = [
+  { href: "/benchmark",    label: "Benchmark",    icon: Award    },
+  { href: "/methodology",  label: "Methodology",  icon: Scale    },
+  { href: "/data-sources", label: "Data Sources", icon: Database },
 ];
 
 const CRM_NAV = [
@@ -132,6 +138,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       <nav className="flex-1 px-3 py-4 space-y-3 overflow-y-auto">
         <NavGroup label="Operations"   items={PRIMARY_NAV}      collapsed={false} onNavClick={onNavClick} />
         <NavGroup label="Intelligence" items={INTELLIGENCE_NAV} collapsed={false} onNavClick={onNavClick} />
+        <NavGroup label="Evidence"     items={EVIDENCE_NAV}     collapsed={false} onNavClick={onNavClick} />
         <NavGroup label="Coverage"     items={MAP_NAV}          collapsed={false} onNavClick={onNavClick} />
         <NavGroup label="CRM"          items={CRM_NAV}          collapsed={false} onNavClick={onNavClick} />
         <NavGroup label="Tools"        items={TOOLS_NAV}        collapsed={true}  onNavClick={onNavClick} />

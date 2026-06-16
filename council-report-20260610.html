@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Council Report — DREADNOUGHT ASRE Production Readiness</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #111827; line-height: 1.6; }
+  .header { background: #1A3A5C; color: white; padding: 40px 48px; }
+  .header-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #60B8E0; margin-bottom: 8px; }
+  .header-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header-question { font-size: 14px; color: #cbd5e1; margin-top: 10px; max-width: 780px; }
+  .header-meta { font-size: 12px; color: #94a3b8; margin-top: 12px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Verdict card */
+  .verdict-card { background: white; border: 2px solid #1A3A5C; border-radius: 10px; overflow: hidden; margin-bottom: 32px; }
+  .verdict-header { background: #1A3A5C; color: white; padding: 16px 24px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .verdict-body { padding: 24px; }
+  .verdict-section { margin-bottom: 24px; }
+  .verdict-section:last-child { margin-bottom: 0; }
+  .verdict-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  .verdict-section-body { font-size: 14px; color: #1f2937; }
+  .verdict-section-body p { margin-bottom: 10px; }
+  .verdict-section-body p:last-child { margin-bottom: 0; }
+
+  /* The one thing */
+  .one-thing { background: #fefce8; border-left: 4px solid #d97706; border-radius: 6px; padding: 18px 20px; margin-top: 20px; }
+  .one-thing-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #92400e; margin-bottom: 6px; }
+  .one-thing-body { font-size: 14px; color: #1f2937; }
+
+  /* Priority list */
+  .priority-list { list-style: none; margin-top: 8px; }
+  .priority-list li { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+  .priority-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: #1A3A5C; color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .priority-text { font-size: 14px; color: #1f2937; }
+  .priority-text strong { color: #111827; }
+
+  /* Blind spots */
+  .blind-spot { background: #fff1f2; border-left: 4px solid #dc2626; border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
+  .blind-spot-num { font-size: 11px; font-weight: 700; color: #991b1b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .blind-spot-body { font-size: 14px; color: #1f2937; }
+
+  /* Advisor grid */
+  .advisor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+  @media (max-width: 640px) { .advisor-grid { grid-template-columns: 1fr; } }
+  .advisor-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  .advisor-header { padding: 12px 16px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .advisor-header.contrarian { background: #fef2f2; color: #991b1b; border-bottom: 1px solid #fecaca; }
+  .advisor-header.firstprinciples { background: #eff6ff; color: #1e40af; border-bottom: 1px solid #bfdbfe; }
+  .advisor-header.expansionist { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
+  .advisor-header.outsider { background: #fefce8; color: #854d0e; border-bottom: 1px solid #fde68a; }
+  .advisor-header.executor { background: #f5f3ff; color: #5b21b6; border-bottom: 1px solid #ddd6fe; }
+  .advisor-badge { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 4px; padding: 2px 6px; margin-top: 4px; }
+  .advisor-badge.strongest { background: #dcfce7; color: #166534; }
+  .advisor-badge.blind-spot-badge { background: #fee2e2; color: #991b1b; }
+  details { }
+  details > summary { padding: 10px 16px; font-size: 13px; color: #6b7280; cursor: pointer; user-select: none; }
+  details > summary:hover { color: #374151; }
+  details > .detail-body { padding: 12px 16px; font-size: 13px; color: #374151; border-top: 1px solid #f3f4f6; line-height: 1.65; }
+
+  /* Agreement row */
+  .agreement-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .agree-chip { background: #dcfce7; color: #166534; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .clash-chip { background: #fee2e2; color: #991b1b; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b7280; margin-bottom: 12px; }
+  .divider { border: none; border-top: 1px solid #e5e7eb; margin: 32px 0; }
+  .footer { text-align: center; font-size: 12px; color: #9ca3af; margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">LLM Council Report &mdash; June 10, 2026</div>
+  <div class="header-title">DREADNOUGHT ASRE &mdash; Production Readiness Audit</div>
+  <div class="header-question">What does this platform still need to be genuinely production-ready — and what is the order of priority?</div>
+  <div class="header-meta">5 Advisors &middot; 5 Anonymous Peer Reviews &middot; Chairman Synthesis</div>
+</div>
+
+<div class="container">
+
+  <!-- CHAIRMAN VERDICT -->
+  <div class="verdict-card">
+    <div class="verdict-header">&#9654; Chairman's Verdict</div>
+    <div class="verdict-body">
+
+      <div class="verdict-section">
+        <div class="verdict-section-title">Where the Council Agrees</div>
+        <div class="verdict-section-body">
+          <div class="agreement-row" style="margin-bottom: 12px;">
+            <span class="agree-chip">Run Supabase migration first</span>
+            <span class="agree-chip">Hide TODO shell pages</span>
+            <span class="agree-chip">End-to-end demo path must work</span>
+            <span class="agree-chip">Auth is post-signature</span>
+          </div>
+          <p>Run the Supabase migration first. Every advisor named it a blocker. Hide or kill the three TODO shell pages before any human sees the product — blank pages destroy credibility faster than missing features. The end-to-end demo path (claim in → decision out → result displays) must work reliably before anything else is touched.</p>
+        </div>
+      </div>
+
+      <div class="verdict-section">
+        <div class="verdict-section-title">Where the Council Clashes</div>
+        <div class="verdict-section-body">
+          <div class="agreement-row" style="margin-bottom: 12px;">
+            <span class="clash-chip">Ship fast vs. audit trail first</span>
+            <span class="clash-chip">Minimum viable trust vs. MVP features</span>
+          </div>
+          <p>The core split: <em>minimum viable trust vs. minimum viable product</em>. The Executor and First Principles Thinker say ship the working flow and defer everything else. The Contrarian says the audit trail <em>is</em> the product — without immutable, traceable decisions, the legal admissibility claim is fiction and sophisticated insurance buyers will catch it. The Expansionist wants to accelerate into CERC growth plays before the foundation exists, which all five reviewers correctly identified as premature.</p>
+          <p><strong>The chairman sides with the Contrarian on one specific point:</strong> for an energy/insurance enterprise buyer, the audit trail is not a nice-to-have. It is what they are actually buying. A fast, pretty, unaudited black box is worthless to a claims adjuster who will testify about it.</p>
+        </div>
+      </div>
+
+      <div class="verdict-section">
+        <div class="verdict-section-title">Blind Spots the Council Caught</div>
+        <div class="verdict-section-body">
+          <div class="blind-spot">
+            <div class="blind-spot-num">Gap 1 &mdash; Legal exposure at the moment of demo</div>
+            <div class="blind-spot-body">If the pilot customer asks "who is liable when this decision is wrong?" and your UI and PDF contain no "advisory output only" disclaimer, you may create an implied legal obligation before a contract exists. Every reviewer flagged this. Fix it before a human sees a demo output.</div>
+          </div>
+          <div class="blind-spot">
+            <div class="blind-spot-num">Gap 2 &mdash; Demo data provenance</div>
+            <div class="blind-spot-body">No one verified: does the local DuckDB sample actually contain NOAA station records for the buyer's geography? If the demo claim hits a missing partition, F1=1.000 is irrelevant. Validate the exact demo query against actual sample data before any deployment step.</div>
+          </div>
+          <div class="blind-spot">
+            <div class="blind-spot-num">Gap 3 &mdash; Supabase free tier single point of failure</div>
+            <div class="blind-spot-body">Free tier has row limits, cold-start latency, and no SLA. A Supabase outage during the demo kills the deal. Have a local DuckDB fallback or know exactly what fails and how to recover in under 60 seconds.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="verdict-section">
+        <div class="verdict-section-title">The Recommendation — Priority Order</div>
+        <div class="verdict-section-body">
+          <ul class="priority-list">
+            <li><span class="priority-num">1</span><span class="priority-text"><strong>Add liability disclaimer.</strong> "Advisory output only — not a legal determination" in every claim output surface and PDF footer. Do this before anything is shown to a buyer.</span></li>
+            <li><span class="priority-num">2</span><span class="priority-text"><strong>Run the Supabase migration</strong> with realistic seed data (15–20 real wind farm claims).</span></li>
+            <li><span class="priority-num">3</span><span class="priority-text"><strong>Hide the three TODO pages</strong> from navigation entirely — do not delete, just suppress from the sidebar.</span></li>
+            <li><span class="priority-num">4</span><span class="priority-text"><strong>Validate the demo query</strong> against local DuckDB sample data. Confirm the exact NOAA partition exists for the buyer's geography before deploying.</span></li>
+            <li><span class="priority-num">5</span><span class="priority-text"><strong>Deploy to Vercel.</strong> Wire Vercel's built-in function logs (not Sentry — too much setup for current stage).</span></li>
+            <li><span class="priority-num">6</span><span class="priority-text"><strong>Build the one-page PDF output:</strong> NOAA Rule 803(8) citation, station ID, observation timestamp, decision, claim ID. This is the highest-leverage deliverable in the entire stack — converts a demo into a document a legal team can review.</span></li>
+            <li><span class="priority-num">7</span><span class="priority-text"><strong>One hardcoded demo account.</strong> No auth system — one API key, one set of credentials that works.</span></li>
+            <li><span class="priority-num">8</span><span class="priority-text"><strong>Write the 60-second demo script</strong> before the demo, not after.</span></li>
+          </ul>
+          <p style="margin-top: 14px; font-size: 13px; color: #6b7280;"><strong>Defer entirely:</strong> full auth system, Sentry, onboarding flow, analytics page, CERC expansion plays.</p>
+        </div>
+      </div>
+
+      <div class="one-thing">
+        <div class="one-thing-label">&#9654; The One Thing to Do First</div>
+        <div class="one-thing-body">Add the liability disclaimer. Not the migration, not the deploy — the disclaimer. Every other step builds toward showing this product to a buyer. Without that language ("Advisory output only — not a legal determination"), the first successful demo is also a legal risk event. Two lines of text in the UI and PDF footer protect you from implied warranty claims before a contract is signed. It costs 10 minutes. The absence of it is the only thing that can terminate the deal retroactively.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ADVISOR ALIGNMENT -->
+  <div class="section-label">Advisor Alignment</div>
+  <div class="advisor-grid">
+
+    <div class="advisor-card">
+      <div class="advisor-header contrarian">
+        The Contrarian
+        <div><span class="advisor-badge">Strong signal on audit trail</span></div>
+      </div>
+      <details>
+        <summary>View response</summary>
+        <div class="detail-body">F1=1.000 is a red flag, not a selling point. Perfect scores signal overfitting to actuaries. Priority: (1) Immutable audit trail — every decision must be timestamped and traceable to the exact NOAA record; without this, the legal admissibility claim is marketing fiction. (2) Supabase migration. (3) Auth. (4) Error monitoring before demo. The frontend shells are irrelevant. Nobody pays ₹50,000 for a pretty UI backed by an unaudited black box.</div>
+      </details>
+    </div>
+
+    <div class="advisor-card">
+      <div class="advisor-header firstprinciples">
+        The First Principles Thinker
+        <div><span class="advisor-badge strongest">Voted strongest by all 5 reviewers</span></div>
+      </div>
+      <details>
+        <summary>View response</summary>
+        <div class="detail-body">Wrong question. Ask: what is the minimum viable proof that earns the wire transfer? Three things the buyer needs: (1) right answer, (2) &lt;500ms, (3) defensible in court. Hide the shell pages from nav entirely. Pre-load a claim in the buyer's geography. A one-page PDF with NOAA Rule 803(8) citation, decision, and timestamp is worth more than any analytics page. Auth, Sentry, onboarding are post-signature problems.</div>
+      </details>
+    </div>
+
+    <div class="advisor-card">
+      <div class="advisor-header expansionist">
+        The Expansionist
+        <div><span class="advisor-badge blind-spot-badge">Flagged: premature scaling</span></div>
+      </div>
+      <details>
+        <summary>View response</summary>
+        <div class="detail-body">F1=1.000 is a regulatory moat, not a demo asset. Priority: (1) Supabase live. (2) API key auth — B2B buyers want to integrate, not log in. (3) Analytics page is upsell surface — converts single-claim pilots into annual contracts. (4) Instrument for sales intelligence. (5) Target CERC filings — one regulatory precedent is worth a hundred pilots. Upside: this could become the de facto standard for weather-based Force Majeure adjudication across South Asia.</div>
+      </details>
+    </div>
+
+    <div class="advisor-card">
+      <div class="advisor-header outsider">
+        The Outsider
+        <div><span class="advisor-badge">Caught: curse of knowledge</span></div>
+      </div>
+      <details>
+        <summary>View response</summary>
+        <div class="detail-body">The curse of knowledge is killing this pitch. A 60-second demo with TODO shells is an apology tour. Priority: (1) Kill/hide TODO pages — navigation to blank pages destroys credibility before a question is asked. (2) Supabase migration with seed data — fake-but-realistic is demo hygiene. (3) 60-second demo needs a script, not a feature. (4) Auth last. (5) Sentry free tier takes 20 minutes and saves the deal. A tight 3-page demo beats an 8-page skeleton every time.</div>
+      </details>
+    </div>
+
+    <div class="advisor-card" style="grid-column: span 2;">
+      <div class="advisor-header executor">
+        The Executor
+        <div><span class="advisor-badge blind-spot-badge">Flagged: skips legal defensibility</span></div>
+      </div>
+      <details>
+        <summary>View response</summary>
+        <div class="detail-body">What to do Monday morning, in order: (1) Run the Supabase migration — single most critical blocker, no demo without it. (2) Execute the Vercel deploy — need a live URL. (3) Build one end-to-end flow: input claim → API call → &lt;500ms decision → result displays. (4) One hardcoded demo account. (5) Wire Vercel's built-in function logs — not Sentry, too much setup. (6) Leave the three TODO pages alone. What you don't need yet: full auth, error monitoring infrastructure, complete UI polish, customer onboarding flow.</div>
+      </details>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+
+  <!-- PEER REVIEW HIGHLIGHTS -->
+  <div class="section-label">Peer Review Highlights</div>
+  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
+    <p style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>All 5 reviewers independently chose Response C (First Principles Thinker) as strongest.</strong> The convergence was unusual — 5/5 with no dissent. The reason: it was the only response that thought from the buyer's evaluation criteria rather than from the builder's feature list.</p>
+    <p style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Response D (Expansionist) was flagged as the most dangerous</strong> — not wrong in direction, but dangerously premature. Growth strategy before live data exists is scope creep dressed as ambition.</p>
+    <p style="font-size: 14px; color: #374151;"><strong>The shared blind spot across all advisors:</strong> contractual liability at the moment of demo. None of the five considered what happens when a buyer's legal team asks who owns the adjudication output and whether the platform indemnifies against wrong decisions. This is the actual gate for enterprise B2B — not auth, not onboarding, not feature completeness.</p>
+  </div>
+
+  <div class="footer">
+    DREADNOUGHT ASRE &mdash; LLM Council &mdash; June 10, 2026 &middot; Based on Karpathy's LLM Council methodology
+  </div>
+
+</div>
+</body>
+</html>

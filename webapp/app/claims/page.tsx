@@ -19,6 +19,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import type { AdjudicationLabel } from "@/types";
+import { FloatingPaths } from "@/components/ui/background-paths";
 
 // ── Column definitions ────────────────────────────────────────────────────────
 
@@ -119,7 +120,10 @@ export default function ClaimsPage() {
   ];
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-10 p-8 space-y-6">
 
       <PageHeader
         title="Claims"
@@ -389,6 +393,7 @@ export default function ClaimsPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

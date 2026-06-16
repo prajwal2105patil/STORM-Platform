@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PageHeader }  from "@/components/ui/page-header";
 import { SkeletonRow } from "@/components/ui/skeleton";
+import { FloatingPaths } from "@/components/ui/background-paths";
+import { adminAuthHeader } from "@/lib/admin-token";
 
 interface Customer {
   id: string;
@@ -89,7 +91,7 @@ export default function CustomersPage() {
     try {
       const res = await fetch("/api/customers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...adminAuthHeader() },
         body: JSON.stringify({
           company_name: newCustomer.company_name,
           contact_name: newCustomer.contact_name || undefined,
@@ -100,6 +102,10 @@ export default function CustomersPage() {
         }),
       });
       const data = await res.json();
+      if (res.status === 401 || res.status === 503) {
+        setAddError("Admin key required — sign in again with your admin password.");
+        return;
+      }
       if (!res.ok) { setAddError(data.error || "Failed to create customer"); return; }
       setNewCustomer({ company_name: "", contact_name: "", email: "", phone: "", sector: "" });
       setShowModal(false);
@@ -116,7 +122,10 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-10 p-8 space-y-6">
 
       <PageHeader
         title="Customers"
@@ -285,6 +294,7 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
