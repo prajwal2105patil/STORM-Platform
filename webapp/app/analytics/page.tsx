@@ -31,8 +31,8 @@ interface AnalyticsData {
 }
 
 const BENCHMARK = {
-  asre:     { name: "ASRE (Routed)",           precision: 1.0,  recall: 1.0,  f1: 1.0,   support: 1000 },
-  baseline: { name: "Baseline LLM (Unrouted)", precision: 0.79, recall: 0.73, f1: 0.782, support: 1000 },
+  asre:     { name: "ASRE (Routed)",           precision: 0.997, recall: 0.997, f1: 0.997, support: 1000 },
+  baseline: { name: "Baseline LLM (Unrouted)", precision: 0.79,  recall: 0.73,  f1: 0.782, support: 1000 },
 };
 
 const CHART_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#60B8E0"];
@@ -492,7 +492,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="mt-5 p-4 bg-sky/8 border border-sky/20 rounded-xl">
           <p className="text-sm text-sky/80">
-            <strong className="text-sky">F1 delta = +0.218</strong> — ASRE achieves perfect accuracy while baseline LLM achieves 78.2%, preventing 26.3% hallucinations. Source: 1,000-claim benchmark on NOAA Rule 803(8) data.
+            <strong className="text-sky">F1 delta = +0.215</strong> — ASRE achieves 99.7% accuracy while baseline LLM achieves 78.2%, preventing 26.3% hallucinations. Source: 1,000-claim benchmark on NOAA Rule 803(8) data.
           </p>
         </div>
       </div>

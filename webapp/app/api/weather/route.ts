@@ -8,9 +8,21 @@ export async function GET(req: NextRequest) {
   const month = searchParams.get("month");
   const metric = searchParams.get("metric");
 
+  const ALLOWED_METRICS = new Set([
+    "peak_wind_ms", "avg_wind_ms", "p95_wind_ms",
+    "exceedance_hours", "gale_confirmed", "n_observations",
+  ]);
+
   if (!station_id || !year || !month || !metric) {
     return NextResponse.json(
       { error: "Missing parameters: station_id, year, month, metric" },
+      { status: 400 }
+    );
+  }
+
+  if (!ALLOWED_METRICS.has(metric)) {
+    return NextResponse.json(
+      { error: `Invalid metric. Allowed: ${[...ALLOWED_METRICS].join(", ")}` },
       { status: 400 }
     );
   }
