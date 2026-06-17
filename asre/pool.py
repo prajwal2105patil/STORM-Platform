@@ -41,7 +41,14 @@ class DuckDBPool:
         """
         Context manager. Blocks up to `timeout` seconds for a free connection.
         Raises RuntimeError if pool is exhausted (all workers busy).
+
+        Lazily initializes on first use. The FastAPI app warms the pool in its
+        lifespan, but scripts, tests and benchmarks call the engine directly
+        without that hook — without this, the queue is empty and every acquire
+        blocks for `timeout` then falsely reports "pool exhausted".
         """
+        if not self._initialized:
+            self.initialize(get_settings().DATA_PATH)
         try:
             con = self._pool.get(timeout=timeout)
         except queue.Empty:
