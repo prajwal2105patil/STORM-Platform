@@ -100,6 +100,18 @@ def _get_with_retry(url: str, attempts: int, timeout: int = 60) -> bytes:
     raise last  # type: ignore[misc]
 
 
+def isd_gateway_up(timeout: int = 20) -> bool:
+    """Probe NOAA's isd-lite HTTP gateway. The catalog can load via the S3
+    mirror while this gateway (which serves the hourly DATA files) is down, so
+    we must check it explicitly before launching ~5k downloads. Returns False
+    on 5xx / network error after a short retry."""
+    try:
+        _get_with_retry(NOAA_BASE + "/", attempts=2, timeout=timeout)
+        return True
+    except (HTTPError, URLError):
+        return False
+
+
 def fetch_catalog(active_only: bool = True) -> list[dict]:
     """Download NOAA station catalog, return active Indian stations w/ coords.
 
@@ -262,6 +274,20 @@ def main():
     print("=" * 68)
     print("DREADNOUGHT — NOAA Production Pipeline  (source: ncei.noaa.gov, $0.00)")
     print("=" * 68)
+
+    # Preflight: probe NOAA's gateway ONCE. Catalog + hourly data files both
+    # live on /pub/data/; the catalog has an S3 mirror but the data files do
+    # NOT. So if the gateway is down, fail fast (seconds) instead of grinding
+    # through ~5k doomed downloads. --dry-run skips this (it only needs catalog).
+    if not args.dry_run and not isd_gateway_up():
+        print("\n" + "=" * 68)
+        print("  NOAA gateway DOWN (503) - /pub/data/ is unavailable.")
+        print("  The catalog has an S3 mirror but the hourly DATA files do NOT,")
+        print("  so a rebuild cannot proceed. Skipping the download entirely.")
+        print("  Your existing Supabase data is UNTOUCHED. Re-run when this")
+        print("  returns 200:  https://www.ncei.noaa.gov/pub/data/noaa/isd-lite/")
+        print("=" * 68)
+        sys.exit(2)
 
     print("\n[1/5] Fetching NOAA station catalog ...")
     try:
