@@ -27,6 +27,7 @@ import io
 import gzip
 import argparse
 import statistics
+import time
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
@@ -48,6 +49,14 @@ SUPABASE_KEY      = os.getenv("SUPABASE_SERVICE_KEY")
 
 NOAA_BASE         = "https://www.ncei.noaa.gov/pub/data/noaa/isd-lite"
 CATALOG_URL       = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
+# AWS open-data mirror of the catalog (byte-identical CSV). NOAA's /pub/data/
+# HTTP gateway throws transient 503s; the catalog is mirrored on S3, so we fall
+# back to it. NOTE: the isd-lite DATA files are NOT mirrored here, so a catalog
+# hit via fallback does not guarantee the download step will succeed.
+CATALOG_FALLBACK_URL = "https://noaa-isd-pds.s3.amazonaws.com/isd-history.csv"
+CATALOG_RETRIES   = 4      # attempts per catalog source before giving up
+RETRY_BACKOFF_S   = 3      # base backoff seconds; exponential 3, 6, 12, ...
+MIN_REBUILD_FRACTION = 0.5 # refuse to wipe+reload if incoming < 50% of existing
 YEARS             = range(2015, 2027)   # 2015–2026 (2026 = partial, most recent)
 WIND_THRESHOLD_MS = 17.2                # Beaufort 8 (gale force)
 MAX_WORKERS       = 16                  # concurrent downloads
@@ -68,11 +77,42 @@ USER_AGENT        = {"User-Agent": "DREADNOUGHT-ASRE/2.1"}
 
 
 # ── Step 1: station catalog (dynamic) ─────────────────────────────────────────
+def _get_with_retry(url: str, attempts: int, timeout: int = 60) -> bytes:
+    """GET a URL with exponential backoff. Retries on 5xx + network errors.
+    4xx (except 429) fail fast — they won't fix themselves. Raises the last
+    error if every attempt fails."""
+    last: Exception | None = None
+    for i in range(attempts):
+        try:
+            req = Request(url, headers=USER_AGENT)
+            with urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except HTTPError as e:
+            last = e
+            if e.code < 500 and e.code != 429:
+                raise
+        except URLError as e:
+            last = e
+        if i < attempts - 1:
+            wait = RETRY_BACKOFF_S * (2 ** i)
+            print(f"      ... fetch failed ({last}); retry {i+1}/{attempts-1} in {wait}s")
+            time.sleep(wait)
+    raise last  # type: ignore[misc]
+
+
 def fetch_catalog(active_only: bool = True) -> list[dict]:
-    """Download NOAA station catalog, return active Indian stations w/ coords."""
-    req = Request(CATALOG_URL, headers=USER_AGENT)
-    with urlopen(req, timeout=60) as r:
-        text = r.read().decode("utf-8", errors="ignore")
+    """Download NOAA station catalog, return active Indian stations w/ coords.
+
+    Tries the NOAA primary (with retries), then the S3 mirror. The catalog is
+    mirrored on AWS but the isd-lite data files are not, so a fallback hit does
+    not guarantee the subsequent download step will succeed if NOAA is down.
+    """
+    try:
+        raw = _get_with_retry(CATALOG_URL, CATALOG_RETRIES)
+    except (HTTPError, URLError) as e:
+        print(f"      primary catalog unavailable ({e}); trying S3 mirror ...")
+        raw = _get_with_retry(CATALOG_FALLBACK_URL, CATALOG_RETRIES)
+    text = raw.decode("utf-8", errors="ignore")
 
     rows = []
     for row in csv.DictReader(io.StringIO(text)):
@@ -216,6 +256,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sample",  action="store_true", help="3-station smoke test")
     ap.add_argument("--dry-run", action="store_true", help="catalog only, no Supabase writes")
+    ap.add_argument("--force",   action="store_true", help="override the partial-rebuild safety guard")
     args = ap.parse_args()
 
     print("=" * 68)
@@ -223,7 +264,17 @@ def main():
     print("=" * 68)
 
     print("\n[1/5] Fetching NOAA station catalog ...")
-    stations = fetch_catalog(active_only=True)
+    try:
+        stations = fetch_catalog(active_only=True)
+    except (HTTPError, URLError) as e:
+        print("\n" + "=" * 68)
+        print("  NOAA UNAVAILABLE - catalog failed after retries + S3 fallback.")
+        print(f"  Last error: {e}")
+        print("  This is a transient NOAA outage (their /pub/data/ gateway), not")
+        print("  a data problem. Your existing Supabase data is UNTOUCHED.")
+        print("  Re-run when https://www.ncei.noaa.gov/pub/data/noaa/ returns 200.")
+        print("=" * 68)
+        sys.exit(2)
     print(f"      {len(stations)} active Indian stations with valid coordinates")
 
     if args.sample:
@@ -308,6 +359,20 @@ def main():
     if args.sample:
         print(f"\n[3/5] SAMPLE MODE — skipping weather wipe (additive upsert only)")
     else:
+        # SAFETY GUARD: a PARTIAL NOAA outage can return a handful of stations
+        # while the rest 404. Wiping + reloading with that fraction would gut the
+        # legal-admissibility record. Refuse unless the incoming rebuild is at
+        # least MIN_REBUILD_FRACTION of what is already live (override: --force).
+        existing = sb.table("weather_monthly_stats").select("id", count="exact").limit(1).execute().count or 0
+        incoming = len(all_stats)
+        if existing and incoming < existing * MIN_REBUILD_FRACTION and not args.force:
+            print("\n" + "=" * 68)
+            print(f"  ABORT: incoming rebuild has {incoming} rows but {existing} are live")
+            print(f"  ({incoming / existing * 100:.0f}% < {MIN_REBUILD_FRACTION * 100:.0f}% floor). NOAA may be")
+            print("  partially down. NOT wiping - your data is safe. Re-run when NOAA")
+            print("  is healthy, or pass --force if this shrinkage is intentional.")
+            print("=" * 68)
+            sys.exit(3)
         print(f"\n[3/5] Clearing weather_monthly_stats (stations refreshed via upsert) ...")
         sb.table("weather_monthly_stats").delete().neq("year", -1).execute()
         print("      weather_monthly_stats cleared")
