@@ -17,6 +17,10 @@ const CreateCustomerSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  // Customer records contain PII (emails, phones) — admin-only, not public.
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");

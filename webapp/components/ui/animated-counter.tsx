@@ -19,37 +19,43 @@ export function AnimatedCounter({
   className,
 }: AnimatedCounterProps) {
   const [display, setDisplay] = useState(0);
-  const startRef  = useRef<number | null>(null);
-  const frameRef  = useRef<number>(0);
-  const prevValue = useRef(0);
+  // Track the value we're actually showing. Animating FROM this ref (updated
+  // only inside the rAF callback) makes the counter resilient to React
+  // StrictMode's double effect-invoke: the cancelled first pass never advances
+  // displayRef, so the second pass still animates 0 -> value instead of
+  // short-circuiting on from === to and freezing at 0.
+  const displayRef = useRef(0);
 
   useEffect(() => {
-    const from = prevValue.current;
+    const from = displayRef.current;
     const to   = value;
-    prevValue.current = value;
 
-    if (from === to) return;
+    if (from === to) {
+      setDisplay(to);
+      return;
+    }
+
+    let raf = 0;
+    let start: number | null = null;
 
     const animate = (timestamp: number) => {
-      if (!startRef.current) startRef.current = timestamp;
-      const elapsed  = timestamp - startRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased    = 1 - Math.pow(1 - progress, 3);
-      setDisplay(from + (to - from) * eased);
+      if (start === null) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const current  = from + (to - from) * eased;
+      displayRef.current = current;
+      setDisplay(current);
 
       if (progress < 1) {
-        frameRef.current = requestAnimationFrame(animate);
+        raf = requestAnimationFrame(animate);
       } else {
+        displayRef.current = to;
         setDisplay(to);
       }
     };
 
-    startRef.current = null;
-    cancelAnimationFrame(frameRef.current);
-    frameRef.current = requestAnimationFrame(animate);
-
-    return () => cancelAnimationFrame(frameRef.current);
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
   }, [value, duration]);
 
   const formatted = decimals > 0

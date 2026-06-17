@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Search, Plus, X, Users } from "lucide-react";
+import { Search, Plus, X, Users, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PageHeader }  from "@/components/ui/page-header";
@@ -66,14 +66,22 @@ export default function CustomersPage() {
     company_name: "", contact_name: "", email: "", phone: "", sector: "",
   });
 
+  const [authRequired, setAuthRequired] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "20" });
     if (sectorFilter !== "all") params.set("sector", sectorFilter);
     if (statusFilter !== "all") params.set("account_status", statusFilter);
-    fetch(`/api/customers?${params}`)
-      .then((r) => r.json())
-      .then((d) => { setCustomers(d.customers || []); setTotal(d.total || 0); setLoading(false); })
+    fetch(`/api/customers?${params}`, { headers: { ...adminAuthHeader() } })
+      .then(async (r) => {
+        if (r.status === 401 || r.status === 503) { setAuthRequired(true); return null; }
+        return r.json();
+      })
+      .then((d) => {
+        if (d) { setCustomers(d.customers || []); setTotal(d.total || 0); setAuthRequired(false); }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [page, sectorFilter, statusFilter]);
 
@@ -110,7 +118,7 @@ export default function CustomersPage() {
       setNewCustomer({ company_name: "", contact_name: "", email: "", phone: "", sector: "" });
       setShowModal(false);
       setPage(1);
-      const fetchRes  = await fetch(`/api/customers?page=1&limit=20`);
+      const fetchRes  = await fetch(`/api/customers?page=1&limit=20`, { headers: { ...adminAuthHeader() } });
       const listData  = await fetchRes.json();
       setCustomers(listData.customers || []);
       setTotal(listData.total || 0);
@@ -176,6 +184,20 @@ export default function CustomersPage() {
           <tbody className="divide-y divide-white/6">
             {loading ? (
               [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+            ) : authRequired ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-14 text-center">
+                  <Lock size={32} className="mx-auto text-white/15 mb-3" />
+                  <p className="text-white/50 font-medium">Admin sign-in required</p>
+                  <p className="mt-1 text-xs text-white/35">
+                    Customer records contain PII. Sign in again with your admin password to view them.
+                  </p>
+                  <Link href="/login"
+                    className="mt-3 inline-block text-xs text-sky/70 hover:text-sky font-semibold transition-colors">
+                    Go to sign in →
+                  </Link>
+                </td>
+              </tr>
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-14 text-center">

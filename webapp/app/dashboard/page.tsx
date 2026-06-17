@@ -49,7 +49,7 @@ const PIPELINE_NODES = [
 const SYSTEM_SPECS = [
   { label: "Query Engine",   value: "Supabase PostgreSQL" },
   { label: "LLM Router",     value: "Groq llama-3.1-8b"  },
-  { label: "IDW Stations",   value: "18 NOAA ISD"        },
+  { label: "IDW Stations",   value: "408 NOAA ISD"       },
   { label: "Wind Threshold", value: "17.2 m/s (B8)"      },
   { label: "Max Radius",     value: "300 km"             },
   { label: "Exceedance",     value: "≥ 3 hours"          },
@@ -301,7 +301,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Search Radius",   value: "300 km",     color: "#60B8E0" },
-                  { label: "Station Network", value: "18 NOAA ISD", color: "#22c55e" },
+                  { label: "Station Network", value: "408 NOAA ISD", color: "#22c55e" },
                   { label: "IDW Power",       value: "p = 2",       color: "#a855f7" },
                   { label: "Legal Standard",  value: "Rule 803(8)", color: "#f59e0b" },
                 ].map(({ label, value, color }) => (
