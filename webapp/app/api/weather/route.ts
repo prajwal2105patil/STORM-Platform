@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 
   const ALLOWED_METRICS = new Set([
     "peak_wind_ms", "avg_wind_ms", "p95_wind_ms",
+    "min_wind_ms", "median_wind_ms", "std_wind_ms",
     "exceedance_hours", "gale_confirmed", "n_observations",
   ]);
 

@@ -188,7 +188,10 @@ def aggregate_station(station_id: str, records: list) -> tuple:
         n      = len(winds)
         winds_s = sorted(winds)
         peak   = winds_s[-1]
+        low    = winds_s[0]
         avg    = sum(winds) / n
+        med    = statistics.median(winds_s)
+        std    = statistics.pstdev(winds)   # population: full month of readings
         p95    = winds_s[min(int(0.95 * n), n - 1)]
         exc    = sum(1 for w in winds if w >= WIND_THRESHOLD_MS)
         rows.append({
@@ -197,6 +200,9 @@ def aggregate_station(station_id: str, records: list) -> tuple:
             "month":            month,
             "n_observations":   n,
             "avg_wind_ms":      round(avg, 3),
+            "min_wind_ms":      round(low, 3),
+            "median_wind_ms":   round(med, 3),
+            "std_wind_ms":      round(std, 3),
             "peak_wind_ms":     round(peak, 3),
             "p95_wind_ms":      round(p95, 3),
             "exceedance_hours": exc,
