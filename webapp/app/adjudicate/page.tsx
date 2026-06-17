@@ -354,7 +354,7 @@ export default function AdjudicatePage() {
                 </div>
 
                 <p className="mt-5 text-[9px] text-white/20 font-mono">
-                  NOAA ISD 2015–2026 · 408 stations · Threshold 17.2 m/s (Beaufort 8)
+                  NOAA ISD 2015–2025 · 409 stations · Threshold 17.2 m/s (Beaufort 8)
                 </p>
               </div>
             )}

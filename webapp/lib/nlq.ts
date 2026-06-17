@@ -56,7 +56,11 @@ const MONTHS: Record<string, number> = {
 };
 
 const YEAR_MIN = 2015;
-const YEAR_MAX = 2026;
+// Highest year actually loaded in Supabase. NOAA had not published 2026 ISD-Lite
+// for India at the last rebuild; the pipeline already requests 2026, so bump this
+// to 2026 after the first rebuild that loads 2026 rows. detectYear() still accepts
+// 2026 queries and answers "no data" gracefully until then.
+const YEAR_MAX = 2025;
 
 export interface QueryResult {
   question: string;

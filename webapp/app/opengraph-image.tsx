@@ -48,7 +48,7 @@ export default function OgImage() {
         </div>
 
         <div style={{ display: "flex", gap: 14, marginTop: 44 }}>
-          {["Deterministic engine", "408 real NOAA stations", "$0 cloud spend"].map((t) => (
+          {["Deterministic engine", "409 real NOAA stations", "$0 cloud spend"].map((t) => (
             <div
               key={t}
               style={{

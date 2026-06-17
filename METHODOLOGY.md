@@ -4,7 +4,7 @@
 the system measures, how, and from what data.* If code and this document
 disagree, treat it as a bug in one of them and reconcile.
 
-**Last reviewed:** 2026-06-17 · **Coverage:** 408 Indian stations · 2015–2026 · wind only
+**Last reviewed:** 2026-06-17 · **Coverage:** 409 Indian stations · 2015–2025 (43,117 monthly rows; 2026 not yet published by NOAA) · wind only
 
 ---
 
@@ -33,7 +33,7 @@ must not be conflated.
 | Granularity | Pre-aggregated **monthly** wind stats | Raw **hourly** observations |
 | Variables | **Wind only** | Wind + temperature + pressure + visibility |
 | Perils | Gale-force wind | Wind, temp, pressure (experimental) |
-| Window | 2015–2026 | 6 sample partitions (2022–2023 summer) |
+| Window | 2015–2025 (loaded; pipeline requests 2026) | 6 sample partitions (2022–2023 summer) |
 
 **Honesty rule:** only the **wind** peril is a live capability. The Python
 engine's temperature/pressure perils exist for ablation studies only — see the
@@ -56,8 +56,11 @@ catalog → download (16-way concurrent) → per-station QC → monthly aggregat
 ```
 
 1. **Catalog** — download `isd-history.csv`, select active Indian stations (~408).
-2. **Download** — 408 stations × 2015–2026 station-years of hourly ISD-Lite `.gz`.
-   Missing station-years return empty and are skipped (2026 is partial by design).
+2. **Download** — ~410 catalogued stations × 2015–2026 station-years of hourly
+   ISD-Lite `.gz`. Missing station-years return empty and are skipped. As of the
+   last rebuild NOAA had **no 2026 data for India**, so the loaded window is
+   2015–2025 (409 stations that produced data, 43,117 monthly rows). 2026 will
+   appear automatically on the next rebuild once NOAA publishes it.
 3. **Quality control** — see §4.
 4. **Aggregate** — per `(station, year, month)`: `n_observations`, `avg_wind_ms`,
    `peak_wind_ms`, `p95_wind_ms`, `exceedance_hours`, `gale_confirmed`.
@@ -65,11 +68,11 @@ catalog → download (16-way concurrent) → per-station QC → monthly aggregat
    **upserted, never deleted** (the `claims.nearest_station_id` FK would orphan
    real adjudication records). `--sample` is additive and never wipes production.
 
-> **Operational note:** the deployed UI advertises 2015–2026. That becomes true
-> only after re-running the pipeline:
-> `python scripts/noaa_free_pipeline.py` (needs `SUPABASE_URL` +
-> `SUPABASE_SERVICE_KEY`, ~5–10 min, $0). Until then the live table is whatever
-> the last rebuild loaded.
+> **Operational note:** the live table reflects whatever the last rebuild loaded
+> (currently 2015–2025, 409 stations). To refresh — and to pull 2026 once NOAA
+> publishes it — re-run `python scripts/noaa_free_pipeline.py` (needs
+> `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`, ~5–10 min, $0). The UI date strings
+> must be bumped to match whatever year the rebuild actually loads.
 
 ---
 
