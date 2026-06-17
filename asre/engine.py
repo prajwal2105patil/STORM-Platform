@@ -5,6 +5,25 @@ Autonomous Service Resolution Engine
 LangGraph state machine: 4 nodes, zero cloud spend.
 
 Flow: Intent Router -> SQL Generator -> Execution Cage -> Adjudicator
+
+================================================================================
+ENGINE PARITY NOTE (read before changing thresholds)
+================================================================================
+This Python service is the RESEARCH / BENCHMARK engine. It runs over the rich
+LOCAL DuckDB sample (data/sample/**), which carries wind, temperature and
+pressure, so it supports multiple perils for ablation studies.
+
+The CANONICAL PRODUCTION engine is the web app's `webapp/lib/asre.ts`. Production
+is WIND-ONLY: it reads pre-aggregated monthly wind stats from Supabase
+(2015-2026) and the only deployed peril is gale-force wind.
+
+To keep the two honest, the FORCE-MAJEURE WIND path here uses thresholds
+IDENTICAL to production:
+    - gale threshold      : 17.2 m/s (Beaufort 8)
+    - sustained exceedance: >= MIN_EXCEEDANCE_HOURS (3 h)
+The temperature / pressure perils in METRIC_MAP are EXPERIMENTAL and are NOT
+part of the production deployment. Do not cite them as live capabilities.
+================================================================================
 """
 
 import re
@@ -59,6 +78,16 @@ class ClaimState(TypedDict):
 # ---------------------------------------------------------------------------
 # Node 1 -- Intent Router
 # ---------------------------------------------------------------------------
+
+# Production parity: a force-majeure event must be SUSTAINED, not a single
+# corrupt/instantaneous reading. The web engine (lib/asre.ts) validates only
+# when exceedance >= 3 hours; mirror that gate here so benchmark verdicts match
+# the deployed product. This is the legally-conservative direction.
+MIN_EXCEEDANCE_HOURS = 3
+
+# Perils that exist in the WIND-ONLY production schema. Everything else in
+# METRIC_MAP is experimental/local-only and must not be presented as live.
+PRODUCTION_PERILS = {"wind_speed_ms"}
 
 METRIC_MAP = {
     # Wind
@@ -141,7 +170,7 @@ def intent_router(state: ClaimState) -> ClaimState:
                 "intent_valid": False,
                 "rejection_reason": "Cannot map claim to a measurable weather metric."}
 
-    year_match = re.search(r"\b(201[5-9]|202[0-9])\b", claim)
+    year_match = re.search(r"\b(201[5-9]|202[0-6])\b", claim)
     year = int(year_match.group()) if year_match else None
 
     month = None
@@ -201,7 +230,7 @@ WHERE year = {year}
   AND month = {month}
   {station_clause}
 GROUP BY station, station_name
-HAVING COUNT(*) FILTER (WHERE {metric} {comparator} {threshold}) > 0
+HAVING COUNT(*) FILTER (WHERE {metric} {comparator} {threshold}) >= {min_exceedance}
 ORDER BY threshold_exceedance_count DESC
 LIMIT 10
 """.format(
@@ -212,6 +241,7 @@ LIMIT 10
         year=year,
         month=month,
         station_clause=station_clause,
+        min_exceedance=MIN_EXCEEDANCE_HOURS,
     ).strip()
 
     return {**state, "sql_query": sql}

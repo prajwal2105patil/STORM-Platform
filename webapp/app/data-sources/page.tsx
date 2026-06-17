@@ -22,7 +22,7 @@ export default function DataSourcesPage() {
 
   const facts = [
     { icon: Database, label: "Real Stations", value: total ? total.toLocaleString() : "—", sub: "Active NOAA USAF stations" },
-    { icon: CalendarRange, label: "Record Window", value: "2015–2024", sub: "10 years of hourly observations" },
+    { icon: CalendarRange, label: "Record Window", value: "2015–2026", sub: "11+ years of NOAA hourly observations" },
     { icon: MapPin, label: "Gale Threshold", value: "17.2 m/s", sub: "Beaufort 8, from raw winds" },
     { icon: Globe, label: "Cloud Spend", value: "$0.00", sub: "Rebuilt free from NCEI" },
   ];

@@ -6,7 +6,7 @@
  *
  * Design note: this used to hardcode a stale 18-station list with fake 5-digit
  * IDs and a 2022–2023 window. After the NOAA rebuild (408 stations, 6-digit
- * USAF IDs, 2015–2024, wind-only schema) that broke every query. It now reads
+ * USAF IDs, 2015–2026, wind-only schema) that broke every query. It now reads
  * stations live (like asre.ts) and only references columns that actually exist.
  */
 
@@ -56,7 +56,7 @@ const MONTHS: Record<string, number> = {
 };
 
 const YEAR_MIN = 2015;
-const YEAR_MAX = 2024;
+const YEAR_MAX = 2026;
 
 export interface QueryResult {
   question: string;
@@ -83,7 +83,7 @@ function detectMetric(q: string): string {
 }
 
 function detectYear(q: string): number | null {
-  const m = q.match(/\b(20(?:1[5-9]|2[0-4]))\b/);
+  const m = q.match(/\b(20(?:1[5-9]|2[0-6]))\b/);
   return m ? parseInt(m[1], 10) : null;
 }
 

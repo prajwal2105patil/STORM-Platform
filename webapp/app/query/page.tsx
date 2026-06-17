@@ -119,7 +119,7 @@ export default function QueryPage() {
           </div>
           <p className="font-semibold text-white/80">Ask Anything About NOAA Weather</p>
           <p className="text-sm text-white/35 mt-2 max-w-sm mx-auto leading-relaxed">
-            Peak wind, average wind, and gale-force hours across 408 stations from 2015 to 2024.
+            Peak wind, average wind, and gale-force hours across 408 stations from 2015 to 2026.
           </p>
           <p className="text-[10px] text-white/20 font-mono mt-6 uppercase tracking-widest">
             Groq llama-3.1-8b · DuckDB partition scan · &lt;500ms

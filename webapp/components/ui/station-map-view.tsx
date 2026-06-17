@@ -134,7 +134,7 @@ export default function StationMapView({ stations, arcs, regionColors }: Props) 
                       ))}
                     </div>
                     <div className="mt-2.5 pt-2 border-t border-white/8">
-                      <p className="text-[8px] text-white/25 font-mono">NOAA ISD 2015–2024 · Rule 803(8)</p>
+                      <p className="text-[8px] text-white/25 font-mono">NOAA ISD 2015–2026 · Rule 803(8)</p>
                     </div>
                   </div>
                 </MarkerPopup>
