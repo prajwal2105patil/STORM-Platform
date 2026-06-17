@@ -30,11 +30,12 @@ const ASSET_TYPES = [
 ];
 
 // Demo presets — each is a COMPLETE claim that genuinely VALIDATES against the
-// live NOAA data (real gale month: peak wind >= 17.2 m/s, exceedance >= 3h).
+// QC'd NOAA data (real gale month: peak wind >= 17.2 m/s, exceedance >= 3h).
+// Verified post-rebuild: Nanded 23.7 m/s/6h, Cochin 21.6/4h, Amini 24.7/5h.
 const DEMO_COORDS = [
-  { city: "Nandurbar — Apr 2018", lat: "21.333", lon: "74.25",  start: "2018-04-01", end: "2018-04-30" },
-  { city: "Jalgaon — Mar 2024",   lat: "21.05",  lon: "75.567", start: "2024-03-01", end: "2024-03-31" },
-  { city: "Tirupathi — Mar 2017", lat: "13.667", lon: "79.583", start: "2017-03-01", end: "2017-03-31" },
+  { city: "Nanded — Oct 2021",      lat: "19.083", lon: "77.333", start: "2021-10-01", end: "2021-10-31" },
+  { city: "Cochin — Aug 2021",      lat: "9.946",  lon: "76.272", start: "2021-08-01", end: "2021-08-31" },
+  { city: "Lakshadweep — Oct 2019", lat: "11.117", lon: "72.733", start: "2019-10-01", end: "2019-10-31" },
 ];
 
 const FORM_SECTIONS = [

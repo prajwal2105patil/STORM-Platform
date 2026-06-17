@@ -26,6 +26,7 @@ import csv
 import io
 import gzip
 import argparse
+import statistics
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
@@ -51,6 +52,17 @@ YEARS             = range(2015, 2025)   # 10 years
 WIND_THRESHOLD_MS = 17.2                # Beaufort 8 (gale force)
 MAX_WORKERS       = 16                  # concurrent downloads
 ACTIVE_SINCE      = "20240101"          # station must report at least into 2024
+
+# ── Wind QC (legal admissibility) ─────────────────────────────────────────────
+# Raw ISD-Lite files for some Indian stations contain blocks of corrupt high
+# readings (~40-50 m/s) that are physically impossible for an HOURLY MEAN
+# surface wind. Left unfiltered, a single bad reading fabricates a "gale" and
+# the adjudication validates on garbage — indefensible under Rule 803(8).
+# We reject readings above a per-station robust envelope, clamped physically.
+PHYS_CEILING_MS   = 30.0   # hourly-MEAN surface wind above this = sensor error
+GALE_PRESERVE_MS  = 25.0   # never reject <= this, so genuine gales (>=17.2) survive
+MAD_K             = 5.0    # extreme-outlier multiplier on robust (MAD) spread
+MIN_QC_SAMPLE     = 30     # need this many readings to trust per-station stats
 
 USER_AGENT        = {"User-Agent": "DREADNOUGHT-ASRE/2.1"}
 
@@ -132,14 +144,45 @@ def fetch_and_parse(usaf: str, wban: str, year: int) -> list:
     return out
 
 
-# ── Step 3: monthly aggregation ────────────────────────────────────────────────
-def aggregate(records: list, station_id: str, year: int) -> list:
-    by_month = defaultdict(list)
-    for mo, wind in records:
-        by_month[mo].append(wind)
+# ── Step 3: per-station QC + monthly aggregation ───────────────────────────────
+def station_wind_ceiling(winds: list) -> float:
+    """Per-station robust upper bound for a valid hourly-mean wind reading.
+
+    Statistical (per-station MAD envelope) anchored by physical limits:
+
+        ceiling = clamp( median + MAD_K * 1.4826*MAD,  GALE_PRESERVE_MS .. PHYS_CEILING_MS )
+
+    - Lower clamp (25 m/s) guarantees every genuine gale (>= 17.2) survives.
+    - Upper clamp (30 m/s) removes corruption even when a whole station is
+      mostly bad (which would otherwise inflate its own median).
+    - MAD is robust: a minority of corrupt readings does not move it.
+    """
+    if len(winds) < MIN_QC_SAMPLE:
+        return PHYS_CEILING_MS
+    med = statistics.median(winds)
+    mad = statistics.median([abs(w - med) for w in winds]) * 1.4826  # ~sigma
+    stat = med + MAD_K * mad
+    return min(PHYS_CEILING_MS, max(GALE_PRESERVE_MS, stat))
+
+
+def aggregate_station(station_id: str, records: list) -> tuple:
+    """records = list of (year, month, wind) across ALL years for one station.
+
+    Computes the station's QC ceiling from its full record, then aggregates
+    monthly stats on the QC-passed readings. Returns (rows, n_rejected).
+    """
+    ceiling = station_wind_ceiling([w for (_, _, w) in records])
+
+    by_ym = defaultdict(list)
+    n_rejected = 0
+    for year, month, wind in records:
+        if wind > ceiling:
+            n_rejected += 1
+            continue
+        by_ym[(year, month)].append(wind)
 
     rows = []
-    for month, winds in sorted(by_month.items()):
+    for (year, month), winds in sorted(by_ym.items()):
         if not winds:
             continue
         n      = len(winds)
@@ -159,7 +202,7 @@ def aggregate(records: list, station_id: str, year: int) -> list:
             "exceedance_hours": exc,
             "gale_confirmed":   exc >= 3 and peak >= WIND_THRESHOLD_MS,
         })
-    return rows
+    return rows, n_rejected
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -192,12 +235,12 @@ def main():
         print("\n      Exiting (no downloads, no Supabase writes).")
         return
 
-    # ── Download + aggregate concurrently ──────────────────────────────────────
+    # ── Download concurrently, collect raw readings per station ─────────────────
     print(f"\n[2/5] Downloading {total_files} files (concurrent, {MAX_WORKERS} workers) ...")
-    all_stats   = []
+    station_recs = defaultdict(list)   # sid -> [(year, month, wind), ...] across all years
     found       = 0
     done        = 0
-    lock_print  = 0
+    raw_obs     = 0
 
     def task(s, year):
         recs = fetch_and_parse(s["id"], s["wban"], year)
@@ -210,12 +253,25 @@ def main():
             done += 1
             if recs:
                 found += 1
-                all_stats.extend(aggregate(recs, sid, year))
+                for mo, wind in recs:
+                    station_recs[sid].append((year, mo, wind))
+                raw_obs += len(recs)
             if done % 250 == 0 or done == total_files:
                 pct = done / total_files * 100
-                print(f"      {done:5d}/{total_files} ({pct:4.0f}%)  files_with_data={found}  monthly_rows={len(all_stats)}")
+                print(f"      {done:5d}/{total_files} ({pct:4.0f}%)  files_with_data={found}  raw_obs={raw_obs}")
 
+    # ── Per-station QC + monthly aggregation ────────────────────────────────────
     print(f"\n      Files with data : {found}/{total_files}")
+    print(f"      Raw observations: {raw_obs}")
+    all_stats     = []
+    total_reject  = 0
+    for sid, recs in station_recs.items():
+        rows, nrej = aggregate_station(sid, recs)
+        all_stats.extend(rows)
+        total_reject += nrej
+    rej_pct = (total_reject / raw_obs * 100) if raw_obs else 0
+    print(f"      QC rejected     : {total_reject} implausible readings ({rej_pct:.2f}%) "
+          f"[per-station MAD envelope, capped {GALE_PRESERVE_MS}-{PHYS_CEILING_MS} m/s]")
     print(f"      Monthly rows    : {len(all_stats)}")
     if not all_stats:
         print("\nERROR: no data downloaded — check internet connection.")
@@ -234,16 +290,21 @@ def main():
         for s in stations if s["id"] in stations_with_data
     ]
 
-    # ── Wipe synthetic data (order matters: weather FK -> stations) ─────────────
+    # ── Refresh data ───────────────────────────────────────────────────────────
     # SAFETY: --sample is an additive smoke test — it must NOT wipe production
-    # data. Only a full rebuild clears the tables.
+    # data. Only a full rebuild clears the weather table.
+    #
+    # We wipe weather_monthly_stats (no inbound FK) and re-upsert it fresh, but
+    # we do NOT delete `stations`: the `claims` table FK-references stations via
+    # nearest_station_id, so a blanket delete fails (23503) and would orphan real
+    # adjudication records. Stations carry stable real USAF IDs, so the upsert in
+    # [4/5] idempotently refreshes them; any station cited by a claim is kept.
     if args.sample:
-        print(f"\n[3/5] SAMPLE MODE — skipping table wipe (additive upsert only)")
+        print(f"\n[3/5] SAMPLE MODE — skipping weather wipe (additive upsert only)")
     else:
-        print(f"\n[3/5] Clearing synthetic data from Supabase ...")
+        print(f"\n[3/5] Clearing weather_monthly_stats (stations refreshed via upsert) ...")
         sb.table("weather_monthly_stats").delete().neq("year", -1).execute()
-        sb.table("stations").delete().neq("id", "__none__").execute()
-        print("      weather_monthly_stats + stations cleared")
+        print("      weather_monthly_stats cleared")
 
     # ── Load stations ───────────────────────────────────────────────────────────
     print(f"\n[4/5] Loading {len(station_rows)} real stations ...")
