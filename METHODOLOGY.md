@@ -121,6 +121,13 @@ VALIDATED  ⟺  peak_wind ≥ 17.2 m/s  AND  exceedance_hours ≥ 3
 - **≥ 3 hours** = *sustained* event. A single exceeding hour is not a force-majeure
   event. The Python engine enforces this via `MIN_EXCEEDANCE_HOURS = 3` in its SQL
   `HAVING` clause (aligned 2026-06-17 — re-run benchmarks after this change).
+- **Single-month rule (production).** For a multi-month claim window the gate is
+  evaluated against the **strongest single calendar month**, not the sum across
+  months (`bestExceedance = max(...)` in `lib/asre.ts`, set 2026-06-17). Summing
+  non-contiguous months could validate two brief gusts weeks apart as one
+  "sustained" event; the single-month rule is conservative (favours rejection
+  under ambiguity — the legally safer bias). Events straddling a month boundary
+  should be filed against their dominant month.
 
 Rejection labels: `REJECTED_NON_WEATHER`, `REJECTED_BELOW_THRESHOLD`,
 `REJECTED_WRONG_MONTH`, `REJECTED_MALFORMED_COORDS`, `INSUFFICIENT_DATA`
@@ -141,7 +148,14 @@ Rejection labels: `REJECTED_NON_WEATHER`, `REJECTED_BELOW_THRESHOLD`,
 
 - **Geography:** India only. New regions = re-run the pipeline with a different
   `CTRY` filter.
-- **Peril:** wind only in production. Temp/pressure are not deployed.
+- **Peril:** wind only in production. Temp/pressure are not deployed. The
+  adjudicate form exposes **wind-driven causes only** (cyclone, gale, high-wind);
+  storm-surge / tornado were removed because hourly-mean wind cannot measure them.
+- **Benchmark is synthetic & self-consistent.** `benchmarks/benchmark_asre.py`
+  labels claims by the same rules the adjudicator applies, so its ~0.997 score
+  measures routing **consistency**, not real-world accuracy. The "baseline" is a
+  **simulated** stochastic control — **no live LLM is run**. Never cite it as a
+  measured win over a production model.
 - **Resolution:** monthly aggregates in production (hourly only in the local
   sample). Exceedance is counted at hourly resolution *before* aggregation.
 - **2026 is partial** — current-year data lags real time by NOAA's publish cadence.

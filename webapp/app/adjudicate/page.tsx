@@ -20,9 +20,12 @@ const INPUT_CLS = [
 
 const SELECT_CLS = INPUT_CLS + " cursor-pointer";
 
+// Wind-driven perils ONLY — the engine adjudicates strictly on sustained
+// surface wind from NOAA ISD (peak ≥ 17.2 m/s, ≥3h). Non-wind perils
+// (storm surge, tornado touchdown) are NOT measured by hourly-mean wind and
+// were removed so the form can't promise an evaluation the engine can't make.
 const CAUSES = [
-  "Cyclone / Hurricane", "Gale Force Wind", "Storm Surge",
-  "Tornado", "Severe Weather Event", "High Wind Event",
+  "Cyclone / Hurricane", "Gale Force Wind", "High Wind Event",
 ];
 
 const ASSET_TYPES = [
@@ -342,7 +345,7 @@ export default function AdjudicatePage() {
                 {/* IDW stats */}
                 <div className="mt-6 grid grid-cols-3 gap-2 text-xs">
                   {[
-                    { label: "Stations", value: "18" },
+                    { label: "Stations", value: "409" },
                     { label: "Radius",   value: "300km" },
                     { label: "Latency",  value: "<500ms" },
                   ].map(({ label, value }) => (

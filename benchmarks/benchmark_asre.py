@@ -4,6 +4,16 @@ DS-PAF Benchmark v2 — 1,000-Claim Synthetic Evaluation
 Scientific claim: "Deterministic graph-constrained routing reduces LLM
 hallucination in geospatial-legal force-majeure query resolution."
 
+HONESTY / SCOPE — read before citing any number:
+  * This is a SELF-CONSISTENCY evaluation on SYNTHETIC claims. The generators
+    label each claim by the same rules the adjudicator applies, so a high
+    ASRE score demonstrates routing DISCIPLINE/consistency — not real-world
+    accuracy or generalization.
+  * The "baseline" is a SIMULATED control (a calibrated coin-flip on the
+    ground-truth label, `adjudicate_baseline` below). NO live LLM is invoked.
+    It is NOT a measured win over GPT-4 or any production model.
+  * Do not present these figures as a competitive benchmark against a real LLM.
+
 All VALIDATED combos pre-verified against DuckDB Parquet sample.
 Zero cloud spend. seed=42 for full reproducibility.
 """
@@ -286,9 +296,12 @@ def adjudicate_asre(claim):
             "wind_peak_ms":round(peak,2),"exceedance_hours":int(exc),
             "station_id":sid,"station_dist_km":round(dist_km,2)}
 
-# ── Unconstrained LLM Baseline ────────────────────────────────────────────
-# Per-class hallucination probabilities (calibrated from literature on
-# unconstrained GPT-4-class models on structured geospatial-legal tasks)
+# ── SIMULATED Unconstrained-LLM Control (no live model invoked) ────────────
+# This is NOT a real LLM. It is a stochastic control: it corrupts the KNOWN
+# ground-truth label with per-class probabilities (calibrated from published
+# literature on unconstrained GPT-4-class models on structured geospatial-legal
+# tasks). It exists to illustrate the cost of unrouted generation — it must not
+# be cited as a measured benchmark against a production model.
 HALLUCINATION = {
     "VALIDATED":                 ("REJECTED_BELOW_THRESHOLD", 0.18),
     "REJECTED_WRONG_MONTH":      ("VALIDATED",                0.38),

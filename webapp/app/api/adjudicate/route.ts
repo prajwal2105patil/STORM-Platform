@@ -6,22 +6,28 @@ import { ClaimPayload } from "@/types";
 import { z } from "zod";
 
 // ── Input schema (Pydantic equivalent for TypeScript) ────────────────────────
+// Length caps: this is an INTENTIONALLY PUBLIC, rate-limited product endpoint
+// (claim submission), so attacker-controlled text fields are bounded to stop
+// oversized-row / junk flooding. Downstream consumers must still escape these
+// (the report route does via esc(); the claims list renders them as React text).
 const ClaimSchema = z.object({
-  petitioner:        z.string().min(1),
-  respondent:        z.string().optional(),
-  asset_name:        z.string().min(1),
-  asset_type:        z.string().optional(),
+  petitioner:        z.string().min(1).max(200),
+  respondent:        z.string().max(200).optional(),
+  asset_name:        z.string().min(1).max(200),
+  asset_type:        z.string().max(80).optional(),
   asset_lat:         z.number().min(-90).max(90),
   asset_lon:         z.number().min(-180).max(180),
-  asset_capacity_mw: z.number().optional(),
+  asset_capacity_mw: z.number().min(0).max(100000).optional(),
   start_date:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   end_date:          z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  claimed_cause:     z.string().min(1),
-  claimed_loss_inr:  z.number().optional(),
+  claimed_cause:     z.string().min(1).max(120),
+  claimed_loss_inr:  z.number().min(0).max(1e15).optional(),
   customer_id:       z.string().uuid().optional(),
 });
 
 export async function POST(req: NextRequest) {
+  // Public-by-design (see lib/auth.ts): claim submission is the core product
+  // action — open but rate-limited (10/min/IP) and strictly Zod-validated above.
   // Rate limit: 10 claims per minute per IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
   const { allowed, remaining, resetAt } = rateLimit(ip, "adjudicate", 10, 60_000);

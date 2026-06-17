@@ -44,7 +44,7 @@ export default function OgImage() {
         </div>
 
         <div style={{ fontSize: 30, color: "#9fc6e0", marginTop: 28, maxWidth: 920 }}>
-          99.7% accuracy · 0% hallucination · NOAA Rule 803(8) public records
+          99.7% on synthetic benchmark · deterministic verdicts · NOAA Rule 803(8)
         </div>
 
         <div style={{ display: "flex", gap: 14, marginTop: 44 }}>

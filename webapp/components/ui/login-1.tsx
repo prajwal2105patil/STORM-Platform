@@ -122,21 +122,54 @@ export default function LoginCard() {
   const [loading, setLoading] = useState<false | "form" | "google">(false);
   const [mouse, setMouse]     = useState({ x: 0, y: 0 });
   const [hover, setHover]     = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const isSignup = mode === "signup";
 
-  // Pilot auth: the typed password IS the admin write-key (shared secret).
-  // It is stored only in this browser's sessionStorage and sent as a Bearer
-  // token on admin writes — never bundled into the build. The server compares
-  // it against ADMIN_API_SECRET. Reads stay public; only writes are gated.
-  const completeAuth = (via: "form" | "google", adminKey?: string) => {
+  // Pilot auth: the typed password IS the admin key (shared secret). We VERIFY
+  // it against the server before storing it or redirecting, so a wrong key is
+  // rejected here at sign-in instead of granting a hollow session that only
+  // fails later on a write. The key lives only in this browser's sessionStorage
+  // (never bundled into the build) and is sent as a Bearer token on admin
+  // writes, where the server compares it against ADMIN_API_SECRET.
+  const completeAuth = async (via: "form" | "google", adminKey?: string) => {
     if (loading) return;
-    if (adminKey && typeof window !== "undefined") {
-      sessionStorage.setItem("asre_admin_key", adminKey);
+    setAuthError(null);
+
+    if (!adminKey) {
+      setAuthError("Enter your admin key in the password field to sign in.");
+      return;
     }
+
     setLoading(via);
-    setTimeout(() => router.push("/dashboard"), 900);
+    try {
+      const res = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${adminKey}` },
+      });
+      if (!res.ok) {
+        setAuthError(
+          res.status === 503
+            ? "Server auth is not configured (ADMIN_API_SECRET missing)."
+            : "Invalid admin key. Check your credentials and try again."
+        );
+        setLoading(false);
+        return;
+      }
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("asre_admin_key", adminKey);
+      }
+      router.push("/dashboard");
+    } catch {
+      setAuthError("Network error verifying credentials. Please try again.");
+      setLoading(false);
+    }
   };
+
+  // The social buttons are not wired to a real OAuth provider in the pilot.
+  // They must NOT grant a keyless session — point users at the admin key.
+  const socialUnavailable = () =>
+    setAuthError("Social sign-in isn't enabled in the pilot — use your admin key below.");
 
   return (
     <>
@@ -198,7 +231,7 @@ export default function LoginCard() {
             {/* Google auth — primary OAuth option */}
             <button
               type="button"
-              onClick={() => completeAuth("google")}
+              onClick={socialUnavailable}
               disabled={!!loading}
               className="w-full h-11 rounded-xl bg-white text-gray-800 text-sm font-semibold flex items-center justify-center gap-2.5 transition-all duration-200 hover:bg-gray-100 hover:scale-[1.01] hover:shadow-lg hover:shadow-white/10 disabled:opacity-60 disabled:cursor-wait cursor-pointer"
             >
@@ -215,17 +248,17 @@ export default function LoginCard() {
 
             {/* Other providers + divider */}
             <div className="flex items-center gap-3">
-              <SocialButton label="Continue with Instagram" onClick={() => completeAuth("form")}>
+              <SocialButton label="Continue with Instagram" onClick={socialUnavailable}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4zm9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8A1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5a5 5 0 0 1-5 5a5 5 0 0 1-5-5a5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3a3 3 0 0 0 3 3a3 3 0 0 0 3-3a3 3 0 0 0-3-3"/>
                 </svg>
               </SocialButton>
-              <SocialButton label="Continue with LinkedIn" onClick={() => completeAuth("form")}>
+              <SocialButton label="Continue with LinkedIn" onClick={socialUnavailable}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M6.94 5a2 2 0 1 1-4-.002a2 2 0 0 1 4 .002M7 8.48H3V21h4zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-4 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.72-2.91z"/>
                 </svg>
               </SocialButton>
-              <SocialButton label="Continue with Facebook" onClick={() => completeAuth("form")}>
+              <SocialButton label="Continue with Facebook" onClick={socialUnavailable}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396z"/>
                 </svg>
@@ -298,6 +331,15 @@ export default function LoginCard() {
                 </div>
               )}
 
+              {authError && (
+                <p
+                  role="alert"
+                  className="text-xs text-red-300 bg-red-500/10 border border-red-500/25 rounded-lg px-3 py-2"
+                >
+                  {authError}
+                </p>
+              )}
+
               <button
                 type="submit"
                 disabled={!!loading}
@@ -336,7 +378,7 @@ export default function LoginCard() {
 
             {/* Legal footer */}
             <p className="text-[9px] text-white/18 text-center font-mono tracking-wide">
-              NOAA Rule 803(8) · Legal-grade meteorological evidence · 100% adjudication accuracy
+              NOAA Rule 803(8) · Legal-grade meteorological evidence · Deterministic adjudication
             </p>
 
           </div>
@@ -376,7 +418,7 @@ export default function LoginCard() {
 
           {/* Stat chips in four quadrants */}
           <div className="absolute top-[14%] left-[10%] z-20">
-            <StatChip value="18" label="NOAA Stations" delay={0.4} />
+            <StatChip value="409" label="NOAA Stations" delay={0.4} />
           </div>
           <div className="absolute top-[18%] right-[8%] z-20">
             <StatChip value="300 km" label="IDW Radius" delay={0.55} />

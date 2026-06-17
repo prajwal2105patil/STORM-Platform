@@ -22,14 +22,14 @@ export default function BenchmarkPage() {
       icon: Target,
       label: "Macro F1",
       value: pct(asre.macroF1, 1),
-      sub: `vs ${pct(baseline.macroF1, 1)} for an unconstrained LLM`,
+      sub: `vs ${pct(baseline.macroF1, 1)} for a simulated unrouted control`,
       tone: "green",
     },
     {
       icon: ShieldCheck,
-      label: "Hallucination Rate",
+      label: "False-Positive Rate",
       value: pct(asre.falsePositiveRate, 0),
-      sub: `LLM baseline hallucinated on ${pct(baseline.hallucinationRate, 1)} of claims`,
+      sub: `simulated control erred on ${pct(baseline.hallucinationRate, 1)} of claims`,
       tone: "sky",
     },
     {
@@ -102,14 +102,17 @@ export default function BenchmarkPage() {
               <GitBranch size={18} className="text-white" />
             </div>
             <div>
-              <p className="font-bold text-white mb-1">Why a deterministic engine beats a bigger model</p>
+              <p className="font-bold text-white mb-1">Why deterministic routing beats unrouted generation</p>
               <p className="text-sm text-white/55 leading-relaxed">
                 ASRE routes every claim through a fixed decision tree backed by NOAA observations — the same
-                input always yields the same verdict, with a citable evidence trail. An unconstrained LLM
-                fabricated a favorable outcome on <strong className="text-amber-300">{pct(baseline.hallucinationRate, 1)}</strong> of
-                claims (mostly false <em>VALIDATED</em> rulings). In a legal-admissibility setting, a single
-                hallucinated approval is a paid-out fraudulent claim. ASRE&apos;s false-positive rate is{" "}
-                <strong className="text-green-400">{pct(asre.falsePositiveRate, 0)}</strong>.
+                input always yields the same verdict, with a citable evidence trail. The comparison is against
+                a <strong>simulated</strong> unrouted control (a calibrated stochastic model, <strong>not a live
+                LLM</strong>) that erred on <strong className="text-amber-300">{pct(baseline.hallucinationRate, 1)}</strong> of
+                claims (mostly false <em>VALIDATED</em> rulings) — illustrating the cost of unrouted generation
+                in a legal-admissibility setting. ASRE&apos;s false-positive rate is{" "}
+                <strong className="text-green-400">{pct(asre.falsePositiveRate, 0)}</strong>. This is a
+                self-consistency benchmark on synthetic claims — see METHODOLOGY.md, not a measured win over a
+                production model.
               </p>
             </div>
           </div>
@@ -117,9 +120,9 @@ export default function BenchmarkPage() {
 
         {/* ── Per-class comparison ────────────────────────────────────── */}
         <div className="glass-card-dark rounded-2xl p-6">
-          <h2 className="text-sm font-bold text-white mb-1">Per-class F1 — ASRE vs Unconstrained LLM</h2>
+          <h2 className="text-sm font-bold text-white mb-1">Per-class F1 — ASRE vs Simulated Control</h2>
           <p className="text-xs text-white/35 mb-5">
-            Each row is a claim category. Bar length = F1 score. Green = ASRE, grey = LLM baseline.
+            Each row is a claim category. Bar length = F1 score. Green = ASRE, grey = simulated control.
           </p>
           <div className="space-y-4">
             {asre.rows.map((row, i) => {
@@ -160,7 +163,7 @@ export default function BenchmarkPage() {
               <div key={k}>
                 <p className="text-[10px] uppercase tracking-widest text-white/35 mb-1">{k}</p>
                 <p className="text-lg font-extrabold text-green-400 tabular-nums">{pct(a, 1)}</p>
-                <p className="text-[11px] text-white/35 tabular-nums">{pct(b, 1)} LLM</p>
+                <p className="text-[11px] text-white/35 tabular-nums">{pct(b, 1)} ctrl</p>
               </div>
             ))}
           </div>

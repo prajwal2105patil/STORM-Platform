@@ -32,7 +32,7 @@ interface AnalyticsData {
 
 const BENCHMARK = {
   asre:     { name: "ASRE (Routed)",           precision: 0.997, recall: 0.997, f1: 0.997, support: 1000 },
-  baseline: { name: "Baseline LLM (Unrouted)", precision: 0.79,  recall: 0.73,  f1: 0.782, support: 1000 },
+  baseline: { name: "Simulated Unrouted Control", precision: 0.79,  recall: 0.73,  f1: 0.782, support: 1000 },
 };
 
 const CHART_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#60B8E0"];
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
           { label: "Total Claims",           value: snap.total_claims.toLocaleString(),    change: "+20.1%", icon: TrendingUp,  color: "text-sky-400",    bg: "bg-sky-500/10"    },
           { label: "Active Customers",        value: snap.total_customers.toLocaleString(), change: "+15.3%", icon: Activity,    color: "text-violet-400", bg: "bg-violet-500/10" },
           { label: "Validated Claims",        value: snap.validated.toLocaleString(),       change: `${snap.approval_rate.toFixed(1)}%`, icon: BarChart3, color: "text-green-400", bg: "bg-green-500/10" },
-          { label: "Hallucinations Blocked",  value: snap.hallucination_prevented.toLocaleString(), change: "–26.3%",   icon: PieIcon, color: "text-amber-400", bg: "bg-amber-500/10"  },
+          { label: "Hallucinations Avoided (proj.)",  value: snap.hallucination_prevented.toLocaleString(), change: "–26.3%",   icon: PieIcon, color: "text-amber-400", bg: "bg-amber-500/10"  },
         ].map(({ label, value, change, icon: Icon, color, bg }) => (
           <div key={label} className="glass-card-dark rounded-2xl p-5 border border-white/8 shadow-glass-md">
             <div className="flex items-center justify-between mb-3">
@@ -346,13 +346,13 @@ export default function AnalyticsPage() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-amber-400/70 text-[10px] font-bold uppercase tracking-widest mb-2">
-              Hallucinations Prevented
+              Projected Hallucinations Avoided
             </p>
             <p className="text-5xl font-extrabold tabular-nums text-amber-300">
               <AnimatedCounter value={snap.hallucination_prevented} />
             </p>
             <p className="text-amber-400/60 text-sm mt-3">
-              26.3% baseline rate × <AnimatedCounter value={snap.total_claims} /> adjudicated claims
+              Projected at the 26.3% simulated-control rate × <AnimatedCounter value={snap.total_claims} /> adjudicated claims
             </p>
           </div>
           <AlertTriangle size={44} className="text-amber-400/40 flex-shrink-0" />
@@ -446,7 +446,7 @@ export default function AnalyticsPage() {
 
       {/* ── Benchmark ───────────────────────────────────────────────── */}
       <div className="glass-card-dark rounded-2xl p-6 shadow-glass-md">
-        <h2 className="text-sm font-bold text-white mb-5">Benchmark: ASRE vs Baseline LLM</h2>
+        <h2 className="text-sm font-bold text-white mb-5">Benchmark: ASRE vs Simulated Control</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {[BENCHMARK.asre, BENCHMARK.baseline].map(model => {
             const perfect = model.f1 === 1.0;
@@ -492,7 +492,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="mt-5 p-4 bg-sky/8 border border-sky/20 rounded-xl">
           <p className="text-sm text-sky/80">
-            <strong className="text-sky">F1 delta = +0.215</strong> — ASRE achieves 99.7% accuracy while baseline LLM achieves 78.2%, preventing 26.3% hallucinations. Source: 1,000-claim benchmark on NOAA Rule 803(8) data.
+            <strong className="text-sky">F1 delta = +0.215</strong> — ASRE scores 99.7% vs a <strong>simulated</strong> unrouted-LLM control at 78.2% on a 1,000-claim synthetic benchmark (seed=42, reproducible). The control is a calibrated stochastic model, <strong>not a live LLM</strong> — see METHODOLOGY.md §benchmark. Demonstrates routing-discipline consistency, not a measured win over a production model.
           </p>
         </div>
       </div>

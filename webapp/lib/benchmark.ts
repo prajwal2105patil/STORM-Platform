@@ -1,10 +1,14 @@
 /**
  * benchmark.ts — Single source of truth for the public benchmark figures.
  *
- * These are the REAL results from benchmarks/benchmark_asre.py (seed=42, 1000
- * claims, NOAA Rule 803(8) sample). Mirrored here so the website never
- * fabricates numbers. Regenerate with `python benchmarks/benchmark_asre.py`
- * and update from benchmarks/benchmark_summary.json.
+ * These are the results from benchmarks/benchmark_asre.py (seed=42, 1000
+ * SYNTHETIC claims, NOAA Rule 803(8) sample). Mirrored here so the website
+ * never fabricates numbers. Regenerate with `python benchmarks/benchmark_asre.py`.
+ *
+ * HONESTY: this is a self-consistency evaluation on synthetic claims, and the
+ * "baseline" is a SIMULATED stochastic control — NO live LLM is run. It must be
+ * presented as a routing-discipline demonstration, not a measured win over a
+ * production model. See METHODOLOGY.md (§7) and the disclaimer on /benchmark.
  */
 
 export interface ClassRow {
@@ -42,7 +46,7 @@ export const BENCHMARK = {
   },
 
   baseline: {
-    name: "Unconstrained LLM",
+    name: "Simulated Unrouted Control",
     macroF1: 0.7822,
     macroPrecision: 0.904,
     macroRecall: 0.7353,

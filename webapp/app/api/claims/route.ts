@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  // Claims carry petitioner / asset / financial PII. Admin-only — the registry
+  // must not be publicly enumerable (it also leaks the UUIDs used by the
+  // evidence-report route). Consistent with /api/customers and /api/policy.
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const { searchParams } = new URL(req.url);
   const page     = parseInt(searchParams.get("page")   || "1");
   const limit    = parseInt(searchParams.get("limit")  || "20");

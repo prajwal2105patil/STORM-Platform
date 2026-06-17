@@ -14,12 +14,17 @@ import { getServiceClient } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  // Fail CLOSED, mirroring requireAdmin in lib/auth.ts: an unconfigured secret
+  // must NOT leave this DB-touching endpoint publicly hammerable. Vercel Cron
+  // auto-sends `Authorization: Bearer ${CRON_SECRET}` — set CRON_SECRET in the
+  // Vercel env or this route (and the keepalive) will correctly refuse to run.
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!secret || secret.length < 16) {
+    return NextResponse.json({ error: "Cron auth not configured" }, { status: 503 });
+  }
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

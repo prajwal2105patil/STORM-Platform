@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/auth";
 
 /**
  * HTML-escape any value before it is interpolated into the report markup.
@@ -23,6 +24,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // The report contains full claim PII + the legal evidence packet. Admin-only.
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   const { id } = await params;
   const supabase = getServiceClient();
   const { data: claim, error } = await supabase

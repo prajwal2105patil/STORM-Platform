@@ -289,7 +289,11 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
 
   // For each (year, month), compute IDW-weighted peak wind across stations
   let idwPeakWind = 0;
-  let totalExceedance = 0;
+  // Best SINGLE-month sustained exceedance across the window — NOT the sum.
+  // Summing non-contiguous months could validate two brief gusts weeks apart
+  // as one "sustained" event; a force-majeure gale must clear the ≥3h bar
+  // within a single calendar month. Conservative by design (legal safety).
+  let bestExceedance = 0;
 
   for (const ym of ymPairs) {
     const monthRows = stats.filter(
@@ -310,7 +314,7 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
     const maxExceedance = Math.max(...weighted.map((w) => w.exceedance_hours));
 
     idwPeakWind = Math.max(idwPeakWind, idwWind);
-    totalExceedance += maxExceedance;
+    bestExceedance = Math.max(bestExceedance, maxExceedance);
   }
 
   const peakWind = idwPeakWind > 0 ? idwPeakWind : Math.max(...stats.map((s: any) => s.peak_wind_ms));
@@ -319,16 +323,16 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   nodePath.push("Adjudicator");
 
   const validated =
-    peakWind >= WIND_THRESHOLD_MS && totalExceedance >= EXCEEDANCE_HOURS;
+    peakWind >= WIND_THRESHOLD_MS && bestExceedance >= EXCEEDANCE_HOURS;
 
   const label = validated ? "VALIDATED" : "REJECTED_BELOW_THRESHOLD";
 
   const legalSummary = validated
     ? `VALIDATED under NOAA Rule 803(8). Station: ${nearest.station.name} ` +
       `(${Math.round(nearest.distKm)}km). Peak wind: ${peakWind.toFixed(1)} m/s. ` +
-      `Exceedance: ${totalExceedance}h ≥ ${EXCEEDANCE_HOURS}h threshold.`
+      `Exceedance: ${bestExceedance}h ≥ ${EXCEEDANCE_HOURS}h threshold.`
     : `REJECTED: Peak wind ${peakWind.toFixed(1)} m/s (threshold ${WIND_THRESHOLD_MS} m/s) ` +
-      `or exceedance ${totalExceedance}h < ${EXCEEDANCE_HOURS}h required. ` +
+      `or exceedance ${bestExceedance}h < ${EXCEEDANCE_HOURS}h required. ` +
       `Station: ${nearest.station.name}.`;
 
   return {
@@ -338,7 +342,7 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
     nearest_station_id: nearest.station.id,
     nearest_station_km: Math.round(nearest.distKm * 10) / 10,
     peak_wind_ms:       Math.round(peakWind * 100) / 100,
-    exceedance_hours:   totalExceedance,
+    exceedance_hours:   bestExceedance,
     idw_confidence:     Math.round(nearest.confidence * 1000) / 1000,
     node_path:          nodePath,
     processing_ms:      Date.now() - startMs,

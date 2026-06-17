@@ -8,6 +8,7 @@ import {
   ListFilter, Columns,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { adminAuthHeader } from "@/lib/admin-token";
 import Link from "next/link";
 import { VerdictBadge }  from "@/components/ui/verdict-badge";
 import { PageHeader }    from "@/components/ui/page-header";
@@ -74,6 +75,7 @@ export default function ClaimsPage() {
   const [search,     setSearch]     = useState("");
   const [filter,     setFilter]     = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [authErr,    setAuthErr]    = useState(false);
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(
     new Set(COLUMNS.map(c => c.key))
   );
@@ -82,13 +84,41 @@ export default function ClaimsPage() {
 
   useEffect(() => {
     setLoading(true);
+    setAuthErr(false);
     const params = new URLSearchParams({ page: String(page), limit: "20" });
     if (filter !== "all") params.set("status", filter);
-    fetch("/api/claims?" + params)
-      .then(r => r.json())
-      .then(d => { setClaims(d.claims || []); setTotal(d.total || 0); setLoading(false); })
+    // Claims are admin-gated — send the Bearer key from sessionStorage.
+    fetch("/api/claims?" + params, { headers: adminAuthHeader() })
+      .then(async r => {
+        if (r.status === 401 || r.status === 503) { setAuthErr(true); return null; }
+        return r.json();
+      })
+      .then(d => {
+        if (d) { setClaims(d.claims || []); setTotal(d.total || 0); }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [page, filter]);
+
+  // Evidence report is admin-gated; a plain <a> can't carry the Bearer header,
+  // so fetch it with the key and render the returned HTML in a new tab. The
+  // window is opened synchronously inside the click gesture to dodge popup
+  // blockers, then filled once the fetch resolves.
+  async function openReport(id: string) {
+    // No "noopener"/"noreferrer" here: those flags make window.open() return
+    // null, which would leave a permanently blank tab and never render the
+    // report. The child is same-origin HTML we write ourselves, so keeping the
+    // opener reference is harmless.
+    const w = window.open("", "_blank");
+    try {
+      const res = await fetch(`/api/claims/${id}/report`, { headers: adminAuthHeader() });
+      if (!res.ok) { if (w) w.close(); setAuthErr(true); return; }
+      const html = await res.text();
+      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+    } catch {
+      if (w) w.close();
+    }
+  }
 
   const filtered = useMemo(() =>
     search
@@ -230,6 +260,18 @@ export default function ClaimsPage() {
           <TableBody>
             {loading ? (
               <SkeletonRows cols={visibleCols.size} />
+            ) : authErr ? (
+              <tr>
+                <td colSpan={visibleCols.size + 1} className="px-4 py-16 text-center">
+                  <FileText size={36} className="mx-auto text-white/15 mb-3" />
+                  <p className="text-white/50 font-medium">Admin sign-in required</p>
+                  <p className="text-white/30 text-xs mt-1">The claims registry contains PII and is admin-only.</p>
+                  <Link href="/login"
+                    className="inline-block mt-4 bg-[#1A3A5C] text-white text-xs px-4 py-2 rounded-lg hover:bg-[#0D6B8E] transition-colors">
+                    Sign in
+                  </Link>
+                </td>
+              </tr>
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={visibleCols.size + 1} className="px-4 py-16 text-center">
@@ -309,14 +351,13 @@ export default function ClaimsPage() {
                       )}
                       {visibleCols.has("report") && (
                         <TableCell onClick={e => e.stopPropagation()}>
-                          <a
-                            href={"/api/claims/" + c.id + "/report"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-sky/70 hover:text-sky font-medium transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => openReport(c.id)}
+                            className="inline-flex items-center gap-1 text-xs text-sky/70 hover:text-sky font-medium transition-colors cursor-pointer"
                           >
                             <ExternalLink size={11} /> Report
-                          </a>
+                          </button>
                         </TableCell>
                       )}
                     </motion.tr>
