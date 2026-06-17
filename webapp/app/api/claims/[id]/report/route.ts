@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 
+/**
+ * HTML-escape any value before it is interpolated into the report markup.
+ * Claim fields (petitioner, asset_name, claimed_cause, respondent, …) originate
+ * from the PUBLIC /api/adjudicate endpoint, so they are attacker-controllable.
+ * Without escaping, a claim submitted with `<script>` in any text field would
+ * execute when this report is opened — a stored XSS. Escaping renders all such
+ * values as inert text.
+ */
+function esc(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  return String(v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,8 +35,8 @@ export async function GET(
     return NextResponse.json({ error: "Claim not found" }, { status: 404 });
   }
 
-  const verdict = claim.adjudication_label || "PENDING";
-  const isValidated = verdict === "VALIDATED";
+  const verdict = esc(claim.adjudication_label || "PENDING");
+  const isValidated = claim.adjudication_label === "VALIDATED";
   const date = new Date(claim.submitted_at || Date.now()).toLocaleDateString("en-IN", {
     day: "numeric", month: "long", year: "numeric"
   });
@@ -81,8 +99,8 @@ export async function GET(
     </div>
     <div class="doc-title">
       <h1>Evidence Report</h1>
-      <p>Claim ID: ${claim.id}</p>
-      <p>Generated: ${date}</p>
+      <p>Claim ID: ${esc(claim.id)}</p>
+      <p>Generated: ${esc(date)}</p>
       <p>NOAA Rule 803(8) Certified</p>
     </div>
   </div>
@@ -91,7 +109,7 @@ export async function GET(
     <div class="verdict-icon">${isValidated ? "✅" : "❌"}</div>
     <div class="verdict-text ${isValidated ? "validated" : "rejected"}">
       <h2>${verdict.replace(/_/g, " ")}</h2>
-      <p>${claim.adjudication_json?.legal_summary || "No legal summary available."}</p>
+      <p>${esc(claim.adjudication_json?.legal_summary || "No legal summary available.")}</p>
     </div>
   </div>
 
@@ -117,14 +135,14 @@ export async function GET(
   <div class="section">
     <h3>Claim Details</h3>
     <div class="grid">
-      <div class="field"><label>Petitioner</label><value>${claim.petitioner}</value></div>
-      <div class="field"><label>Respondent</label><value>${claim.respondent || "—"}</value></div>
-      <div class="field"><label>Asset / Project</label><value>${claim.asset_name}</value></div>
-      <div class="field"><label>Asset Type</label><value>${claim.asset_type || "—"}</value></div>
-      <div class="field"><label>Asset Coordinates</label><value>${claim.asset_lat}°N, ${claim.asset_lon}°E</value></div>
-      <div class="field"><label>Claimed Cause</label><value>${claim.claimed_cause}</value></div>
-      <div class="field"><label>Claim Period</label><value>${claim.start_date} → ${claim.end_date}</value></div>
-      <div class="field"><label>Claimed Loss</label><value>${claim.claimed_loss_inr ? `₹${Number(claim.claimed_loss_inr).toLocaleString("en-IN")}` : "—"}</value></div>
+      <div class="field"><label>Petitioner</label><value>${esc(claim.petitioner)}</value></div>
+      <div class="field"><label>Respondent</label><value>${esc(claim.respondent || "—")}</value></div>
+      <div class="field"><label>Asset / Project</label><value>${esc(claim.asset_name)}</value></div>
+      <div class="field"><label>Asset Type</label><value>${esc(claim.asset_type || "—")}</value></div>
+      <div class="field"><label>Asset Coordinates</label><value>${esc(claim.asset_lat)}°N, ${esc(claim.asset_lon)}°E</value></div>
+      <div class="field"><label>Claimed Cause</label><value>${esc(claim.claimed_cause)}</value></div>
+      <div class="field"><label>Claim Period</label><value>${esc(claim.start_date)} → ${esc(claim.end_date)}</value></div>
+      <div class="field"><label>Claimed Loss</label><value>${claim.claimed_loss_inr ? `₹${esc(Number(claim.claimed_loss_inr).toLocaleString("en-IN"))}` : "—"}</value></div>
     </div>
   </div>
 
@@ -132,7 +150,7 @@ export async function GET(
     <h3>ASRE Adjudication Pipeline</h3>
     <div class="node-path">
       ${(claim.adjudication_json?.node_path || []).map((n: string, i: number, arr: string[]) =>
-        `<span class="node">${n}</span>${i < arr.length - 1 ? '<span class="arrow">→</span>' : ''}`
+        `<span class="node">${esc(n)}</span>${i < arr.length - 1 ? '<span class="arrow">→</span>' : ''}`
       ).join("")}
     </div>
   </div>
@@ -140,7 +158,7 @@ export async function GET(
   <div class="section">
     <h3>Legal Admissibility</h3>
     <div class="legal-box">
-      <strong>Evidence Basis:</strong> NOAA Integrated Surface Database (ISD), Station: ${claim.adjudication_json?.nearest_station || "—"}.
+      <strong>Evidence Basis:</strong> NOAA Integrated Surface Database (ISD), Station: ${esc(claim.adjudication_json?.nearest_station || "—")}.
       Weather data admitted as public records under <strong>Federal Rule of Evidence 803(8)</strong>.
       Adjudication performed deterministically by ASRE v2 engine with no human intervention.
       Wind threshold applied: 17.2 m/s (Beaufort Scale Force 8). Exceedance requirement: ≥ 3 hours.

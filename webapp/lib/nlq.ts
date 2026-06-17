@@ -139,7 +139,7 @@ async function groqStationFallback(question: string): Promise<string | null> {
   try {
     const client = new Groq({ apiKey: key });
     const r = await client.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
       max_tokens: 12,
       messages: [
         { role: "system", content: "Extract ONLY the Indian city name from the weather question. Reply with the city name alone, or NONE." },
