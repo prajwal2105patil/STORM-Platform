@@ -6,7 +6,7 @@
  *
  * Design note: this used to hardcode a stale 18-station list with fake 5-digit
  * IDs and a 2022–2023 window. After the NOAA rebuild (408 stations, 6-digit
- * USAF IDs, 2015–2024, wind-only schema) that broke every query. It now reads
+ * USAF IDs, 2015–2026, wind-only schema) that broke every query. It now reads
  * stations live (like asre.ts) and only references columns that actually exist.
  */
 
@@ -56,7 +56,11 @@ const MONTHS: Record<string, number> = {
 };
 
 const YEAR_MIN = 2015;
-const YEAR_MAX = 2024;
+// Highest year actually loaded in Supabase. NOAA had not published 2026 ISD-Lite
+// for India at the last rebuild; the pipeline already requests 2026, so bump this
+// to 2026 after the first rebuild that loads 2026 rows. detectYear() still accepts
+// 2026 queries and answers "no data" gracefully until then.
+const YEAR_MAX = 2025;
 
 export interface QueryResult {
   question: string;
@@ -83,7 +87,7 @@ function detectMetric(q: string): string {
 }
 
 function detectYear(q: string): number | null {
-  const m = q.match(/\b(20(?:1[5-9]|2[0-4]))\b/);
+  const m = q.match(/\b(20(?:1[5-9]|2[0-6]))\b/);
   return m ? parseInt(m[1], 10) : null;
 }
 
@@ -139,7 +143,7 @@ async function groqStationFallback(question: string): Promise<string | null> {
   try {
     const client = new Groq({ apiKey: key });
     const r = await client.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
       max_tokens: 12,
       messages: [
         { role: "system", content: "Extract ONLY the Indian city name from the weather question. Reply with the city name alone, or NONE." },

@@ -5,7 +5,7 @@ ZERO COST path: NOAA public server -> Supabase. No GCP. No billing.
 
 Pulls the FULL active-India station list dynamically from NOAA's master
 catalog (isd-history.csv), downloads every station-year of hourly
-observations for 2015-2024, computes monthly wind statistics, and rebuilds
+observations for 2015-2026, computes monthly wind statistics, and rebuilds
 the Supabase `stations` + `weather_monthly_stats` tables from scratch.
 
 Station IDs are the REAL 6-digit NOAA USAF codes from the catalog — this
@@ -48,7 +48,7 @@ SUPABASE_KEY      = os.getenv("SUPABASE_SERVICE_KEY")
 
 NOAA_BASE         = "https://www.ncei.noaa.gov/pub/data/noaa/isd-lite"
 CATALOG_URL       = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
-YEARS             = range(2015, 2025)   # 10 years
+YEARS             = range(2015, 2027)   # 2015–2026 (2026 = partial, most recent)
 WIND_THRESHOLD_MS = 17.2                # Beaufort 8 (gale force)
 MAX_WORKERS       = 16                  # concurrent downloads
 ACTIVE_SINCE      = "20240101"          # station must report at least into 2024

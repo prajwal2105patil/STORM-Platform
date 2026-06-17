@@ -21,6 +21,11 @@ const EXCEEDANCE_HOURS  = 3;
 const MAX_RANGE_KM      = 300.0;
 const IDW_POWER         = 2;
 
+// Groq model is env-overridable so a model retirement can be fixed by setting
+// GROQ_MODEL in Vercel — no redeploy of code needed. Default tracks a current,
+// supported Groq production model.
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+
 // Cache stations in module memory — they never change between requests
 let stationsCache: Station[] | null = null;
 let stationsCachedAt = 0;
@@ -113,7 +118,7 @@ async function classifyCause(claimedCause: string): Promise<boolean> {
   try {
     const client  = new Groq({ apiKey: groqKey });
     const message = await client.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: GROQ_MODEL,
       max_tokens: 5,
       messages: [
         { role: "system", content: 'Classify if weather-related force majeure. Reply YES or NO only.' },

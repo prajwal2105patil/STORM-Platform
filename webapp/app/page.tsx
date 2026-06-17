@@ -11,7 +11,7 @@ const LandingMap = dynamic(
 );
 
 const STATS = [
-  { value: "408",    label: "NOAA Stations"   },
+  { value: "409",    label: "NOAA Stations"   },
   { value: "300km",  label: "IDW Radius"       },
   { value: "<500ms", label: "Adjudication"     },
   { value: "10yr",   label: "Data Archive"     },
@@ -160,7 +160,7 @@ export default function LandingPage() {
           <div className="h-6 w-px bg-white/10 mx-2 hidden sm:block" />
           <div className="flex items-center gap-2 px-4">
             <Shield size={12} className="text-sky-400/60" />
-            <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2015–2024 · Rule 803(8)</span>
+            <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2015–2025 · Rule 803(8)</span>
           </div>
         </div>
       </motion.div>

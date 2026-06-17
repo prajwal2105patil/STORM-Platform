@@ -49,7 +49,7 @@ const PIPELINE_NODES = [
 const SYSTEM_SPECS = [
   { label: "Query Engine",   value: "Supabase PostgreSQL" },
   { label: "LLM Router",     value: "Groq llama-3.1-8b"  },
-  { label: "IDW Stations",   value: "408 NOAA ISD"       },
+  { label: "IDW Stations",   value: "409 NOAA ISD"       },
   { label: "Wind Threshold", value: "17.2 m/s (B8)"      },
   { label: "Max Radius",     value: "300 km"             },
   { label: "Exceedance",     value: "≥ 3 hours"          },
@@ -296,12 +296,12 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div>
               <div className="glass-badge mb-6 inline-flex"><MapPin size={10} className="text-sky" /> Spatial Evidence Layer</div>
-              <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">408 NOAA Stations.<br /><span className="text-gradient-electric">One defensible verdict.</span></h2>
+              <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">409 NOAA Stations.<br /><span className="text-gradient-electric">One defensible verdict.</span></h2>
               <p className="text-white/50 text-sm leading-relaxed mb-6">Every adjudication uses Inverse Distance Weighting across all NOAA ISD ground stations within a 300 km search radius. The nearest station, its distance, its IDW confidence weight — all embedded in the evidence packet and admissible under Indian Evidence Act s74 and IT Act s65B.</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Search Radius",   value: "300 km",     color: "#60B8E0" },
-                  { label: "Station Network", value: "408 NOAA ISD", color: "#22c55e" },
+                  { label: "Station Network", value: "409 NOAA ISD", color: "#22c55e" },
                   { label: "IDW Power",       value: "p = 2",       color: "#a855f7" },
                   { label: "Legal Standard",  value: "Rule 803(8)", color: "#f59e0b" },
                 ].map(({ label, value, color }) => (

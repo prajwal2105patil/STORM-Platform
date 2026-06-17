@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { MapPin, Radio, Zap } from "lucide-react";
 import { FloatingPaths } from "@/components/ui/background-paths";
 
-/* ── Station type (loaded live from /api/stations → Supabase, 408 stations) ── */
+/* ── Station type (loaded live from /api/stations → Supabase, 409 stations) ── */
 type Station = { id: string; name: string; lat: number; lng: number; region: string };
 
 /* ── Geographic zone classifier ──
@@ -105,7 +105,7 @@ export default function MapPage() {
             { icon: Radio,  label: "Active Stations", value: loading ? "…" : String(stationCount) },
             { icon: MapPin, label: "Zones Covered",   value: loading ? "…" : String(zonesCovered)  },
             { icon: Zap,    label: "IDW Radius",       value: "300 km"    },
-            { icon: Zap,    label: "Data Archive",     value: "2015–2024" },
+            { icon: Zap,    label: "Data Archive",     value: "2015–2025" },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="glass-card-dark rounded-xl px-4 py-2.5 flex items-center gap-3 border border-white/8">
               <Icon size={13} className="text-sky-400 flex-shrink-0" />
@@ -170,7 +170,7 @@ export default function MapPage() {
         </div>
 
         <p className="text-[9px] text-white/20 font-mono pb-4">
-          Source: NOAA Integrated Surface Database (ISD) 2015–2024 · Rule 803(8) public records · Indian Evidence Act s74/s78 · IT Act s65B · Wind threshold 17.2 m/s (Beaufort 8) · Exceedance ≥ 3 hours
+          Source: NOAA Integrated Surface Database (ISD) 2015–2025 · Rule 803(8) public records · Indian Evidence Act s74/s78 · IT Act s65B · Wind threshold 17.2 m/s (Beaufort 8) · Exceedance ≥ 3 hours
         </p>
       </div>
     </div>
