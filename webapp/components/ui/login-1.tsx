@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Globe from "@/components/ui/globe";
 import { motion, AnimatePresence } from "framer-motion";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // ── AppInput ──────────────────────────────────────────────────────────────────
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -122,54 +123,90 @@ export default function LoginCard() {
   const [loading, setLoading] = useState<false | "form" | "google">(false);
   const [mouse, setMouse]     = useState({ x: 0, y: 0 });
   const [hover, setHover]     = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authError, setAuthError]   = useState<string | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
 
   const isSignup = mode === "signup";
 
-  // Pilot auth: the typed password IS the admin key (shared secret). We VERIFY
-  // it against the server before storing it or redirecting, so a wrong key is
-  // rejected here at sign-in instead of granting a hollow session that only
-  // fails later on a write. The key lives only in this browser's sessionStorage
-  // (never bundled into the build) and is sent as a Bearer token on admin
-  // writes, where the server compares it against ADMIN_API_SECRET.
-  const completeAuth = async (via: "form" | "google", adminKey?: string) => {
+  // Where to land after auth: honour ?next=… set by the middleware, else dashboard.
+  const nextTarget = () => {
+    if (typeof window === "undefined") return "/dashboard";
+    const next = new URLSearchParams(window.location.search).get("next");
+    return next && next.startsWith("/") ? next : "/dashboard";
+  };
+
+  // Real Supabase email/password auth. Signup also stores username + full name
+  // as user metadata, which a DB trigger copies into the `profiles` table.
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (loading) return;
     setAuthError(null);
+    setAuthNotice(null);
 
-    if (!adminKey) {
-      setAuthError("Enter your admin key in the password field to sign in.");
+    const fd       = new FormData(e.currentTarget);
+    const email    = ((fd.get("email") as string)    || "").trim();
+    const password = ((fd.get("password") as string) || "");
+    const username = ((fd.get("username") as string) || "").trim();
+    const fullName = ((fd.get("name") as string)     || "").trim();
+
+    if (!email || !password) {
+      setAuthError("Enter your email and password.");
+      return;
+    }
+    if (isSignup && password.length < 8) {
+      setAuthError("Password must be at least 8 characters.");
       return;
     }
 
-    setLoading(via);
+    setLoading("form");
     try {
-      const res = await fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${adminKey}` },
-      });
-      if (!res.ok) {
-        setAuthError(
-          res.status === 503
-            ? "Server auth is not configured (ADMIN_API_SECRET missing)."
-            : "Invalid admin key. Check your credentials and try again."
-        );
-        setLoading(false);
-        return;
+      const supabase = createSupabaseBrowserClient();
+
+      if (isSignup) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { username, full_name: fullName } },
+        });
+        if (error) {
+          setAuthError(error.message || "Could not create account.");
+          setLoading(false);
+          return;
+        }
+        // Email-confirmation OFF → a session is returned immediately.
+        // Email-confirmation ON  → no session; user must confirm first.
+        if (!data.session) {
+          setAuthNotice("Account created. Check your email to confirm, then sign in.");
+          setMode("signin");
+          setLoading(false);
+          return;
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          setAuthError(
+            /invalid login/i.test(error.message)
+              ? "Invalid email or password."
+              : error.message || "Could not sign in."
+          );
+          setLoading(false);
+          return;
+        }
       }
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("asre_admin_key", adminKey);
-      }
-      router.push("/dashboard");
+
+      // Session established — refresh server components so the middleware/header
+      // pick up the new auth state, then navigate.
+      router.push(nextTarget());
+      router.refresh();
     } catch {
-      setAuthError("Network error verifying credentials. Please try again.");
+      setAuthError("Network error. Please try again.");
       setLoading(false);
     }
   };
 
-  // The social buttons are not wired to a real OAuth provider in the pilot.
-  // They must NOT grant a keyless session — point users at the admin key.
+  // OAuth providers aren't configured in the pilot — point users at email/password.
   const socialUnavailable = () =>
-    setAuthError("Social sign-in isn't enabled in the pilot — use your admin key below.");
+    setAuthError("Social sign-in isn't enabled yet — use email & password below.");
 
   return (
     <>
@@ -271,23 +308,16 @@ export default function LoginCard() {
             </div>
 
             {/* Fields */}
-            <form
-              className="flex flex-col gap-3.5"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const pw = (new FormData(e.currentTarget).get("password") as string) || "";
-                completeAuth("form", pw);
-              }}
-            >
+            <form className="flex flex-col gap-3.5" onSubmit={handleSubmit}>
               <AnimatePresence initial={false}>
                 {isSignup && (
                   <motion.div
-                    key="fullname"
+                    key="signup-fields"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="overflow-hidden"
+                    className="overflow-hidden flex flex-col gap-3.5"
                   >
                     <AppInput
                       type="text"
@@ -295,7 +325,19 @@ export default function LoginCard() {
                       placeholder="Full name"
                       autoComplete="name"
                       aria-label="Full name"
-                      required
+                      required={isSignup}
+                    />
+                    <AppInput
+                      type="text"
+                      name="username"
+                      placeholder="Username"
+                      autoComplete="username"
+                      aria-label="Username"
+                      minLength={3}
+                      maxLength={32}
+                      pattern="[A-Za-z0-9_.\-]+"
+                      title="Letters, numbers, and . _ - only"
+                      required={isSignup}
                     />
                   </motion.div>
                 )}
@@ -323,7 +365,7 @@ export default function LoginCard() {
                 <div className="flex justify-end mt-0.5">
                   <button
                     type="button"
-                    onClick={() => {/* placeholder — no email service wired yet */}}
+                    onClick={() => setAuthNotice("Password reset isn't wired up yet — contact the admin to reset.")}
                     className="text-[11px] text-sky-400/55 hover:text-sky-400 transition-colors cursor-pointer"
                   >
                     Forgot password?
@@ -337,6 +379,14 @@ export default function LoginCard() {
                   className="text-xs text-red-300 bg-red-500/10 border border-red-500/25 rounded-lg px-3 py-2"
                 >
                   {authError}
+                </p>
+              )}
+              {authNotice && (
+                <p
+                  role="status"
+                  className="text-xs text-sky-200 bg-sky-500/10 border border-sky-500/25 rounded-lg px-3 py-2"
+                >
+                  {authNotice}
                 </p>
               )}
 
@@ -354,7 +404,7 @@ export default function LoginCard() {
                     />
                   )}
                   {loading === "form"
-                    ? "Authenticating…"
+                    ? (isSignup ? "Creating account…" : "Signing in…")
                     : isSignup ? "Create ASRE account" : "Sign in to ASRE"}
                 </span>
                 {/* Shimmer sweep */}
@@ -369,7 +419,7 @@ export default function LoginCard() {
               {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
                 type="button"
-                onClick={() => setMode(isSignup ? "signin" : "signup")}
+                onClick={() => { setMode(isSignup ? "signin" : "signup"); setAuthError(null); setAuthNotice(null); }}
                 className="text-sky-400 font-semibold hover:text-sky-300 transition-colors cursor-pointer"
               >
                 {isSignup ? "Sign in" : "Create one"}

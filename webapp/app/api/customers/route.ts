@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminUser } from "@/lib/user";
 import { z } from "zod";
 
 const CreateCustomerSchema = z.object({
@@ -18,8 +18,8 @@ const CreateCustomerSchema = z.object({
 
 export async function GET(req: NextRequest) {
   // Customer records contain PII (emails, phones) — admin-only, not public.
-  const denied = requireAdmin(req);
-  if (denied) return denied;
+  const gate = await requireAdminUser();
+  if (gate instanceof NextResponse) return gate;
 
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") || "1");
@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
-  if (denied) return denied;
+  const gate = await requireAdminUser();
+  if (gate instanceof NextResponse) return gate;
   try {
     const body = await req.json();
     const payload = CreateCustomerSchema.parse(body);
@@ -98,8 +98,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const denied = requireAdmin(req);
-  if (denied) return denied;
+  const gate = await requireAdminUser();
+  if (gate instanceof NextResponse) return gate;
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

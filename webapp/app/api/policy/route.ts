@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminUser } from "@/lib/user";
 
-export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
-  if (denied) return denied;
+export async function GET() {
+  const gate = await requireAdminUser();
+  if (gate instanceof NextResponse) return gate;
   const supabase = getServiceClient();
 
   const [stationsRes, auditRes] = await Promise.all([

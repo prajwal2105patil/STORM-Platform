@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adjudicate } from "@/lib/asre";
 import { getServiceClient } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/user";
 import { rateLimit } from "@/lib/ratelimit";
 import { ClaimPayload } from "@/types";
 import { z } from "zod";
@@ -61,6 +62,11 @@ export async function POST(req: NextRequest) {
 
   const payload = parsed.data as ClaimPayload;
 
+  // Tie the claim to the signed-in user (if any) so they — and only they —
+  // can see it later. The /adjudicate page is behind auth, so this is normally
+  // present; a null user_id means an anonymous/legacy submission.
+  const sessionUser = await getSessionUser();
+
   try {
     const result = await adjudicate(payload);
 
@@ -69,6 +75,7 @@ export async function POST(req: NextRequest) {
     const { data: saved } = await supabase
       .from("claims")
       .insert([{
+        user_id:            sessionUser?.id || null,
         customer_id:        payload.customer_id || null,
         petitioner:         payload.petitioner,
         respondent:         payload.respondent || null,

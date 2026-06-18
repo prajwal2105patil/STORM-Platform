@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
+import { getProfile } from "@/lib/user";
 
 /**
  * HTML-escape any value before it is interpolated into the report markup.
@@ -21,12 +21,15 @@ function esc(v: unknown): string {
 }
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // The report contains full claim PII + the legal evidence packet. Admin-only.
-  const denied = requireAdmin(req);
-  if (denied) return denied;
+  // The report contains full claim PII + the legal evidence packet. A signed-in
+  // user may open ONLY their own claim's report; an admin may open any.
+  const profile = await getProfile();
+  if (!profile) {
+    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  }
 
   const { id } = await params;
   const supabase = getServiceClient();
@@ -38,6 +41,11 @@ export async function GET(
 
   if (error || !claim) {
     return NextResponse.json({ error: "Claim not found" }, { status: 404 });
+  }
+
+  // Ownership check: non-admins can't read someone else's claim by guessing UUIDs.
+  if (profile.role !== "admin" && claim.user_id && claim.user_id !== profile.id) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const verdict = esc(claim.adjudication_label || "PENDING");

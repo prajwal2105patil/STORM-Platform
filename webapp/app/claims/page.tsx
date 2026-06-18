@@ -264,8 +264,8 @@ export default function ClaimsPage() {
               <tr>
                 <td colSpan={visibleCols.size + 1} className="px-4 py-16 text-center">
                   <FileText size={36} className="mx-auto text-white/15 mb-3" />
-                  <p className="text-white/50 font-medium">Admin sign-in required</p>
-                  <p className="text-white/30 text-xs mt-1">The claims registry contains PII and is admin-only.</p>
+                  <p className="text-white/50 font-medium">Sign in required</p>
+                  <p className="text-white/30 text-xs mt-1">Sign in to view the claims you&apos;ve submitted.</p>
                   <Link href="/login"
                     className="inline-block mt-4 bg-[#1A3A5C] text-white text-xs px-4 py-2 rounded-lg hover:bg-[#0D6B8E] transition-colors">
                     Sign in

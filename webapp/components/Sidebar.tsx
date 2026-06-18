@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, FileText, Users, BarChart3, Zap, Shield,
   ChevronRight, Search, Calculator, BookOpen, ChevronDown, Menu, X,
-  Map as MapIcon, LogIn, Award, Scale, Database,
+  Map as MapIcon, LogIn, LogOut, Award, Scale, Database,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useState, useEffect } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const PRIMARY_NAV = [
   { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
@@ -26,6 +27,7 @@ const EVIDENCE_NAV = [
   { href: "/data-sources", label: "Data Sources", icon: Database },
 ];
 
+// Admin-only: customer PII + the policy/audit panel.
 const CRM_NAV = [
   { href: "/customers", label: "Customers",   icon: Users },
 ];
@@ -33,16 +35,23 @@ const CRM_NAV = [
 const TOOLS_NAV = [
   { href: "/sla",      label: "SLA Calc", icon: Calculator },
   { href: "/api-docs", label: "API Docs", icon: BookOpen   },
-  { href: "/policy",   label: "Policy",   icon: Shield     },
+];
+
+// Admin-only tools.
+const ADMIN_TOOLS_NAV = [
+  { href: "/policy",   label: "Policy",   icon: Shield },
 ];
 
 const MAP_NAV = [
   { href: "/map", label: "Station Map", icon: MapIcon },
 ];
 
-const ACCOUNT_NAV = [
-  { href: "/login", label: "Sign In / Sign Up", icon: LogIn },
-];
+interface Profile {
+  username: string | null;
+  full_name: string | null;
+  email: string | null;
+  role: string;
+}
 
 function NavItem({
   href, label, icon: Icon, onClick,
@@ -153,7 +162,84 @@ function StatusFooter() {
   );
 }
 
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+// ── Account section — auth-aware (user + sign out, or sign-in link) ───────────
+function AccountSection({ profile, loading, onNavClick }: {
+  profile: Profile | null; loading: boolean; onNavClick?: () => void;
+}) {
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch { /* ignore — navigate regardless */ }
+    onNavClick?.();
+    router.push("/login");
+    router.refresh();
+  };
+
+  // While the profile request is in flight, render nothing to avoid flicker.
+  if (loading) {
+    return (
+      <div className="mb-1 px-3 py-2.5">
+        <div className="h-9 rounded-xl bg-white/5 animate-pulse" />
+      </div>
+    );
+  }
+
+  // Signed out → the original sign-in / sign-up link.
+  if (!profile) {
+    return (
+      <NavGroup
+        label="Account"
+        items={[{ href: "/login", label: "Sign In / Sign Up", icon: LogIn }]}
+        collapsed={false}
+        onNavClick={onNavClick}
+      />
+    );
+  }
+
+  // Signed in → identity card + sign-out button.
+  const display = profile.full_name || profile.username || profile.email || "Account";
+  const initial = (display || "?").trim().charAt(0).toUpperCase();
+
+  return (
+    <div className="mb-1">
+      <p className="px-3 py-1.5 text-[9px] font-extrabold text-blue-400/40 uppercase tracking-[0.15em]">
+        Account
+      </p>
+      <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/8">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-white"
+          style={{ background: "linear-gradient(135deg, #0D6B8E 0%, #1E88BE 100%)" }}
+        >
+          {initial}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[12px] font-semibold text-white truncate leading-tight">{display}</p>
+          <p className="text-[9px] text-blue-300/45 truncate leading-tight">
+            {profile.role === "admin" ? "Administrator" : profile.email || "Signed in"}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={signOut}
+        disabled={signingOut}
+        className="mt-1 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-blue-200/55 hover:text-white hover:bg-white/6 transition-all duration-150 disabled:opacity-50"
+      >
+        <LogOut size={14} className="flex-shrink-0 opacity-55" />
+        <span>{signingOut ? "Signing out…" : "Sign out"}</span>
+      </button>
+    </div>
+  );
+}
+
+function SidebarContent({ profile, loadingProfile, onNavClick }: {
+  profile: Profile | null; loadingProfile: boolean; onNavClick?: () => void;
+}) {
+  const isAdmin = profile?.role === "admin";
   return (
     <>
       {/* Logo */}
@@ -186,9 +272,17 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         <NavGroup label="Intelligence" items={INTELLIGENCE_NAV} collapsed={false} onNavClick={onNavClick} />
         <NavGroup label="Evidence"     items={EVIDENCE_NAV}     collapsed={false} onNavClick={onNavClick} />
         <NavGroup label="Coverage"     items={MAP_NAV}          collapsed={false} onNavClick={onNavClick} />
-        <NavGroup label="CRM"          items={CRM_NAV}          collapsed={false} onNavClick={onNavClick} />
-        <NavGroup label="Tools"        items={TOOLS_NAV}        collapsed={true}  onNavClick={onNavClick} />
-        <NavGroup label="Account"      items={ACCOUNT_NAV}      collapsed={false} onNavClick={onNavClick} />
+        {/* CRM + Policy are admin-only — regular users never see them. */}
+        {isAdmin && (
+          <NavGroup label="CRM"        items={CRM_NAV}          collapsed={false} onNavClick={onNavClick} />
+        )}
+        <NavGroup
+          label="Tools"
+          items={isAdmin ? [...TOOLS_NAV, ...ADMIN_TOOLS_NAV] : TOOLS_NAV}
+          collapsed={true}
+          onNavClick={onNavClick}
+        />
+        <AccountSection profile={profile} loading={loadingProfile} onNavClick={onNavClick} />
       </nav>
 
       {/* Status footer — reflects real /api/health state */}
@@ -199,7 +293,22 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const path = usePathname();
+
+  // Load the signed-in user's profile so the sidebar can show their identity
+  // and reveal admin-only sections. Re-runs on navigation so it reflects
+  // sign-in / sign-out without a hard refresh.
+  useEffect(() => {
+    let alive = true;
+    setLoadingProfile(true);
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((d) => { if (alive) { setProfile(d.user ?? null); setLoadingProfile(false); } })
+      .catch(() => { if (alive) { setProfile(null); setLoadingProfile(false); } });
+    return () => { alive = false; };
+  }, [path]);
 
   // Landing and auth pages render chrome-free
   if (path === "/" || path === "/login") return null;
@@ -236,7 +345,7 @@ export default function Sidebar() {
         >
           <X size={18} />
         </button>
-        <SidebarContent onNavClick={() => setMobileOpen(false)} />
+        <SidebarContent profile={profile} loadingProfile={loadingProfile} onNavClick={() => setMobileOpen(false)} />
       </aside>
 
       {/* Desktop sidebar */}
@@ -248,7 +357,7 @@ export default function Sidebar() {
           boxShadow:    "4px 0 24px rgba(0,0,0,0.4)",
         }}
       >
-        <SidebarContent />
+        <SidebarContent profile={profile} loadingProfile={loadingProfile} />
       </aside>
     </>
   );

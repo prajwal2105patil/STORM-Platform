@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, Zap, Shield, Radio, Database } from "lucide-react";
 
 const LandingMap = dynamic(
@@ -40,16 +39,11 @@ export default function LandingPage() {
         style={{ background: "radial-gradient(ellipse 90% 50% at 50% 0%, rgba(13,107,142,0.15) 0%, transparent 60%)" }}
       />
 
-      {/* ── Hero content ── */}
+      {/* ── Hero content (animations removed — renders instantly) ── */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-10 pointer-events-none">
 
         {/* Brand chip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 1.2 }}
-          className="flex items-center gap-2 mb-8 pointer-events-auto"
-        >
+        <div className="flex items-center gap-2 mb-8 pointer-events-auto">
           <div
             className="flex items-center gap-2.5 px-4 py-2 rounded-full border"
             style={{
@@ -59,46 +53,30 @@ export default function LandingPage() {
             }}
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
             </span>
             <span className="text-[10px] font-extrabold tracking-[0.2em] text-white/70 uppercase">
               DREADNOUGHT ASRE · NOAA Rule 803(8) Grounded
             </span>
           </div>
-        </motion.div>
+        </div>
 
         {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1, duration: 1.5 }}
-          className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight text-white leading-[1.05] mb-4 pointer-events-auto"
-        >
+        <h1 className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight text-white leading-[1.05] mb-4 pointer-events-auto">
           Force Majeure
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-[#60B8E0]">
             Adjudicated.
           </span>
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.35, duration: 1.2 }}
-          className="text-base md:text-lg text-white/45 mb-10 max-w-lg leading-relaxed pointer-events-auto"
-        >
+        <p className="text-base md:text-lg text-white/45 mb-10 max-w-lg leading-relaxed pointer-events-auto">
           AI-powered storm-event verification backed by 10 years of NOAA ISD data.
           Admissible under US FRE 803(8) · Deterministic · Reproducible.
-        </motion.p>
+        </p>
 
         {/* CTA buttons */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.55, duration: 1.0 }}
-          className="flex flex-col sm:flex-row gap-4 pointer-events-auto"
-        >
+        <div className="flex flex-col sm:flex-row gap-4 pointer-events-auto">
           <Link
             href="/login"
             className="group relative overflow-hidden rounded-2xl px-8 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_32px_rgba(96,184,224,0.35)]"
@@ -130,16 +108,11 @@ export default function LandingPage() {
             <Radio size={14} className="text-sky-400" />
             Join the Movement
           </Link>
-        </motion.div>
+        </div>
       </div>
 
       {/* ── Bottom stats bar ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.7, duration: 1.0 }}
-        className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-6"
-      >
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-6">
         <div
           className="flex items-center justify-center gap-1 flex-wrap max-w-2xl mx-auto rounded-2xl px-6 py-4"
           style={{
@@ -163,7 +136,7 @@ export default function LandingPage() {
             <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2015–2025 · Rule 803(8)</span>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* ── Top-left logo ── */}
       <div className="absolute top-6 left-6 z-10 flex items-center gap-3">

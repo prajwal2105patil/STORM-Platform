@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
+import { getProfile } from "@/lib/user";
 
 export async function GET(req: NextRequest) {
-  // Claims carry petitioner / asset / financial PII. Admin-only — the registry
-  // must not be publicly enumerable (it also leaks the UUIDs used by the
-  // evidence-report route). Consistent with /api/customers and /api/policy.
-  const denied = requireAdmin(req);
-  if (denied) return denied;
+  // Claims carry petitioner / asset / financial PII. A signed-in user may see
+  // ONLY their own claims; an admin (profiles.role = 'admin') sees everything.
+  const profile = await getProfile();
+  if (!profile) {
+    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  }
+  const isAdmin = profile.role === "admin";
 
   const { searchParams } = new URL(req.url);
   const page     = parseInt(searchParams.get("page")   || "1");
@@ -22,6 +24,10 @@ export async function GET(req: NextRequest) {
     .select("*", { count: "exact" })
     .order("submitted_at", { ascending: false })
     .range(from, from + limit - 1);
+
+  // Non-admins are scoped to their own user_id. This is the real enforcement
+  // boundary (the service key bypasses RLS).
+  if (!isAdmin) query = query.eq("user_id", profile.id);
 
   if (status)   query = query.eq("status", status);
   if (customer) query = query.eq("customer_id", customer);
