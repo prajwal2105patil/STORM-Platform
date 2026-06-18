@@ -211,9 +211,13 @@ def sql_generator(state: ClaimState) -> ClaimState:
     month      = state["month"]
     station    = state.get("station_hint")
 
-    station_clause = ""
-    if station:
-        station_clause = "AND station = '%s'" % station
+    # Validate station_hint before interpolation: USAF IDs are 4–9 digits only.
+    # Reject anything that isn't purely numeric to close the string-injection path.
+    if station and not re.fullmatch(r"[0-9]{4,9}", station):
+        return {**state, "sql_query": None,
+                "exec_error": f"Invalid station_hint: {station!r}"}
+
+    station_clause = f"AND station = '{station}'" if station else ""
 
     sql = """
 SELECT
@@ -253,6 +257,9 @@ LIMIT 10
 
 def execution_cage(state: ClaimState) -> ClaimState:
     sql = state["sql_query"]
+    if not sql:
+        # sql_generator already wrote exec_error (e.g. invalid station_hint)
+        return {**state, "raw_result": None}
     try:
         from asre.pool import DB_POOL
         with DB_POOL.acquire(timeout=9.0) as con:

@@ -64,7 +64,7 @@ export async function GET() {
       approval_rate:           total > 0 ? Math.round((validated / total) * 1000) / 10 : 0,
       avg_processing_ms:       avgMs,
       total_customers:         customers,
-      hallucination_prevented: Math.round(total * 0.263), // derived from benchmark
+      hallucinations_avoided_proj: Math.round(total * 0.263), // projected from 26.3% simulated-control error rate (benchmark-derived, not measured)
     },
     timeline,
     label_distribution: Object.entries(labelCounts).map(([label, count]) => ({

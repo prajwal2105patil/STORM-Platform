@@ -116,6 +116,6 @@ export interface AnalyticsSnapshot {
   pending: number;
   approval_rate: number;
   avg_processing_ms: number;
-  hallucination_prevented: number;   // claims that would have been mis-adjudicated
+  hallucinations_avoided_proj: number; // benchmark-projected, not a measured count
   total_customers: number;
 }

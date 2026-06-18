@@ -23,7 +23,7 @@ interface AnalyticsData {
   snapshot: {
     total_claims: number; validated: number; rejected: number; pending: number;
     approval_rate: number; avg_processing_ms: number;
-    hallucination_prevented: number; total_customers: number;
+    hallucinations_avoided_proj: number; total_customers: number;
   };
   timeline: TimelineData[];
   label_distribution: LabelData[];
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
           { label: "Total Claims",           value: snap.total_claims.toLocaleString(),    change: "+20.1%", icon: TrendingUp,  color: "text-sky-400",    bg: "bg-sky-500/10"    },
           { label: "Active Customers",        value: snap.total_customers.toLocaleString(), change: "+15.3%", icon: Activity,    color: "text-violet-400", bg: "bg-violet-500/10" },
           { label: "Validated Claims",        value: snap.validated.toLocaleString(),       change: `${snap.approval_rate.toFixed(1)}%`, icon: BarChart3, color: "text-green-400", bg: "bg-green-500/10" },
-          { label: "Hallucinations Avoided (proj.)",  value: snap.hallucination_prevented.toLocaleString(), change: "–26.3%",   icon: PieIcon, color: "text-amber-400", bg: "bg-amber-500/10"  },
+          { label: "Hallucinations Avoided (proj.)",  value: snap.hallucinations_avoided_proj.toLocaleString(), change: "–26.3%",   icon: PieIcon, color: "text-amber-400", bg: "bg-amber-500/10"  },
         ].map(({ label, value, change, icon: Icon, color, bg }) => (
           <div key={label} className="glass-card-dark rounded-2xl p-5 border border-white/8 shadow-glass-md">
             <div className="flex items-center justify-between mb-3">
@@ -349,7 +349,7 @@ export default function AnalyticsPage() {
               Projected Hallucinations Avoided
             </p>
             <p className="text-5xl font-extrabold tabular-nums text-amber-300">
-              <AnimatedCounter value={snap.hallucination_prevented} />
+              <AnimatedCounter value={snap.hallucinations_avoided_proj} />
             </p>
             <p className="text-amber-400/60 text-sm mt-3">
               Projected at the 26.3% simulated-control rate × <AnimatedCounter value={snap.total_claims} /> adjudicated claims

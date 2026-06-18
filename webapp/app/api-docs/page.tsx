@@ -114,7 +114,7 @@ const endpoints = [
     "approval_rate": 28.6,
     "avg_processing_ms": 1107,
     "total_customers": 3,
-    "hallucination_prevented": 2
+    "hallucinations_avoided_proj": 2
   },
   "timeline": [...],
   "label_distribution": [...],

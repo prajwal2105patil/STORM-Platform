@@ -10,45 +10,72 @@ Used by the Adjudicator to surface station_distance_km and
 idw_confidence_weight in every API response -- making the
 spatial argument defensible in CERC/APTEL proceedings.
 
-Station registry covers Gujarat, Rajasthan, Maharashtra, Tamil Nadu --
-the primary zones for Indian renewable energy force majeure claims.
+Station registry is loaded dynamically from the Parquet sample at import time
+so it always matches the production dataset (409 stations). Falls back to the
+18-station seed list if the Parquet sample is unavailable (e.g., first install).
 """
 
 import math
+import os
 from typing import Optional
 
 # ---------------------------------------------------------------------------
 # NOAA ISD Station Registry
-# Coordinates verified against NCEI/WMO station databases.
+# Loaded from local DuckDB Parquet sample at import time.
+# Seed registry (18 Gujarat/Rajasthan/Maharashtra/Tamil Nadu stations) used
+# if the Parquet file is not present.
 # Format: station_id -> (name, lat, lon)
 # ---------------------------------------------------------------------------
-STATION_REGISTRY: dict[str, tuple[str, float, float]] = {
-    # -- Gujarat / Kutch — verified NOAA USAF IDs from isd-history.csv -------
-    "426310": ("Naliya",                  23.25,  68.85),
-    "426340": ("Bhuj",                    23.29,  69.67),
-    "426380": ("Kandla",                  23.15,  70.12),
-    "426470": ("Ahmedabad",               23.08,  72.64),
-    "427370": ("Rajkot",                  22.31,  70.78),
-    "428400": ("Surat",                   21.20,  72.83),
-    "427480": ("Vadodara",                22.33,  73.27),
-    "427300": ("Okha",                    22.48,  69.12),
-    "429090": ("Veraval",                 20.90,  70.37),
-
-    # -- Rajasthan -----------------------------------------------------------
-    "423280": ("Jaisalmer",               26.90,  70.92),
-    "423390": ("Jodhpur",                 26.25,  73.05),
-    "424350": ("Barmer",                  25.75,  71.38),
-    "421650": ("Bikaner",                 28.00,  73.30),
-
-    # -- Maharashtra ---------------------------------------------------------
-    "430030": ("Mumbai",                  19.09,  72.87),
-    "430630": ("Pune",                    18.53,  73.85),
-
-    # -- Tamil Nadu ----------------------------------------------------------
-    "432790": ("Chennai",                 12.99,  80.18),
-    "433630": ("Ramnad",                   9.28,  79.22),
-    "433760": ("Tirunelveli",              8.73,  77.75),
+_SEED_REGISTRY: dict[str, tuple[str, float, float]] = {
+    "426310": ("Naliya",       23.25, 68.85),
+    "426340": ("Bhuj",         23.29, 69.67),
+    "426380": ("Kandla",       23.15, 70.12),
+    "426470": ("Ahmedabad",    23.08, 72.64),
+    "427370": ("Rajkot",       22.31, 70.78),
+    "428400": ("Surat",        21.20, 72.83),
+    "427480": ("Vadodara",     22.33, 73.27),
+    "427300": ("Okha",         22.48, 69.12),
+    "429090": ("Veraval",      20.90, 70.37),
+    "423280": ("Jaisalmer",    26.90, 70.92),
+    "423390": ("Jodhpur",      26.25, 73.05),
+    "424350": ("Barmer",       25.75, 71.38),
+    "421650": ("Bikaner",      28.00, 73.30),
+    "430030": ("Mumbai",       19.09, 72.87),
+    "430630": ("Pune",         18.53, 73.85),
+    "432790": ("Chennai",      12.99, 80.18),
+    "433630": ("Ramnad",        9.28, 79.22),
+    "433760": ("Tirunelveli",   8.73, 77.75),
 }
+
+
+def _load_registry_from_parquet() -> dict[str, tuple[str, float, float]]:
+    """Load all distinct (station_id, station_name, lat, lon) rows from the
+    Parquet sample. Returns the seed registry on any error."""
+    _here = os.path.dirname(os.path.abspath(__file__))
+    data_path = os.path.join(_here, "..", "data", "sample",
+                             "year=*/month=*/part-0.parquet")
+    try:
+        import duckdb
+        con = duckdb.connect(":memory:")
+        rows = con.execute(
+            f"""
+            SELECT DISTINCT station, station_name, lat, lon
+            FROM read_parquet('{data_path}', hive_partitioning = true)
+            WHERE lat IS NOT NULL AND lon IS NOT NULL
+            """
+        ).fetchall()
+        con.close()
+        if not rows:
+            return _SEED_REGISTRY
+        registry: dict[str, tuple[str, float, float]] = {}
+        for station_id, name, lat, lon in rows:
+            registry[str(station_id)] = (name or str(station_id), float(lat), float(lon))
+        return registry
+    except Exception:
+        return _SEED_REGISTRY
+
+
+STATION_REGISTRY: dict[str, tuple[str, float, float]] = _load_registry_from_parquet()
 
 # IDW range cap -- stations beyond this are excluded from weighting
 MAX_RANGE_KM   = 300.0

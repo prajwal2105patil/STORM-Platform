@@ -85,11 +85,17 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+import os as _os
+_ALLOWED_ORIGINS = [o.strip() for o in _os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+if not _ALLOWED_ORIGINS:
+    # Default: allow only localhost in dev; in production set ALLOWED_ORIGINS env var
+    _ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:8000"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_methods=["POST", "GET"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 

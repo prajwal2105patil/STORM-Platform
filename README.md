@@ -278,10 +278,10 @@ Evaluated on 1,000 held-out claims from the NOAA ISD dataset.
 
 | Model | Precision | Recall | Macro F1 |
 |-------|-----------|--------|----------|
-| **ASRE (Routed)** | **1.000** | **1.000** | **1.000** |
-| Baseline LLM (Unrouted) | 0.790 | 0.730 | 0.782 |
+| **ASRE (Deterministic)** | **0.997** | **0.997** | **0.997** |
+| Simulated Unrouted Control | 0.790 | 0.730 | 0.782 |
 
-**Delta F1: +0.218** — ASRE prevents 100% of hallucinations that the baseline LLM produces.
+**Delta F1: +0.215** — self-consistency benchmark on 1,000 synthetic claims (seed=42). The "baseline" is a calibrated stochastic model, **not a live LLM**. See [METHODOLOGY.md](./METHODOLOGY.md) for the full scope statement.
 
 Full evaluation methodology: [Dreadnought_Evaluation_Report.docx](./Dreadnought_Evaluation_Report.docx)
 
@@ -323,23 +323,23 @@ See `deploy-cloudrun.sh` for the complete automated script.
 
 ## NOAA Station Coverage
 
-18 stations across India, covering all major renewable energy corridors:
+**409 NOAA ISD stations** across India, covering all major renewable energy corridors (ingested from `ncei.noaa.gov` free public archive — zero cloud spend).
+
+Representative stations:
 
 | Station ID | City | State |
 |-----------|------|-------|
-| 43003 | Mumbai | Maharashtra |
-| 42867 | Surat | Gujarat |
-| 43346 | Chennai | Tamil Nadu |
-| 43285 | Hyderabad | Telangana |
-| 42647 | Ahmedabad | Gujarat |
-| 43057 | Pune | Maharashtra |
-| 42492 | Jaipur | Rajasthan |
-| 43430 | Bangalore | Karnataka |
-| 42182 | Jaisalmer | Rajasthan |
-| 43466 | Kochi | Kerala |
-| ... | 8 more | various |
+| 426310 | Naliya | Gujarat |
+| 426340 | Bhuj | Gujarat |
+| 426470 | Ahmedabad | Gujarat |
+| 427370 | Rajkot | Gujarat |
+| 423280 | Jaisalmer | Rajasthan |
+| 423390 | Jodhpur | Rajasthan |
+| 430030 | Mumbai | Maharashtra |
+| 432790 | Chennai | Tamil Nadu |
+| ... | 401 more | various |
 
-Data range: **2014 – 2024** (11 years). Hive-partitioned by `year/month` for O(1) partition pruning.
+Data range: **2015 – 2025** (11 years). Hive-partitioned by `year/month` for O(1) partition pruning.
 
 ---
 
