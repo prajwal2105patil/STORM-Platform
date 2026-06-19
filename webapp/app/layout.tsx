@@ -4,6 +4,7 @@ import "./globals.css";
 import Sidebar      from "@/components/Sidebar";
 import { Providers } from "@/components/Providers";
 import { GlobalBackground } from "@/components/ui/global-background";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,9 +38,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-[#040810] text-white`}>
-        <GlobalBackground />
+      <body className={`${inter.className} bg-white dark:bg-[#040810] text-gray-900 dark:text-white transition-colors`}>
         <Providers>
+          {/* Inside Providers so its themed FloatingPaths can read the theme. */}
+          <GlobalBackground />
+          <ThemeToggle />
           <div className="relative z-10 flex h-screen overflow-hidden">
             <Sidebar />
             <main className="flex-1 overflow-y-auto">

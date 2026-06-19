@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -8,6 +10,18 @@ import { Button } from "@/components/ui/button";
 const PATH_DURATIONS = Array.from({ length: 36 }, (_, i) => 20 + ((i * 7 + 3) % 10) + i * 0.15);
 
 export function FloatingPaths({ position }: { position: number }) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const { resolvedTheme } = useTheme();
+    // Defer theme read until after hydration — SSR always sees dark values,
+    // avoiding the server/client mismatch React warns about.
+    const light = mounted && resolvedTheme === "light";
+    // Light mode: the faint cyan lines wash out on the light background, so use a
+    // darker teal stroke AND bump every line's opacity by +0.25 to make them
+    // much more visible (per request). Dark mode keeps the original look.
+    const strokeColor = light ? "rgba(13,107,142,1)" : "rgba(96,184,224,1)";
+    const opacityBoost = light ? 0.25 : 0;
+
     const paths = Array.from({ length: 36 }, (_, i) => ({
         id: i,
         d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
@@ -27,14 +41,15 @@ export function FloatingPaths({ position }: { position: number }) {
                 viewBox="0 0 696 316"
                 fill="none"
                 aria-hidden="true"
+                preserveAspectRatio="none"
             >
                 {paths.map((path) => (
                     <motion.path
                         key={path.id}
                         d={path.d}
-                        stroke="rgba(96,184,224,1)"
+                        stroke={strokeColor}
                         strokeWidth={path.width}
-                        strokeOpacity={0.06 + path.id * 0.012}
+                        strokeOpacity={Math.min(0.85, 0.06 + path.id * 0.012 + opacityBoost)}
                         initial={{ pathLength: 0.3, opacity: 0.6 }}
                         animate={{
                             pathLength: 1,

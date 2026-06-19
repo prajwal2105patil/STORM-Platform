@@ -3,12 +3,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CheckCircle, XCircle, Clock, Search,
+  CheckCircle, XCircle, Clock, Search, Info,
   FileText, ExternalLink, ChevronDown, ChevronRight,
   ListFilter, Columns,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { adminAuthHeader } from "@/lib/admin-token";
 import Link from "next/link";
 import { VerdictBadge }  from "@/components/ui/verdict-badge";
 import { PageHeader }    from "@/components/ui/page-header";
@@ -21,6 +20,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { AdjudicationLabel } from "@/types";
 import { FloatingPaths } from "@/components/ui/background-paths";
+
+// ── Demo rows shown to unauthenticated visitors ───────────────────────────────
+
+const DEMO_CLAIMS = [
+  {
+    id: "demo-001", petitioner: "Adani Green Energy Ltd.", asset_name: "Mundra Wind Farm II",
+    start_date: "2021-10-01", end_date: "2021-10-31", adjudication_label: "VALIDATED" as const,
+    peak_wind_ms: 23.7, exceedance_hours: 6, processing_ms: 312,
+  },
+  {
+    id: "demo-002", petitioner: "ReNew Power Ltd.", asset_name: "Nashik Solar Park IV",
+    start_date: "2022-07-01", end_date: "2022-07-31", adjudication_label: "REJECTED_BELOW_THRESHOLD" as const,
+    peak_wind_ms: 11.2, exceedance_hours: 0, processing_ms: 287,
+  },
+];
 
 // ── Column definitions ────────────────────────────────────────────────────────
 
@@ -87,8 +101,7 @@ export default function ClaimsPage() {
     setAuthErr(false);
     const params = new URLSearchParams({ page: String(page), limit: "20" });
     if (filter !== "all") params.set("status", filter);
-    // Claims are admin-gated — send the Bearer key from sessionStorage.
-    fetch("/api/claims?" + params, { headers: adminAuthHeader() })
+    fetch("/api/claims?" + params)
       .then(async r => {
         if (r.status === 401 || r.status === 503) { setAuthErr(true); return null; }
         return r.json();
@@ -100,18 +113,16 @@ export default function ClaimsPage() {
       .catch(() => setLoading(false));
   }, [page, filter]);
 
-  // Evidence report is admin-gated; a plain <a> can't carry the Bearer header,
-  // so fetch it with the key and render the returned HTML in a new tab. The
-  // window is opened synchronously inside the click gesture to dodge popup
-  // blockers, then filled once the fetch resolves.
+  // Open the evidence report in a new tab. The window is opened synchronously
+  // inside the click gesture to dodge popup blockers, then filled once the
+  // fetch resolves. Cookies carry the Supabase session automatically.
   async function openReport(id: string) {
-    // No "noopener"/"noreferrer" here: those flags make window.open() return
-    // null, which would leave a permanently blank tab and never render the
-    // report. The child is same-origin HTML we write ourselves, so keeping the
-    // opener reference is harmless.
+    // No "noopener"/"noreferrer": those flags make window.open() return null,
+    // leaving a permanently blank tab. The child is same-origin HTML we write
+    // ourselves, so keeping the opener reference is harmless.
     const w = window.open("", "_blank");
     try {
-      const res = await fetch(`/api/claims/${id}/report`, { headers: adminAuthHeader() });
+      const res = await fetch(`/api/claims/${id}/report`);
       if (!res.ok) { if (w) w.close(); setAuthErr(true); return; }
       const html = await res.text();
       if (w) { w.document.open(); w.document.write(html); w.document.close(); }
@@ -244,6 +255,18 @@ export default function ClaimsPage() {
         </div>
       </div>
 
+      {/* Sign-in banner for unauthenticated visitors */}
+      {authErr && (
+        <div className="flex items-center gap-3 bg-sky/8 border border-sky/20 rounded-xl px-4 py-3 text-sm">
+          <Info size={14} className="text-sky flex-shrink-0" />
+          <span className="text-sky/80">
+            Showing demo data.{" "}
+            <Link href="/login" className="font-semibold text-sky hover:underline">Sign in</Link>
+            {" "}to view your own submitted claims.
+          </span>
+        </div>
+      )}
+
       {/* Table */}
       <div className="glass-card-dark rounded-2xl overflow-hidden shadow-glass-lg">
         <Table>
@@ -261,17 +284,43 @@ export default function ClaimsPage() {
             {loading ? (
               <SkeletonRows cols={visibleCols.size} />
             ) : authErr ? (
-              <tr>
-                <td colSpan={visibleCols.size + 1} className="px-4 py-16 text-center">
-                  <FileText size={36} className="mx-auto text-white/15 mb-3" />
-                  <p className="text-white/50 font-medium">Sign in required</p>
-                  <p className="text-white/30 text-xs mt-1">Sign in to view the claims you&apos;ve submitted.</p>
-                  <Link href="/login"
-                    className="inline-block mt-4 bg-[#1A3A5C] text-white text-xs px-4 py-2 rounded-lg hover:bg-[#0D6B8E] transition-colors">
-                    Sign in
-                  </Link>
-                </td>
-              </tr>
+              <>
+                {DEMO_CLAIMS.map((c) => (
+                  <tr key={c.id} className="border-b border-white/6 opacity-60">
+                    <TableCell className="w-8 px-3 text-white/20">
+                      <ChevronRight size={13} />
+                    </TableCell>
+                    {visibleCols.has("petitioner") && (
+                      <TableCell className="font-medium text-white">
+                        <span className="truncate max-w-[110px] inline-block align-bottom">{c.petitioner}</span>
+                        <span className="ml-2 text-[9px] font-bold text-sky/60 uppercase tracking-widest border border-sky/20 rounded px-1 py-0.5 align-middle">DEMO</span>
+                      </TableCell>
+                    )}
+                    {visibleCols.has("asset_name") && (
+                      <TableCell className="text-white/60 truncate max-w-[120px]">{c.asset_name}</TableCell>
+                    )}
+                    {visibleCols.has("period") && (
+                      <TableCell className="text-white/45 text-xs whitespace-nowrap">{c.start_date} / {c.end_date}</TableCell>
+                    )}
+                    {visibleCols.has("peak_wind_ms") && (
+                      <TableCell className="text-xs">
+                        <span className={cn("font-semibold tabular-nums", c.peak_wind_ms >= 17.2 ? "text-green-400" : "text-red-400")}>
+                          {c.peak_wind_ms}m/s
+                        </span>
+                      </TableCell>
+                    )}
+                    {visibleCols.has("adjudication_label") && (
+                      <TableCell><VerdictBadge label={c.adjudication_label as AdjudicationLabel} /></TableCell>
+                    )}
+                    {visibleCols.has("processing_ms") && (
+                      <TableCell className="text-white/30 text-xs tabular-nums">{c.processing_ms}ms</TableCell>
+                    )}
+                    {visibleCols.has("report") && (
+                      <TableCell><span className="text-white/20 text-xs">—</span></TableCell>
+                    )}
+                  </tr>
+                ))}
+              </>
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={visibleCols.size + 1} className="px-4 py-16 text-center">

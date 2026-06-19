@@ -42,8 +42,10 @@ const CHART_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6
 type TSPoint  = { date: string; value: number };
 type DPoint   = { label: string; value: number; color: string };
 
-const GRID_COLOR  = "rgba(255,255,255,0.07)";
-const LABEL_COLOR = "rgba(255,255,255,0.35)";
+// Theme-aware via CSS variables (defined in globals.css) so the SVG grid/labels
+// flip between dark and light mode instead of staying white-on-white.
+const GRID_COLOR  = "var(--chart-grid)";
+const LABEL_COLOR = "var(--chart-label)";
 
 function SvgLineChart({ data }: { data: TSPoint[] }) {
   const [animated, setAnimated] = useState(false);
@@ -291,7 +293,7 @@ export default function AnalyticsPage() {
           { label: "Total Claims",           value: snap.total_claims.toLocaleString(),    change: "+20.1%", icon: TrendingUp,  color: "text-sky-400",    bg: "bg-sky-500/10"    },
           { label: "Active Customers",        value: snap.total_customers.toLocaleString(), change: "+15.3%", icon: Activity,    color: "text-violet-400", bg: "bg-violet-500/10" },
           { label: "Validated Claims",        value: snap.validated.toLocaleString(),       change: `${snap.approval_rate.toFixed(1)}%`, icon: BarChart3, color: "text-green-400", bg: "bg-green-500/10" },
-          { label: "Hallucinations Avoided (proj.)",  value: snap.hallucinations_avoided_proj.toLocaleString(), change: "–26.3%",   icon: PieIcon, color: "text-amber-400", bg: "bg-amber-500/10"  },
+          { label: "False Verdicts Prevented (proj.)", value: snap.hallucinations_avoided_proj.toLocaleString(), change: "+26.3% vs baseline", icon: PieIcon, color: "text-amber-400", bg: "bg-amber-500/10"  },
         ].map(({ label, value, change, icon: Icon, color, bg }) => (
           <div key={label} className="glass-card-dark rounded-2xl p-5 border border-white/8 shadow-glass-md">
             <div className="flex items-center justify-between mb-3">
@@ -301,7 +303,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <p className="text-2xl font-extrabold text-white tabular-nums leading-none">{value}</p>
-            <span className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/6 text-white/40 border border-white/10">
+            <span className={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              change.startsWith("+") ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-white/6 text-white/40 border-white/10"
+            }`}>
               {change}
             </span>
           </div>
@@ -346,7 +350,7 @@ export default function AnalyticsPage() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-amber-400/70 text-[10px] font-bold uppercase tracking-widest mb-2">
-              Projected Hallucinations Avoided
+              False Verdicts Prevented (proj.)
             </p>
             <p className="text-5xl font-extrabold tabular-nums text-amber-300">
               <AnimatedCounter value={snap.hallucinations_avoided_proj} />
@@ -388,9 +392,9 @@ export default function AnalyticsPage() {
           {data.timeline.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <RBarChart data={data.timeline} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#ffffff30" }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "#ffffff30" }} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--chart-label)" }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "var(--chart-label)" }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ background: "#0e2640", border: "1px solid rgba(96,184,224,0.2)", borderRadius: 10, fontSize: 12, color: "#fff" }}
                   labelStyle={{ fontWeight: 700, color: "#60B8E0" }} />
                 <Bar dataKey="validated" fill="#16a34a" name="Validated" radius={[3,3,0,0]} />

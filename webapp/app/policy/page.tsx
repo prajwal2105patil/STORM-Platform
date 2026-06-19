@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Wind, MapPin, Clock, Zap, Shield } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
-import { Skeleton }   from "@/components/ui/skeleton";
-import { cn }         from "@/lib/utils";
+import { PageHeader }    from "@/components/ui/page-header";
+import { Skeleton }      from "@/components/ui/skeleton";
+import { cn }            from "@/lib/utils";
+import { FloatingPaths } from "@/components/ui/background-paths";
 
 interface Threshold {
   wind_threshold_ms: number;
@@ -57,17 +58,21 @@ export default function PolicyPage() {
 
   if (loading || !data) {
     return (
-      <div className="p-8 space-y-6">
-        <PageHeader title="Policy & Compliance" description="Adjudication thresholds & audit trail" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="glass-card-dark rounded-xl p-6">
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          ))}
+      <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+        <FloatingPaths position={1} />
+        <FloatingPaths position={-1} />
+        <div className="relative z-[1] p-8 space-y-6">
+          <PageHeader title="Policy & Compliance" description="Adjudication thresholds & audit trail" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="glass-card-dark rounded-xl p-6">
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
-        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
   }
@@ -80,7 +85,10 @@ export default function PolicyPage() {
   const TD_CLS = "px-4 py-3 text-sm";
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-[1] p-8 space-y-8">
 
       <PageHeader title="Policy & Compliance" description="Adjudication thresholds & audit trail" />
 
@@ -216,6 +224,7 @@ export default function PolicyPage() {
           <strong className="text-white/70">Policy enforced deterministically by ASRE v2 engine.</strong> No human override. All decisions are final and subject to attestation by a qualified legal operator.
         </p>
       </div>
+    </div>
     </div>
   );
 }

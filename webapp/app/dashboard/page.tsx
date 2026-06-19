@@ -236,7 +236,7 @@ export default function DashboardPage() {
               {[
                 { icon: Activity,   label: "Claims Processed",      value: snap.total_claims,           suffix: ""   },
                 { icon: Clock,      label: "Avg Decision Time",      value: snap.avg_processing_ms,      suffix: "ms" },
-                { icon: TrendingUp, label: "Hallucinations Avoided (proj.)", value: snap.hallucinations_avoided_proj, suffix: ""  },
+                { icon: TrendingUp, label: "False Verdicts Prevented (proj.)", value: snap.hallucinations_avoided_proj, suffix: ""  },
               ].map(({ icon: Icon, label, value, suffix }) => (
                 <div key={label} className="glass-card-dark rounded-xl px-4 py-3 flex items-center gap-3">
                   <Icon size={15} className="text-sky flex-shrink-0 opacity-70" />
@@ -284,7 +284,7 @@ export default function DashboardPage() {
               <TiltCard intensity={5}><StatCard icon={CheckCircle} label="Validated Claims" value={snap.validated} sub={`${snap.approval_rate}% approval`} iconBg="bg-green-600" variant="dark" /></TiltCard>
               <TiltCard intensity={5}><StatCard icon={XCircle}     label="Rejected Claims"  value={snap.rejected}  sub="All classes combined" iconBg="bg-red-600" variant="dark" /></TiltCard>
               <TiltCard intensity={5}><StatCard icon={Clock}       label="Avg Latency"       value={`${snap.avg_processing_ms}ms`} sub="End-to-end adjudication" iconBg="bg-[#0D6B8E]" variant="dark" /></TiltCard>
-              <TiltCard intensity={5}><StatCard icon={AlertTriangle} label="Hallucinations Avoided (proj.)" value={snap.hallucinations_avoided_proj} sub="26.3% simulated-control rate" iconBg="bg-amber-600" variant="dark" /></TiltCard>
+              <TiltCard intensity={5}><StatCard icon={AlertTriangle} label="False Verdicts Prevented (proj.)" value={snap.hallucinations_avoided_proj} sub="26.3% vs simulated control" iconBg="bg-amber-600" variant="dark" /></TiltCard>
             </>
           )}
         </div>

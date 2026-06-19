@@ -468,7 +468,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
         <PromptInputActions className="flex items-center justify-between gap-2 pt-2">
           <div className={cn("flex items-center gap-1 transition-opacity duration-300", isRecording ? "opacity-0 invisible h-0" : "opacity-100 visible")}>
             {/* Attach */}
-            <PromptInputAction tooltip="Upload image">
+            <PromptInputAction tooltip="Attach file">
               <button onClick={() => uploadInputRef.current?.click()} disabled={isRecording}
                 className="flex h-8 w-8 text-[#9CA3AF] cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-gray-600/30 hover:text-[#D1D5DB]">
                 <Paperclip className="h-5 w-5" />
@@ -480,7 +480,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
             {/* Mode toggles */}
             <div className="flex items-center">
               {/* Search */}
-              <button type="button" onClick={() => toggleMode("search")}
+              <button type="button" title="Set location context" onClick={() => toggleMode("search")}
                 className={cn("rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
                   showSearch ? "bg-[#1EAEDB]/15 border-[#1EAEDB] text-[#1EAEDB]" : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]")}>
                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -499,7 +499,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
               <CustomDivider />
 
               {/* Think */}
-              <button type="button" onClick={() => toggleMode("think")}
+              <button type="button" title="Deep think mode" onClick={() => toggleMode("think")}
                 className={cn("rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
                   showThink ? "bg-[#8B5CF6]/15 border-[#8B5CF6] text-[#8B5CF6]" : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]")}>
                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -518,7 +518,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
               <CustomDivider />
 
               {/* Canvas */}
-              <button type="button" onClick={() => toggleMode("canvas")}
+              <button type="button" title="Canvas / code mode" onClick={() => toggleMode("canvas")}
                 className={cn("rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
                   showCanvas ? "bg-[#F97316]/15 border-[#F97316] text-[#F97316]" : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]")}>
                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">

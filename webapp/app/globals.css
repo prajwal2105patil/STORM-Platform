@@ -23,6 +23,13 @@
   --glass-border:   rgba(255, 255, 255, 0.10);
   --glass-dark-bg:  rgba(14, 38, 64, 0.55);
   --glass-dark-border: rgba(96, 184, 224, 0.18);
+
+  /* Chart tokens (dark defaults; light theme overrides these near the bottom).
+     The chart components read these via var() so SVG fills/strokes flip with
+     the theme. */
+  --chart-grid:     rgba(255, 255, 255, 0.07);
+  --chart-label:    rgba(255, 255, 255, 0.35);
+  --chart-accent:   #60B8E0;
 }
 
 /* ─────────────────────────────────────────────
@@ -40,6 +47,12 @@ body {
   @apply antialiased;
   background-color: #040810;
   min-height: 100vh;
+}
+
+/* Light theme repaints the body; the override layer at the bottom of this file
+   handles the page content. */
+html.light body {
+  background-color: #eef2f8;
 }
 
 /* ─────────────────────────────────────────────
@@ -309,4 +322,197 @@ body {
   background: linear-gradient(90deg, rgba(96,184,224,0.15) 0%, rgba(96,184,224,0.05) 100%);
   border:     1px solid rgba(96,184,224,0.20);
   box-shadow: inset 3px 0 0 #60B8E0, 0 2px 12px rgba(96,184,224,0.08);
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   LIGHT THEME  (active when <html class="light">)
+
+   Design: the dark sidebar stays dark in both themes (a common dashboard
+   pattern); only the <main> content area + the fixed app backdrop flip to a
+   light palette. Overrides are scoped to `main` so the sidebar's white-on-dark
+   text is never affected. This layer flips the dark-baked utilities the pages
+   use (arbitrary hex backgrounds, glass-card-dark, text-white, border-white)
+   WITHOUT having to edit every page file. Functionality is untouched — these
+   are purely cosmetic colour swaps.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* Fixed app backdrop → soft light wash; fade the decorative floating paths. */
+html.light .global-bg            { background-color: #eef2f8 !important; }
+html.light .global-bg svg        { opacity: 0.35; }
+
+/* Page-wrapper backgrounds (the dark arbitrary hex utilities) → light. */
+html.light main .bg-\[\#040810\],
+html.light main .bg-\[\#060d1a\],
+html.light main .bg-\[\#040c1a\],
+html.light main .bg-\[\#02060e\],
+html.light main .bg-\[\#020810\],
+html.light main .bg-\[\#020c1a\],
+html.light main .bg-\[\#0a1f38\],
+html.light main .bg-\[\#0e2640\],
+html.light main .section-dark    { background: #eef2f8 !important; }
+
+/* Glass surfaces → opaque-ish white cards with a subtle slate border. */
+html.light main .glass-card-dark,
+html.light main .glass-card {
+  background:   rgba(255,255,255,0.88) !important;
+  border-color: rgba(15,23,42,0.10) !important;
+  box-shadow:   0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+}
+
+/* Text: white → slate, with each opacity tier mapped to stay readable. */
+html.light main .text-white       { color: #0f172a !important; }
+html.light main .text-white\/85   { color: rgba(15,23,42,0.86) !important; }
+html.light main .text-white\/80   { color: rgba(15,23,42,0.82) !important; }
+html.light main .text-white\/70   { color: rgba(15,23,42,0.74) !important; }
+html.light main .text-white\/65   { color: rgba(15,23,42,0.70) !important; }
+html.light main .text-white\/60   { color: rgba(15,23,42,0.66) !important; }
+html.light main .text-white\/55   { color: rgba(15,23,42,0.62) !important; }
+html.light main .text-white\/50   { color: rgba(15,23,42,0.58) !important; }
+html.light main .text-white\/45   { color: rgba(15,23,42,0.55) !important; }
+html.light main .text-white\/40   { color: rgba(15,23,42,0.52) !important; }
+html.light main .text-white\/35   { color: rgba(15,23,42,0.48) !important; }
+html.light main .text-white\/30   { color: rgba(15,23,42,0.46) !important; }
+html.light main .text-white\/25   { color: rgba(15,23,42,0.44) !important; }
+html.light main .text-white\/20   { color: rgba(15,23,42,0.42) !important; }
+html.light main .text-white\/18   { color: rgba(15,23,42,0.40) !important; }
+html.light main .text-white\/15   { color: rgba(15,23,42,0.38) !important; }
+
+/* Borders: white hairlines → subtle slate. */
+html.light main [class*="border-white"] {
+  border-color: rgba(15,23,42,0.12) !important;
+}
+
+/* Translucent white veils (bg-white/2 … /20) → faint slate tints.
+   Solid/near-solid surfaces (bg-white/80, /90 and plain bg-white) are LEFT
+   ALONE — they're already meant to read as light chips/tooltips. */
+html.light main .bg-white\/2,
+html.light main .bg-white\/3,
+html.light main .bg-white\/4,
+html.light main .bg-white\/5,
+html.light main .bg-white\/6,
+html.light main .bg-white\/8,
+html.light main .bg-white\/\[0\.03\],
+html.light main .bg-white\/\[0\.05\] { background-color: rgba(15,23,42,0.04) !important; }
+
+html.light main .bg-white\/10,
+html.light main .bg-white\/15,
+html.light main .bg-white\/20 { background-color: rgba(15,23,42,0.07) !important; }
+
+/* Inputs in the content area need a visible light field. */
+html.light main input,
+html.light main textarea,
+html.light main select {
+  background-color: rgba(15,23,42,0.03) !important;
+  border-color:     rgba(15,23,42,0.14) !important;
+  color:            #0f172a !important;
+}
+
+/* ── Light-mode ACCENT remaps ─────────────────────────────────────────
+   Accent text/icons that stay light (sky/green/amber/violet/blue) wash out
+   on the light bg + white cards. Darken each family to an AA-contrast tone.
+   Audited per-page; applies wherever the class is used inside <main>. */
+
+/* Sky family (text + icons + hover states) → sky-700 */
+html.light main .text-sky,
+html.light main .text-sky\/50,
+html.light main .text-sky\/55,
+html.light main .text-sky\/60,
+html.light main .text-sky\/70,
+html.light main .text-sky\/80,
+html.light main .text-sky-300,
+html.light main .text-sky-400,
+html.light main .text-sky-400\/70,
+html.light main .hover\:text-sky:hover,
+html.light main .hover\:text-sky\/80:hover,
+html.light main .hover\:text-sky-700:hover { color: #0369a1 !important; }
+
+/* Green accents → green-700 */
+html.light main .text-green-400,
+html.light main .text-green-400\/70,
+html.light main .text-green-300 { color: #15803d !important; }
+
+/* Amber accents → amber-700 */
+html.light main .text-amber-300,
+html.light main .text-amber-300\/80,
+html.light main .text-amber-400,
+html.light main .text-amber-400\/40,
+html.light main .text-amber-400\/60,
+html.light main .text-amber-400\/70 { color: #b45309 !important; }
+
+/* Violet accents → violet-700 */
+html.light main .text-violet-400,
+html.light main .text-violet-300 { color: #6d28d9 !important; }
+
+/* Light-blue labels (these are NOT in the sidebar) → slate-600 */
+html.light main .text-blue-200,
+html.light main .text-blue-200\/50,
+html.light main .text-blue-300 { color: #475569 !important; }
+
+/* Glass badge: sky-on-sky → readable on white */
+html.light main .glass-badge {
+  color:        #0369a1 !important;
+  background:    rgba(3,105,161,0.08) !important;
+  border-color:  rgba(3,105,161,0.25) !important;
+}
+
+/* Electric gradient clip-text → darker gradient so it doesn't wash out */
+html.light main .text-gradient-electric {
+  background: linear-gradient(135deg, #0369a1 0%, #15803d 55%, #0d6b8e 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+/* Sky-tinted hairline borders → visible slate-blue */
+html.light main .border-sky\/15,
+html.light main .border-sky\/20,
+html.light main .border-sky\/35 { border-color: rgba(3,105,161,0.35) !important; }
+
+/* Solid sky data-bars (charts) → darker so they read on white cards */
+html.light main .bg-sky { background-color: #0369a1 !important; }
+
+/* Hero clip-text gradients ("Adjudicated." on dashboard + landing) use light
+   sky stops that wash out on white. Darken the gradient stops in light mode. */
+html.light main .from-\[\#38bdf8\],
+html.light main .from-sky-300 {
+  --tw-gradient-from: #0369a1 var(--tw-gradient-from-position) !important;
+}
+html.light main .to-\[\#60B8E0\]\/80,
+html.light main .to-\[\#60B8E0\] {
+  --tw-gradient-to: #0d6b8e var(--tw-gradient-to-position) !important;
+}
+
+/* ── Light-mode CHART tokens (consumed via var() by the SVG/recharts charts,
+   so inline fills/strokes flip with the theme) ───────────────────────── */
+html.light {
+  --chart-grid:   rgba(15,23,42,0.10);
+  --chart-label:  rgba(15,23,42,0.58);
+  --chart-accent: #0369a1;
+}
+
+/* Scrollbar tint for light mode. */
+html.light ::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); }
+
+/* btn-glass: white text on near-transparent bg is invisible on light cards. */
+html.light main .btn-glass {
+  color:        #0f172a !important;
+  background:   rgba(15,23,42,0.06) !important;
+  border-color: rgba(15,23,42,0.15) !important;
+}
+html.light main .btn-glass:hover {
+  background:   rgba(15,23,42,0.10) !important;
+  border-color: rgba(15,23,42,0.22) !important;
+}
+
+/* divide-white/*: Tailwind applies border-color to child elements, not the
+   element carrying the class. [class*="border-white"] misses these children.
+   Target them directly so table/list dividers remain visible on light cards. */
+html.light main [class*="divide-white"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(15,23,42,0.10) !important;
+}
+
+/* Code blocks (api-docs pre elements): bg-black/30 keeps a dark background but
+   text-white/* is remapped to dark slate — dark on dark. Light the bg instead. */
+html.light main pre {
+  background-color: rgba(15,23,42,0.05) !important;
+  border-color:     rgba(15,23,42,0.12) !important;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapPin, Radio, Zap } from "lucide-react";
 import { FloatingPaths } from "@/components/ui/background-paths";
 
@@ -22,7 +22,7 @@ function classifyZone(lat: number, lon: number): string {
 }
 
 const REGION_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  north:     { label: "North India",      color: "#60B8E0", bg: "rgba(96,184,224,0.08)", border: "rgba(96,184,224,0.25)" },
+  north:     { label: "North India",      color: "#0284c7", bg: "rgba(96,184,224,0.08)", border: "rgba(96,184,224,0.25)" },
   west:      { label: "West (Guj/Raj)",   color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.25)" },
   westcoast: { label: "West Coast",       color: "#a855f7", bg: "rgba(168,85,247,0.08)", border: "rgba(168,85,247,0.25)" },
   central:   { label: "Central India",    color: "#ec4899", bg: "rgba(236,72,153,0.08)", border: "rgba(236,72,153,0.25)" },
@@ -54,9 +54,45 @@ const StationMapView = dynamic(() => import("@/components/ui/station-map-view"),
   ),
 });
 
+function IndiaOutlineFallback({ stations }: { stations: Station[] }) {
+  const W = 400, H = 500, LAT_MIN = 7, LAT_MAX = 37, LON_MIN = 68, LON_MAX = 97;
+  const proj = (lat: number, lon: number) => ({
+    x: ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * W,
+    y: ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * H,
+  });
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-sm border border-white/8 rounded-xl"
+        style={{ background: "rgba(13,107,142,0.06)", maxHeight: 420 }}>
+        <text x="200" y="20" textAnchor="middle" fontSize="10" fill="rgba(96,184,224,0.4)">
+          {stations.length} NOAA ISD Stations
+        </text>
+        {stations.map(s => {
+          const { x, y } = proj(s.lat, s.lng);
+          const meta = REGION_META[s.region];
+          return (
+            <g key={s.id}>
+              <circle cx={x} cy={y} r={4} fill={meta?.color ?? "#60B8E0"} opacity={0.7} />
+              <title>{s.name}</title>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="text-xs text-white/30 text-center">
+        WebGL unavailable — showing station scatter plot.<br />
+        <a href="https://get.webgl.org" target="_blank" rel="noreferrer" className="text-sky/50 hover:text-sky underline">
+          Enable WebGL
+        </a>{" "}for the interactive map.
+      </p>
+    </div>
+  );
+}
+
 export default function MapPage() {
   const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [mapTimedOut, setMapTimedOut] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.title = "Station Map — DREADNOUGHT ASRE";
@@ -71,6 +107,15 @@ export default function MapPage() {
       })
       .catch(() => setStations([]))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!mapContainerRef.current?.querySelector("canvas")) {
+        setMapTimedOut(true);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
   }, []);
 
   const stationCount = stations.length;
@@ -136,8 +181,12 @@ export default function MapPage() {
               <span className="text-[9px] text-sky-400 font-bold uppercase tracking-widest">Live</span>
             </div>
           </div>
-          <div style={{ height: 480 }}>
-            <StationMapView stations={stations} arcs={ARCS} regionColors={REGION_COLORS} />
+          <div ref={mapContainerRef} style={{ height: 480 }}>
+            {mapTimedOut ? (
+              <IndiaOutlineFallback stations={stations} />
+            ) : (
+              <StationMapView stations={stations} arcs={ARCS} regionColors={REGION_COLORS} />
+            )}
           </div>
         </div>
 

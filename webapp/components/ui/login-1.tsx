@@ -24,9 +24,9 @@ function AppInput({ label, ...props }: InputProps) {
       )}
       <div className="relative">
         <input
-          className="relative z-10 h-11 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm text-white font-light outline-none transition-all duration-200
-            focus:border-sky-400/50 focus:bg-white/[0.05]
-            placeholder:text-white/25"
+          className="relative z-10 h-11 w-full rounded-xl border border-white/10 dark:border-white/10 bg-white/[0.03] dark:bg-white/[0.03] px-4 text-sm text-gray-900 dark:text-white font-light outline-none transition-all duration-200
+            focus:border-sky-400/50 dark:focus:border-sky-400/50 focus:bg-white/[0.05] dark:focus:bg-white/[0.05]
+            placeholder:text-gray-400 dark:placeholder:text-white/25"
           onMouseMove={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
             setMouse({ x: e.clientX - r.left, y: e.clientY - r.top });
@@ -77,10 +77,10 @@ function StatChip({ value, label, delay }: { value: string; label: string; delay
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay, duration: 0.5, ease: "easeOut" }}
-      className="bg-[#020c1a]/85 border border-sky-400/25 rounded-xl px-3 py-2 text-center backdrop-blur-sm"
+      className="bg-white/85 dark:bg-[#020c1a]/85 border border-sky/30 dark:border-sky/25 rounded-xl px-3 py-2 text-center backdrop-blur-sm shadow-sm"
     >
-      <p className="text-sky-300 text-sm font-bold tabular-nums leading-none">{value}</p>
-      <p className="text-white/35 text-[8px] uppercase tracking-wider mt-1 leading-none">{label}</p>
+      <p className="text-sky text-sm font-bold tabular-nums leading-none">{value}</p>
+      <p className="text-slate-500 dark:text-white/35 text-[8px] uppercase tracking-wider mt-1 leading-none">{label}</p>
     </motion.div>
   );
 }
@@ -204,6 +204,29 @@ export default function LoginCard() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]');
+    const email = emailInput?.value?.trim();
+    if (!email) {
+      setAuthError("Enter your email address above, then click Forgot password.");
+      return;
+    }
+    setAuthError(null);
+    setLoading("form");
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/login",
+      });
+      if (error) throw error;
+      setAuthNotice(`Reset link sent to ${email} — check your inbox.`);
+    } catch (err: any) {
+      setAuthError(err.message || "Could not send reset email. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // OAuth providers aren't configured in the pilot — point users at email/password.
   const socialUnavailable = () =>
     setAuthError("Social sign-in isn't enabled yet — use email & password below.");
@@ -226,7 +249,7 @@ export default function LoginCard() {
 
         {/* ── Left: form ──────────────────────────────────────────── */}
         <div
-          className="relative w-full lg:w-[52%] bg-[#040c1a] px-8 lg:px-14 py-10 flex flex-col justify-center overflow-hidden"
+          className="relative w-full lg:w-[52%] bg-white dark:bg-[#040c1a] px-8 lg:px-14 py-10 flex flex-col justify-center overflow-hidden"
           onMouseMove={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
             setMouse({ x: e.clientX - r.left, y: e.clientY - r.top });
@@ -365,7 +388,7 @@ export default function LoginCard() {
                 <div className="flex justify-end mt-0.5">
                   <button
                     type="button"
-                    onClick={() => setAuthNotice("Password reset isn't wired up yet — contact the admin to reset.")}
+                    onClick={handleForgotPassword}
                     className="text-[11px] text-sky-400/55 hover:text-sky-400 transition-colors cursor-pointer"
                   >
                     Forgot password?
@@ -435,7 +458,7 @@ export default function LoginCard() {
         </div>
 
         {/* ── Right: rotating Earth + data theme ──────────────────── */}
-        <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-center justify-center" style={{ background: "#020810" }}>
+        <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-center justify-center dark:bg-[#020810] bg-gray-50">
 
           {/* Atmospheric radial glow behind the globe */}
           <div

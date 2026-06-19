@@ -50,9 +50,10 @@ const VERDICT_LABELS: Record<string, string> = {
 
 interface VerdictResultCardProps {
   result: AdjudicationResult & { claim_id?: string };
+  onDownloadReport?: () => void;
 }
 
-export function VerdictResultCard({ result }: VerdictResultCardProps) {
+export function VerdictResultCard({ result, onDownloadReport }: VerdictResultCardProps) {
   const style   = VERDICT_STYLES[result.label] ?? VERDICT_STYLES["INSUFFICIENT_DATA"];
   const VIcon   = style.icon;
   const isValid = result.label === "VALIDATED";
@@ -117,7 +118,12 @@ export function VerdictResultCard({ result }: VerdictResultCardProps) {
       {/* Actions */}
       {isValid && (
         <div className="px-6 pb-5 flex gap-3 border-t border-white/8 pt-4">
-          <button className="flex items-center gap-2 text-xs font-semibold text-sky/80 hover:text-sky border border-sky/20 hover:border-sky/40 rounded-lg px-3 py-2 bg-sky/5 hover:bg-sky/10 transition-all">
+          <button
+            type="button"
+            onClick={onDownloadReport}
+            disabled={!onDownloadReport}
+            className="flex items-center gap-2 text-xs font-semibold text-sky/80 hover:text-sky border border-sky/20 hover:border-sky/40 rounded-lg px-3 py-2 bg-sky/5 hover:bg-sky/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             <Download size={12} /> Evidence Report
           </button>
           <Link href="/sla" className="flex items-center gap-2 text-xs font-semibold text-green-400/80 hover:text-green-400 border border-green-500/20 hover:border-green-500/40 rounded-lg px-3 py-2 bg-green-500/5 hover:bg-green-500/10 transition-all">

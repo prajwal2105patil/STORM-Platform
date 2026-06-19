@@ -1,6 +1,7 @@
 "use client";
 
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader }    from "@/components/ui/page-header";
+import { FloatingPaths } from "@/components/ui/background-paths";
 
 const endpoints = [
   {
@@ -132,7 +133,10 @@ const METHOD_COLOR: Record<string, string> = {
 
 export default function APIDocsPage() {
   return (
-    <div className="p-8 max-w-4xl space-y-8">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-[1] p-8 max-w-4xl space-y-8">
 
       <PageHeader
         title="API Reference"
@@ -203,6 +207,7 @@ export default function APIDocsPage() {
       <div className="pt-2 text-center text-xs text-white/20 font-mono">
         DREADNOUGHT ASRE v2 · Supabase · Groq LLM · NOAA ISD · DuckDB
       </div>
+    </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { FloatingPaths } from "@/components/ui/background-paths";
 
 export function GlobalBackground() {
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 bg-[#040810]">
+    <div className="global-bg fixed inset-0 pointer-events-none z-0 bg-[#040810]">
       <FloatingPaths position={1} />
       <FloatingPaths position={-1} />
       <div

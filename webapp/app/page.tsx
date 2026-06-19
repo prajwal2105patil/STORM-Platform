@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight, Zap, Shield, Radio, Database } from "lucide-react";
+import { ArrowRight, Zap, Shield, Radio, Database, CheckCircle } from "lucide-react";
 
 const LandingMap = dynamic(
   () => import("@/components/ui/landing-map"),
@@ -18,7 +18,8 @@ const STATS = [
 
 export default function LandingPage() {
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#040810]">
+    <div className="relative w-full bg-[#040810]">
+    <div className="relative h-screen overflow-hidden">
 
       {/* ── Full-screen map ── */}
       <div className="absolute inset-0">
@@ -106,7 +107,7 @@ export default function LandingPage() {
             }}
           >
             <Radio size={14} className="text-sky-400" />
-            Join the Movement
+            Request a Demo
           </Link>
         </div>
       </div>
@@ -154,6 +155,80 @@ export default function LandingPage() {
           <p className="text-[8px] text-sky-400/50 tracking-widest uppercase mt-0.5">ASRE Platform v2</p>
         </div>
       </div>
+    </div>{/* end hero */}
+
+    {/* ── Pricing section ── */}
+    <section className="relative z-10 px-6 py-24 border-t border-white/8">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-sky/60 mb-3">Pricing</p>
+          <h2 className="text-3xl font-extrabold text-white mb-3">Simple, Transparent Pricing</h2>
+          <p className="text-white/40 text-sm">Start free. Scale when you need to. No lock-in.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Starter */}
+          <div className="glass-card-dark rounded-2xl p-8 border border-white/8 flex flex-col">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-sky/70 mb-3">Starter</p>
+            <p className="text-4xl font-extrabold text-white mb-1">Free</p>
+            <p className="text-white/35 text-sm mb-6">Up to 10 claims / month</p>
+            <ul className="space-y-2.5 text-sm text-white/60 mb-8 flex-1">
+              {["NOAA ISD adjudication", "VALIDATED / REJECTED verdict", "Legal summary export", "409-station network"].map(f => (
+                <li key={f} className="flex items-center gap-2.5">
+                  <CheckCircle size={13} className="text-green-400 flex-shrink-0" />{f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/login" className="btn-glass w-full justify-center text-sm">
+              Get Started
+            </Link>
+          </div>
+
+          {/* Professional */}
+          <div className="glass-card-dark rounded-2xl p-8 border border-sky/30 flex flex-col relative">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+              <span className="bg-sky text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full whitespace-nowrap">
+                Most Popular
+              </span>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-sky/70 mb-3">Professional</p>
+            <p className="text-4xl font-extrabold text-white mb-1">Contact us</p>
+            <p className="text-white/35 text-sm mb-6">Up to 500 claims / month</p>
+            <ul className="space-y-2.5 text-sm text-white/60 mb-8 flex-1">
+              {["Everything in Starter", "Bulk adjudication API", "Priority email support", "Custom reporting dashboard"].map(f => (
+                <li key={f} className="flex items-center gap-2.5">
+                  <CheckCircle size={13} className="text-green-400 flex-shrink-0" />{f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/login" className="btn-primary-3d w-full justify-center text-sm">
+              Request Demo
+            </Link>
+          </div>
+
+          {/* Enterprise */}
+          <div className="glass-card-dark rounded-2xl p-8 border border-white/8 flex flex-col">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-sky/70 mb-3">Enterprise</p>
+            <p className="text-4xl font-extrabold text-white mb-1">Custom</p>
+            <p className="text-white/35 text-sm mb-6">Unlimited · SLA guarantee</p>
+            <ul className="space-y-2.5 text-sm text-white/60 mb-8 flex-1">
+              {["Everything in Professional", "Dedicated infrastructure", "SLA contract & indemnity", "Custom legal stamping"].map(f => (
+                <li key={f} className="flex items-center gap-2.5">
+                  <CheckCircle size={13} className="text-green-400 flex-shrink-0" />{f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/login" className="btn-glass w-full justify-center text-sm">
+              Talk to Sales
+            </Link>
+          </div>
+        </div>
+
+        <p className="text-center text-[10px] text-white/20 mt-12 font-mono">
+          DREADNOUGHT ASRE · NOAA ISD 2015–2025 · Rule 803(8) · Partition-safe BigQuery engine
+        </p>
+      </div>
+    </section>
     </div>
   );
 }

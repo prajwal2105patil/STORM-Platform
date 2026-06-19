@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Calculator, TrendingDown, TrendingUp, Clock } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader }    from "@/components/ui/page-header";
+import { FloatingPaths } from "@/components/ui/background-paths";
 
 interface SLAResult {
   force_majeure_days: number;
@@ -80,7 +81,10 @@ export default function SLACalculatorPage() {
   const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
   return (
-    <div className="p-8 max-w-4xl space-y-6">
+    <div className="relative min-h-screen bg-[#040810] overflow-hidden">
+      <FloatingPaths position={1} />
+      <FloatingPaths position={-1} />
+    <div className="relative z-[1] p-8 max-w-4xl space-y-6">
       <PageHeader
         title="SLA Breach Calculator"
         description="Estimate recommended settlement for validated force majeure claims"
@@ -193,6 +197,7 @@ export default function SLACalculatorPage() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
