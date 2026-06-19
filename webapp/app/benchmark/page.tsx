@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Zap, AlertTriangle, Target, GitBranch } from "lucide-react";
+import { ShieldCheck, Zap, AlertTriangle, Target, GitBranch, IndianRupee } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { FloatingPaths } from "@/components/ui/background-paths";
 import { BENCHMARK, prettyLabel } from "@/lib/benchmark";
@@ -8,6 +8,11 @@ import { BENCHMARK, prettyLabel } from "@/lib/benchmark";
 function pct(n: number, dp = 1) {
   return (n * 100).toFixed(dp) + "%";
 }
+
+// Illustrative average force-majeure claim value (₹25 L) for the business
+// translation below. Never presented as realized revenue.
+const AVG_CLAIM_INR = 2_500_000;
+const formatCr = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
 
 export default function BenchmarkPage() {
   const { asre, baseline, config, delta } = BENCHMARK;
@@ -166,6 +171,33 @@ export default function BenchmarkPage() {
                 <p className="text-[11px] text-white/35 tabular-nums">{pct(b, 1)} ctrl</p>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ── Business translation (illustrative) ─────────────────────── */}
+        <div
+          className="glass-card-dark rounded-2xl p-6"
+          style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(96,184,224,0.06) 100%)", border: "1px solid rgba(34,197,94,0.22)" }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg,#15803d,#16a34a)" }}>
+              <IndianRupee size={18} className="text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-white mb-1">What the {pct(delta.macroF1, 1)} F1 gap is worth</p>
+              <p className="text-sm text-white/55 leading-relaxed">
+                The simulated control erred on{" "}
+                <strong className="text-amber-300">{pct(baseline.hallucinationRate, 1)}</strong> of claims, mostly as false{" "}
+                <em>VALIDATED</em> rulings. At a portfolio of <strong className="text-white/80">1,000 claims/year</strong> and a{" "}
+                <strong className="text-white/80">₹25 L</strong> average claim, that error profile corresponds to{" "}
+                <strong className="text-white/80">~{Math.round(config.nClaims * baseline.hallucinationRate)}</strong> wrongful
+                payouts — an illustrative{" "}
+                <strong className="text-green-400">{formatCr(config.nClaims * baseline.hallucinationRate * AVG_CLAIM_INR)}</strong>{" "}
+                in payout exposure that deterministic routing removes. This is a projection from the synthetic benchmark&apos;s
+                error rate, scaled by an assumed claim value — <strong>illustrative, not a measured or realized figure</strong>.
+              </p>
+            </div>
           </div>
         </div>
 

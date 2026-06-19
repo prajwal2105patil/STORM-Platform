@@ -516,3 +516,71 @@ html.light main pre {
   background-color: rgba(15,23,42,0.05) !important;
   border-color:     rgba(15,23,42,0.12) !important;
 }
+
+/* ─────────────────────────────────────────────
+   FORCE-DARK SUBTREE (landing page /)
+   The marketing landing hero sits on a dark MapLibre canvas that CSS cannot
+   lighten, so the light-mode remap above turns its text dark-on-dark
+   (invisible). Opt the whole subtree out: the extra `.force-dark` class gives
+   these rules higher specificity than `html.light main …`, so they win
+   regardless of source order and restore the original dark-mode palette.
+───────────────────────────────────────────── */
+html.light main .force-dark,
+html.light main .force-dark .bg-\[\#040810\],
+html.light main .force-dark .bg-\[\#060d1a\],
+html.light main .force-dark .section-dark { background: #040810 !important; }
+
+html.light main .force-dark .glass-card-dark,
+html.light main .force-dark .glass-card {
+  background:    rgba(14,38,64,0.55) !important;
+  border-color:  rgba(96,184,224,0.18) !important;
+  box-shadow:    none !important;
+}
+
+html.light main .force-dark .text-white      { color: #fff !important; }
+html.light main .force-dark .text-white\/85   { color: rgba(255,255,255,0.85) !important; }
+html.light main .force-dark .text-white\/80   { color: rgba(255,255,255,0.80) !important; }
+html.light main .force-dark .text-white\/70   { color: rgba(255,255,255,0.70) !important; }
+html.light main .force-dark .text-white\/65   { color: rgba(255,255,255,0.65) !important; }
+html.light main .force-dark .text-white\/60   { color: rgba(255,255,255,0.60) !important; }
+html.light main .force-dark .text-white\/55   { color: rgba(255,255,255,0.55) !important; }
+html.light main .force-dark .text-white\/50   { color: rgba(255,255,255,0.50) !important; }
+html.light main .force-dark .text-white\/45   { color: rgba(255,255,255,0.45) !important; }
+html.light main .force-dark .text-white\/40   { color: rgba(255,255,255,0.40) !important; }
+html.light main .force-dark .text-white\/35   { color: rgba(255,255,255,0.35) !important; }
+html.light main .force-dark .text-white\/30   { color: rgba(255,255,255,0.30) !important; }
+html.light main .force-dark .text-white\/25   { color: rgba(255,255,255,0.25) !important; }
+html.light main .force-dark .text-white\/20   { color: rgba(255,255,255,0.20) !important; }
+html.light main .force-dark .text-white\/18   { color: rgba(255,255,255,0.18) !important; }
+html.light main .force-dark .text-white\/15   { color: rgba(255,255,255,0.15) !important; }
+
+/* Sky / accent text back to dark-mode tints */
+html.light main .force-dark .text-sky,
+html.light main .force-dark .text-sky\/60,
+html.light main .force-dark .text-sky\/70,
+html.light main .force-dark .text-sky-400,
+html.light main .force-dark .text-sky-400\/50,
+html.light main .force-dark .text-sky-400\/60,
+html.light main .force-dark .text-sky-400\/70 { color: #60B8E0 !important; }
+
+/* White hairline + sky borders stay translucent-on-dark */
+html.light main .force-dark [class*="border-white"] { border-color: rgba(255,255,255,0.10) !important; }
+html.light main .force-dark [class*="border-sky"]   { border-color: rgba(96,184,224,0.30) !important; }
+
+/* Faint white surface fills (stat dividers, chips) back to white-translucent */
+html.light main .force-dark [class*="bg-white"] { background-color: rgba(255,255,255,0.08) !important; }
+
+/* Hero clip-text gradient ("Adjudicated.") back to sky stops */
+html.light main .force-dark .from-\[\#7dd3fc\] { --tw-gradient-from: #7dd3fc var(--tw-gradient-from-position) !important; }
+html.light main .force-dark .to-\[\#60B8E0\]   { --tw-gradient-to: #60B8E0 var(--tw-gradient-to-position) !important; }
+
+/* btn-glass back to translucent-white-on-dark (pricing CTAs) */
+html.light main .force-dark .btn-glass {
+  color:        #fff !important;
+  background:    rgba(255,255,255,0.06) !important;
+  border-color:  rgba(255,255,255,0.15) !important;
+}
+html.light main .force-dark .btn-glass:hover {
+  background:    rgba(255,255,255,0.10) !important;
+  border-color:  rgba(255,255,255,0.22) !important;
+}

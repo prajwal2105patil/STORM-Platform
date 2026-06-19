@@ -8,6 +8,7 @@ import {
   CheckCircle, XCircle, Zap, AlertTriangle,
   ArrowRight, Shield, Clock, Database,
   MapPin, Activity, TrendingUp, Globe as GlobeIcon,
+  IndianRupee,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -28,6 +29,18 @@ interface Snapshot {
 }
 
 /* ─── constants ─── */
+// Illustrative average force-majeure claim value (₹25 L). Used only for the
+// projected business-impact card — clearly labelled as a model, never as
+// realized revenue. See the 26.3% simulated-control rate in lib/benchmark.ts.
+const AVG_CLAIM_INR = 2_500_000;
+
+/** Compact Indian-format currency: ₹X.XX Cr / ₹X.X L / ₹n. */
+function formatINR(n: number): string {
+  if (n >= 1e7) return `₹${(n / 1e7).toFixed(2)} Cr`;
+  if (n >= 1e5) return `₹${(n / 1e5).toFixed(1)} L`;
+  return `₹${Math.round(n).toLocaleString("en-IN")}`;
+}
+
 const LABEL_COLORS: Record<string, string> = {
   VALIDATED:                 "#16a34a",
   REJECTED_BELOW_THRESHOLD:  "#dc2626",
@@ -260,6 +273,35 @@ export default function DashboardPage() {
           <div className="hidden lg:flex flex-col items-end gap-6 pt-8 flex-shrink-0">
             <FloatingVerdictPreview />
             <div className="opacity-90 drop-shadow-[0_0_32px_rgba(96,184,224,0.35)]"><GlobeViz standalone={false} /></div>
+          </div>
+        </div>
+      </div>
+
+      {/* BUSINESS IMPACT (illustrative projection — honest framing) */}
+      <div className="bg-[#060d1a] px-8 lg:px-12 py-8 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div
+            className="glass-card-dark rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-5"
+            style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(96,184,224,0.06) 100%)", border: "1px solid rgba(34,197,94,0.22)" }}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg,#15803d,#16a34a)", boxShadow: "0 0 28px rgba(34,197,94,0.35)" }}>
+              <IndianRupee size={22} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-green-400/70 mb-1">
+                Illustrative Wrongful-Settlement Exposure Avoided (proj.)
+              </p>
+              <p className="text-3xl font-extrabold text-white tabular-nums leading-none">
+                {loading ? "—" : formatINR(snap.hallucinations_avoided_proj * AVG_CLAIM_INR)}
+              </p>
+              <p className="text-xs text-white/45 mt-2 leading-relaxed max-w-2xl">
+                Model: <span className="text-white/70 tabular-nums">{loading ? "—" : snap.hallucinations_avoided_proj}</span> projected
+                false-<em>VALIDATED</em> rulings × ₹25 L average claim. The rate is derived from the
+                <strong className="text-green-300"> 26.3%</strong> error rate of a <strong>simulated</strong> unrouted control on
+                synthetic claims — an illustrative projection of avoided payout risk, <strong>not realized revenue</strong>.
+              </p>
+            </div>
           </div>
         </div>
       </div>

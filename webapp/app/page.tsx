@@ -18,7 +18,7 @@ const STATS = [
 
 export default function LandingPage() {
   return (
-    <div className="relative w-full bg-[#040810]">
+    <div className="force-dark relative w-full bg-[#040810]">
     <div className="relative h-screen overflow-hidden">
 
       {/* ── Full-screen map ── */}
@@ -66,7 +66,7 @@ export default function LandingPage() {
         <h1 className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight text-white leading-[1.05] mb-4 pointer-events-auto">
           Force Majeure
           <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-[#60B8E0]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7dd3fc] to-[#60B8E0]">
             Adjudicated.
           </span>
         </h1>
