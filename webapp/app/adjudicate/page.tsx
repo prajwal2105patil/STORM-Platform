@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Zap, XCircle, Layers, MapPin, Calendar, Building2, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { PipelineTracker }   from "@/components/ui/pipeline-tracker";
@@ -8,6 +9,19 @@ import { PageHeader }        from "@/components/ui/page-header";
 import { TiltCard }          from "@/components/ui/tilt-card";
 import { FloatingPaths } from "@/components/ui/background-paths";
 import type { AdjudicationResult } from "@/types";
+
+const EvidenceMap = dynamic(() => import("@/components/ui/evidence-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center" style={{ background: "rgba(14,38,64,0.4)" }}>
+      <div className="flex gap-1.5">
+        {[0, 150, 300].map((d) => (
+          <span key={d} className="h-2 w-2 rounded-full bg-sky-400/60 animate-pulse" style={{ animationDelay: `${d}ms` }} />
+        ))}
+      </div>
+    </div>
+  ),
+});
 
 const INPUT_CLS = [
   "w-full rounded-xl px-3.5 py-2.5 text-sm",
@@ -116,6 +130,25 @@ export default function AdjudicatePage() {
   const [result,  setResult]  = useState<(AdjudicationResult & { claim_id?: string }) | null>(null);
   const [error,   setError]   = useState<string | null>(null);
 
+  // Coordinates the verdict was actually computed on (captured at submit so
+  // later form edits don't move the pin), plus the station registry for
+  // resolving the nearest-station location on the evidence map.
+  const [verdictGeo, setVerdictGeo] = useState<{ lat: number; lon: number; name: string } | null>(null);
+  const [stationsById, setStationsById] = useState<Record<string, { lat: number; lon: number; name: string }>>({});
+
+  useEffect(() => {
+    fetch("/api/stations")
+      .then((r) => r.json())
+      .then((rows: { id: string; name: string; lat: number; lon: number }[]) => {
+        const map: Record<string, { lat: number; lon: number; name: string }> = {};
+        (Array.isArray(rows) ? rows : []).forEach((s) => {
+          map[String(s.id)] = { lat: s.lat, lon: s.lon, name: s.name };
+        });
+        setStationsById(map);
+      })
+      .catch(() => setStationsById({}));
+  }, []);
+
   const [form, setForm] = useState({
     petitioner:        "",
     respondent:        "",
@@ -150,7 +183,7 @@ export default function AdjudicatePage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setVerdictGeo(null);
 
     const payload = {
       ...form,
@@ -168,7 +201,12 @@ export default function AdjudicatePage() {
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Adjudication failed");
-      else         setResult(data);
+      else {
+        setResult(data);
+        if (Number.isFinite(payload.asset_lat) && Number.isFinite(payload.asset_lon)) {
+          setVerdictGeo({ lat: payload.asset_lat, lon: payload.asset_lon, name: form.asset_name });
+        }
+      }
     } catch (err: any) {
       setError(err.message || "Network error. Check API connection.");
     } finally {
@@ -384,6 +422,34 @@ export default function AdjudicatePage() {
                 result={result}
                 onDownloadReport={() => downloadReport(result, form)}
               />
+            )}
+
+            {/* Spatial evidence — entered coordinate, 300 km IDW area, nearest station */}
+            {result && !loading && verdictGeo && (
+              <div className="glass-card-dark rounded-2xl p-4 border border-white/8 shadow-glass-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin size={13} className="text-sky" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-sky/70">
+                    Spatial Evidence · Claimed Location
+                  </p>
+                </div>
+                <div style={{ height: 320 }}>
+                  <EvidenceMap
+                    assetLat={verdictGeo.lat}
+                    assetLon={verdictGeo.lon}
+                    assetName={verdictGeo.name}
+                    label={result.label}
+                    distanceKm={result.nearest_station_km}
+                    station={
+                      (result.nearest_station_id ? stationsById[result.nearest_station_id] : undefined)
+                      ?? (result.nearest_station
+                            ? Object.values(stationsById).find((s) => s.name === result.nearest_station)
+                            : undefined)
+                      ?? null
+                    }
+                  />
+                </div>
+              </div>
             )}
 
             {/* Empty state */}
