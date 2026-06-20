@@ -1,6 +1,7 @@
 "use client";
 import {
   Scale, GitBranch, MapPin, Gavel, FileCheck, Database, ArrowRight,
+  ShieldCheck, Wind, AlertTriangle, Target,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { FloatingPaths } from "@/components/ui/background-paths";
@@ -16,6 +17,15 @@ const LEGAL = [
   { icon: Gavel, title: "Rule 803(8) — Public Records", body: "NOAA Integrated Surface Database observations are records of a public agency, admissible under the public-records hearsay exception. ASRE never invents data; every verdict cites the underlying NOAA station observations." },
   { icon: FileCheck, title: "Chain of custody", body: "Every adjudication writes an immutable audit-log entry — input payload, decision node path, evidence, and timestamp. The full reasoning is reconstructable for any claim, months later." },
   { icon: GitBranch, title: "Determinism", body: "Identical inputs always produce identical verdicts. No temperature, no sampling, no model drift. The decision logic is inspectable and can be cross-examined — unlike a black-box LLM." },
+];
+
+// Real-world validation against the documented meteorological record.
+// Source: webapp/scripts/validate-historical.mjs · benchmarks/HISTORICAL_VALIDATION.md
+const VALIDATION_SENSITIVITY = [
+  { setting: "Current — peak ≥ 17.2 m/s, exceedance ≥ 3 h", recall: "1 / 12", fp: "0 / 6", current: true },
+  { setting: "Gust ×1.4 (WMO factor), exceedance ≥ 3 h",     recall: "2 / 12", fp: "0 / 6", current: false },
+  { setting: "Current wind, exceedance ≥ 1 h",               recall: "4 / 12", fp: "0 / 6", current: false },
+  { setting: "Gust ×1.4 + exceedance ≥ 1 h",                 recall: "7 / 12", fp: "0 / 6", current: false },
 ];
 
 export default function MethodologyPage() {
@@ -96,6 +106,95 @@ export default function MethodologyPage() {
                 <p className="text-sm text-white/50 leading-relaxed">{body}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── Scope (honest) ──────────────────────────────────────────── */}
+        <section className="glass-card-dark rounded-2xl p-6 flex items-start gap-4"
+          style={{ border: "1px solid rgba(96,184,224,0.18)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(96,184,224,0.10)", border: "1px solid rgba(96,184,224,0.22)" }}>
+            <Wind size={18} className="text-sky" />
+          </div>
+          <div>
+            <p className="font-bold text-white text-sm mb-1">Scope: wind-driven perils</p>
+            <p className="text-sm text-white/50 leading-relaxed">
+              ASRE today adjudicates <strong className="text-white/70">sustained surface-wind</strong> events
+              (gale ≥ 17.2 m/s, Beaufort 8) from NOAA ISD hourly observations. It does <strong>not</strong> yet
+              adjudicate flood, storm surge, hail, lightning, or tornado touchdown — those require different
+              sensor networks and are out of scope until validated. The engine refuses claims it cannot measure
+              rather than guessing.
+            </p>
+          </div>
+        </section>
+
+        {/* ── Real-world validation ───────────────────────────────────── */}
+        <section className="glass-card-dark rounded-2xl p-7">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-sky/70 mb-1">Real-World Validation</p>
+          <h2 className="text-lg font-bold text-white mb-1">Replayed against documented cyclones — not only synthetic claims</h2>
+          <p className="text-sm text-white/40 mb-6">
+            The benchmark page reports 99.7% on 1,000 <em>synthetic</em> claims — a measure of routing discipline.
+            Separately, we replay the engine on the <strong className="text-white/60">real NOAA record</strong> for
+            12 documented IMD/JTWC cyclones (2016–2023) and 6 calm-period controls. Reproducible:{" "}
+            <code className="text-sky bg-sky/10 px-1.5 py-0.5 rounded text-xs">node scripts/validate-historical.mjs</code>.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { icon: Target,      k: "Cyclone recall",   v: "1 / 12", sub: "at current thresholds" },
+              { icon: ShieldCheck, k: "Calm specificity", v: "6 / 6",  sub: "no false validations" },
+              { icon: Gavel,       k: "False positives",  v: "0",       sub: "never validates a non-event" },
+            ].map(({ icon: Icon, k, v, sub }) => (
+              <div key={k} className="rounded-xl p-4 border border-white/8 bg-white/3">
+                <Icon size={15} className="text-sky mb-2" />
+                <p className="text-2xl font-extrabold text-white tabular-nums leading-none">{v}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider mt-1.5">{k}</p>
+                <p className="text-[10px] text-white/30 mt-0.5">{sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-sm text-white/50 leading-relaxed mb-5">
+            Read this honestly: ASRE is a <strong className="text-white/70">high-specificity, low-recall</strong>{" "}
+            instrument on the raw record. It never manufactured a validation (the legally safe direction), but it
+            under-detects real cyclones — because NOAA reports hourly-<em>mean</em> wind while cyclones do damage
+            through <em>gusts</em>, and the nearest station is often tens of km from the eyewall. That conservatism
+            is deliberate: evidence headed to a tribunal should err toward provable.
+          </p>
+
+          {/* Sensitivity table */}
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-3">Sensitivity — the tunable levers</p>
+          <div className="overflow-hidden rounded-xl border border-white/8">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-white/4 text-[10px] uppercase tracking-wider text-white/40">
+                  <th className="text-left font-bold px-4 py-2.5">Threshold setting</th>
+                  <th className="text-right font-bold px-4 py-2.5">Cyclone recall</th>
+                  <th className="text-right font-bold px-4 py-2.5">Control false-pos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {VALIDATION_SENSITIVITY.map((r) => (
+                  <tr key={r.setting} className="border-t border-white/6">
+                    <td className="px-4 py-2.5 text-white/65">
+                      {r.setting}
+                      {r.current && <span className="ml-2 text-[9px] font-bold text-sky/80 uppercase">live</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-right tabular-nums font-bold text-green-400">{r.recall}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-white/50">{r.fp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-start gap-2.5 mt-4">
+            <AlertTriangle size={14} className="text-sky/60 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-white/40 leading-relaxed">
+              A standard WMO gust factor (×1.4) with a 1-hour sustained bar lifts recall to <strong className="text-white/60">7/12 (58%)</strong>{" "}
+              with zero new false positives on this control set. We have not adopted it in production: 0 false positives on
+              6 controls is encouraging, not conclusive. Changing the gale threshold is a deliberate legal decision pending a
+              larger adversarial control set — not a silent tuning.
+            </p>
           </div>
         </section>
 
