@@ -10,7 +10,7 @@ const QuerySchema = z.object({
 export async function POST(req: NextRequest) {
   // Rate limit: 30 queries per minute per IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-  const { allowed, remaining, resetAt } = rateLimit(ip, "query", 30, 60_000);
+  const { allowed, remaining, resetAt } = await rateLimit(ip, "query", 30, 60_000);
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Max 30 queries per minute." },

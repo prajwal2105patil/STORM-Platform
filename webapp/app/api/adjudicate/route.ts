@@ -3,6 +3,7 @@ import { adjudicate } from "@/lib/asre";
 import { getServiceClient } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/user";
 import { rateLimit } from "@/lib/ratelimit";
+import { notifyAdjudication } from "@/lib/email";
 import { ClaimPayload } from "@/types";
 import { z } from "zod";
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   // action — open but rate-limited (10/min/IP) and strictly Zod-validated above.
   // Rate limit: 10 claims per minute per IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-  const { allowed, remaining, resetAt } = rateLimit(ip, "adjudicate", 10, 60_000);
+  const { allowed, remaining, resetAt } = await rateLimit(ip, "adjudicate", 10, 60_000);
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Max 10 claims per minute." },
@@ -112,6 +113,17 @@ export async function POST(req: NextRequest) {
         actor:      "ASRE-v2",
         payload:    { label: result.label, node_path: result.node_path },
       }] as any[]).then(() => {}).catch(console.error);
+
+      notifyAdjudication({
+        id: claimId,
+        petitioner: payload.petitioner,
+        asset_name: payload.asset_name,
+        label: result.label,
+        peak_wind_ms: result.peak_wind_ms ?? null,
+        exceedance_hours: result.exceedance_hours ?? null,
+        nearest_station: result.nearest_station ?? null,
+        processing_ms: result.processing_ms,
+      }).catch(console.error);
     }
 
     return NextResponse.json({ claim_id: claimId, ...result }, { status: 200 });

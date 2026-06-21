@@ -1,57 +1,74 @@
 /**
- * ratelimit.ts — Best-effort in-memory rate limiter for API routes.
- * Fixed-window counter per IP address.
+ * ratelimit.ts — Global rate limiter backed by Upstash Redis.
  *
- * SERVERLESS CAVEAT: on Vercel each lambda instance has its own `store`, so the
- * limit is enforced PER INSTANCE, not globally. Under high concurrency a client
- * can exceed the nominal limit by (limit × number of warm instances). This is
- * acceptable abuse-dampening for a pilot, not a hard quota.
- *
- * To make limits global (a future upgrade, only if abuse appears):
- *   - Upstash Redis + @upstash/ratelimit (free tier, set UPSTASH_REDIS_* env), OR
- *   - a Supabase counter table with an atomic-increment RPC ($0, +1 round-trip).
- * Swap the body of rateLimit() for one of those; the signature stays the same.
+ * When UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set (production),
+ * limits are enforced globally across all Vercel instances via Upstash Redis.
+ * When they're missing (local dev), falls back to in-memory per-instance limits.
  */
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-const store = new Map<string, RateLimitEntry>();
+const hasUpstash =
+  !!process.env.UPSTASH_REDIS_REST_URL &&
+  !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-// Purge expired entries when the map grows, so a high-cardinality stream of IPs
-// can't grow this map without bound (memory leak) on a long-lived instance.
-const SWEEP_THRESHOLD = 5000;
-function sweepExpired(now: number) {
-  if (store.size < SWEEP_THRESHOLD) return;
-  for (const [k, v] of store) {
-    if (now > v.resetAt) store.delete(k);
+const redis = hasUpstash
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
+  : null;
+
+const limiters = new Map<string, Ratelimit>();
+
+function getUpstashLimiter(route: string, limit: number, windowMs: number) {
+  const key = `${route}:${limit}:${windowMs}`;
+  if (!limiters.has(key)) {
+    limiters.set(
+      key,
+      new Ratelimit({
+        redis: redis!,
+        limiter: Ratelimit.fixedWindow(limit, `${windowMs}ms`),
+        prefix: `asre:${route}`,
+      })
+    );
   }
+  return limiters.get(key)!;
 }
 
-export function rateLimit(
+// ── In-memory fallback (local dev / missing env) ────────────────────────────
+interface Entry { count: number; resetAt: number; }
+const memStore = new Map<string, Entry>();
+
+function memRateLimit(ip: string, route: string, limit: number, windowMs: number) {
+  const key = `${route}:${ip}`;
+  const now = Date.now();
+  if (memStore.size > 5000) {
+    for (const [k, v] of memStore) if (now > v.resetAt) memStore.delete(k);
+  }
+  const entry = memStore.get(key);
+  if (!entry || now > entry.resetAt) {
+    memStore.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
+  }
+  if (entry.count >= limit) {
+    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
+  }
+  entry.count++;
+  return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt };
+}
+
+// ── Public API (same signature as before) ───────────────────────────────────
+export async function rateLimit(
   ip: string,
   route: string,
   limit: number,
   windowMs: number
-): { allowed: boolean; remaining: number; resetAt: number } {
-  const key = `${route}:${ip}`;
-  const now = Date.now();
-  sweepExpired(now);
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  if (!redis) return memRateLimit(ip, route, limit, windowMs);
 
-  const entry = store.get(key);
-
-  if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: limit - 1, resetAt: now + windowMs };
-  }
-
-  if (entry.count >= limit) {
-    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
-  }
-
-  entry.count++;
-  return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt };
-  // Note: store is reset on serverless cold start — acceptable for rate limiting
+  const limiter = getUpstashLimiter(route, limit, windowMs);
+  const { success, remaining, reset } = await limiter.limit(ip);
+  return { allowed: success, remaining, resetAt: reset };
 }
