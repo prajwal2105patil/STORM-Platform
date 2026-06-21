@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 import { getProfile } from "@/lib/user";
+import type { AdjudicationJson } from "@/types/helpers";
 
 /**
  * HTML-escape any value before it is interpolated into the report markup.
@@ -43,8 +44,11 @@ export async function GET(
     return NextResponse.json({ error: "Claim not found" }, { status: 404 });
   }
 
-  // Ownership check: non-admins can't read someone else's claim by guessing UUIDs.
-  if (profile.role !== "admin" && claim.user_id && claim.user_id !== profile.id) {
+  // user_id column added by multi-user auth migration (may not exist yet)
+  const userId = (claim as Record<string, unknown>).user_id as string | null;
+  const adj = claim.adjudication_json as unknown as AdjudicationJson | null;
+
+  if (profile.role !== "admin" && userId && userId !== profile.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -122,7 +126,7 @@ export async function GET(
     <div class="verdict-icon">${isValidated ? "✅" : "❌"}</div>
     <div class="verdict-text ${isValidated ? "validated" : "rejected"}">
       <h2>${verdict.replace(/_/g, " ")}</h2>
-      <p>${esc(claim.adjudication_json?.legal_summary || "No legal summary available.")}</p>
+      <p>${esc(adj?.legal_summary || "No legal summary available.")}</p>
     </div>
   </div>
 
@@ -162,7 +166,7 @@ export async function GET(
   <div class="section">
     <h3>ASRE Adjudication Pipeline</h3>
     <div class="node-path">
-      ${(claim.adjudication_json?.node_path || []).map((n: string, i: number, arr: string[]) =>
+      ${(adj?.node_path || []).map((n: string, i: number, arr: string[]) =>
         `<span class="node">${esc(n)}</span>${i < arr.length - 1 ? '<span class="arrow">→</span>' : ''}`
       ).join("")}
     </div>
@@ -171,7 +175,7 @@ export async function GET(
   <div class="section">
     <h3>Legal Admissibility</h3>
     <div class="legal-box">
-      <strong>Evidence Basis:</strong> NOAA Integrated Surface Database (ISD), Station: ${esc(claim.adjudication_json?.nearest_station || "—")}.
+      <strong>Evidence Basis:</strong> NOAA Integrated Surface Database (ISD), Station: ${esc(adj?.nearest_station || "—")}.
       Weather data sourced from NOAA public records (US FRE 803(8) in origin jurisdiction).
       Adjudication performed deterministically by ASRE v2 engine with no human intervention.
       Wind threshold applied: 17.2 m/s (Beaufort Scale Force 8). Exceedance requirement: ≥ 3 hours.

@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         account_status: payload.account_status,
         total_claims: 0,
         approved_claims: 0,
-      }] as any[])
+      }])
       .select()
       .single();
 
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       event_type: "submitted",
       actor: "CRM-UI",
       payload: { company_name: payload.company_name, sector: payload.sector },
-    }] as any[]).then(() => {}).catch(console.error);
+    }]).then(() => {}, console.error);
 
     return NextResponse.json({ customer }, { status: 201 });
   } catch (err) {
@@ -118,7 +118,7 @@ export async function PATCH(req: NextRequest) {
 
     const { data: customer, error } = await supabase
       .from("customers")
-      .update({ account_status, updated_at: new Date().toISOString() } as any)
+      .update({ account_status, updated_at: new Date().toISOString() })
       .eq("id", id)
       .select()
       .single();
@@ -132,7 +132,7 @@ export async function PATCH(req: NextRequest) {
       event_type: "overridden",
       actor: "CRM-UI",
       payload: { customer_id: id, new_status: account_status },
-    }] as any[]).then(() => {}).catch(console.error);
+    }]).then(() => {}, console.error);
 
     return NextResponse.json({ customer });
   } catch (err) {

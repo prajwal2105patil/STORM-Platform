@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 import { getProfile } from "@/lib/user";
+import type { AdjudicationJson } from "@/types/helpers";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
@@ -37,7 +38,10 @@ export async function GET(
     return NextResponse.json({ error: "Claim not found" }, { status: 404 });
   }
 
-  if (profile.role !== "admin" && claim.user_id && claim.user_id !== profile.id) {
+  const userId = (claim as Record<string, unknown>).user_id as string | null;
+  const adj = claim.adjudication_json as unknown as AdjudicationJson | null;
+
+  if (profile.role !== "admin" && userId && userId !== profile.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -107,7 +111,7 @@ export async function GET(
     <div class="verdict-icon">${isValidated ? "✅" : "❌"}</div>
     <div class="verdict-text ${isValidated ? "validated" : "rejected"}">
       <h2>${verdict.replace(/_/g, " ")}</h2>
-      <p>${esc(claim.adjudication_json?.legal_summary || "No legal summary available.")}</p>
+      <p>${esc(adj?.legal_summary || "No legal summary available.")}</p>
     </div>
   </div>
 
@@ -147,7 +151,7 @@ export async function GET(
   <div class="section">
     <h3>ASRE Adjudication Pipeline</h3>
     <div class="node-path">
-      ${(claim.adjudication_json?.node_path || []).map((n: string, i: number, arr: string[]) =>
+      ${(adj?.node_path || []).map((n: string, i: number, arr: string[]) =>
         `<span class="node">${esc(n)}</span>${i < arr.length - 1 ? '<span class="arrow">→</span>' : ''}`
       ).join("")}
     </div>
@@ -156,7 +160,7 @@ export async function GET(
   <div class="section">
     <h3>Evidence Basis</h3>
     <div class="legal-box">
-      <strong>Source:</strong> NOAA Integrated Surface Database (ISD), Station: ${esc(claim.adjudication_json?.nearest_station || "—")}.
+      <strong>Source:</strong> NOAA Integrated Surface Database (ISD), Station: ${esc(adj?.nearest_station || "—")}.
       Weather data sourced from NOAA public records (US FRE 803(8) in origin jurisdiction).
       Adjudication performed deterministically by ASRE v2 engine with no human intervention.
       Wind threshold applied: 17.2 m/s (Beaufort Scale Force 8). Exceedance requirement: ≥ 3 hours.

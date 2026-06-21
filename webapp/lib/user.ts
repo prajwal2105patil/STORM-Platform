@@ -49,16 +49,17 @@ export async function getProfile(): Promise<UserProfile | null> {
   // Read via the service client so RLS can't hide the row from us; we already
   // know the id from the verified session, so this is a trusted lookup.
   const svc = getServiceClient();
-  const { data } = await svc
+  // profiles table is created by the multi-user auth migration; cast through
+  // unknown until then (getServiceClient() returns a typed client).
+  const { data } = await (svc as any)
     .from("profiles")
     .select("id, username, full_name, email, role")
     .eq("id", user.id)
     .single();
   if (!data) {
-    // Profile row missing (e.g. trigger not yet applied) — treat as a plain user.
     return { id: user.id, username: null, full_name: null, email: user.email, role: "user" };
   }
-  return data as UserProfile;
+  return data as unknown as UserProfile;
 }
 
 /**

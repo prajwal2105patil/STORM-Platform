@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
         event_type: "adjudicated",
         actor:      "ASRE-v2",
         payload:    { label: result.label, node_path: result.node_path },
-      }] as any[]).then(() => {}).catch(console.error);
+      }]).then(() => {}, console.error);
 
       notifyAdjudication({
         id: claimId,

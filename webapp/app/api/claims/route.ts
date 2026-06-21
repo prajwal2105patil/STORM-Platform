@@ -19,15 +19,15 @@ export async function GET(req: NextRequest) {
   const from     = (page - 1) * limit;
 
   const supabase = getServiceClient();
+  // Query claims table directly (claim_summary view lacks user_id/customer_id)
   let query = supabase
-    .from("claim_summary")
+    .from("claims")
     .select("*", { count: "exact" })
     .order("submitted_at", { ascending: false })
     .range(from, from + limit - 1);
 
-  // Non-admins are scoped to their own user_id. This is the real enforcement
-  // boundary (the service key bypasses RLS).
-  if (!isAdmin) query = query.eq("user_id", profile.id);
+  // Non-admins are scoped to their own user_id (pending multi-user migration)
+  if (!isAdmin) query = query.eq("user_id" as string, profile.id);
 
   if (status)   query = query.eq("status", status);
   if (customer) query = query.eq("customer_id", customer);
