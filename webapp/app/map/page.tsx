@@ -137,7 +137,7 @@ export default function MapPage() {
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-white tracking-tight">NOAA ISD Station Network</h1>
-            <p className="text-xs text-white/40 mt-0.5">{loading ? "Loading stations…" : `${stationCount} ground stations`} · pan-India · 300 km IDW search radius · NOAA Rule 803(8)</p>
+            <p className="text-xs text-white/40 mt-0.5">{loading ? "Loading stations…" : `${stationCount} ground stations`} · pan-India · 300 km IDW search radius · NOAA Public Record</p>
           </div>
         </div>
       </div>
@@ -219,7 +219,7 @@ export default function MapPage() {
         </div>
 
         <p className="text-[9px] text-white/20 font-mono pb-4">
-          Source: NOAA Integrated Surface Database (ISD) 2015–2025 · Rule 803(8) public records · Indian Evidence Act s74/s78 · IT Act s65B · Wind threshold 17.2 m/s (Beaufort 8) · Exceedance ≥ 3 hours
+          Source: NOAA Integrated Surface Database (ISD) 2015–2025 · US public record (FRE 803(8) source data) · Wind threshold 17.2 m/s (Beaufort 8) · Exceedance ≥ 3 hours
         </p>
       </div>
     </div>

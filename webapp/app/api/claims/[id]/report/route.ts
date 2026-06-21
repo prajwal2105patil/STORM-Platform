@@ -114,7 +114,7 @@ export async function GET(
       <h1>Evidence Report</h1>
       <p>Claim ID: ${esc(claim.id)}</p>
       <p>Generated: ${esc(date)}</p>
-      <p>NOAA Rule 803(8) Certified</p>
+      <p>NOAA Public Record (US FRE 803(8) Source Data)</p>
     </div>
   </div>
 
@@ -172,7 +172,7 @@ export async function GET(
     <h3>Legal Admissibility</h3>
     <div class="legal-box">
       <strong>Evidence Basis:</strong> NOAA Integrated Surface Database (ISD), Station: ${esc(claim.adjudication_json?.nearest_station || "—")}.
-      Weather data admitted as public records under <strong>Federal Rule of Evidence 803(8)</strong>.
+      Weather data sourced from NOAA public records (US FRE 803(8) in origin jurisdiction).
       Adjudication performed deterministically by ASRE v2 engine with no human intervention.
       Wind threshold applied: 17.2 m/s (Beaufort Scale Force 8). Exceedance requirement: ≥ 3 hours.
       IDW Confidence: ${claim.idw_confidence ? `${(claim.idw_confidence * 100).toFixed(1)}%` : "—"}.
@@ -182,7 +182,7 @@ export async function GET(
   <div class="footer">
     <div>
       <p>DREADNOUGHT ASRE v2 — Automated Storm-Related Events Engine</p>
-      <p>This report is system-generated and legally admissible under NOAA Rule 803(8).</p>
+      <p>This report is system-generated decision-support. Admissibility is subject to jurisdictional certification.</p>
     </div>
     <div class="stamp">
       <p class="${isValidated ? "validated" : "rejected"}">${verdict}</p>

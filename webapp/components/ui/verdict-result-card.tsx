@@ -86,7 +86,7 @@ export function VerdictResultCard({ result, onDownloadReport }: VerdictResultCar
           <p className="text-[10px] text-white/35 flex items-center gap-1 justify-end">
             <Clock size={10} /> {result.processing_ms}ms
           </p>
-          <p className="text-[9px] text-white/25 mt-0.5">NOAA Rule 803(8)</p>
+          <p className="text-[9px] text-white/25 mt-0.5">NOAA Public Record</p>
         </div>
       </div>
 

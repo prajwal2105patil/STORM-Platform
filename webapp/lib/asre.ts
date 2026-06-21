@@ -328,7 +328,7 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   const label = validated ? "VALIDATED" : "REJECTED_BELOW_THRESHOLD";
 
   const legalSummary = validated
-    ? `VALIDATED under NOAA Rule 803(8). Station: ${nearest.station.name} ` +
+    ? `VALIDATED — NOAA public record. Station: ${nearest.station.name} ` +
       `(${Math.round(nearest.distKm)}km). Peak wind: ${peakWind.toFixed(1)} m/s. ` +
       `Exceedance: ${bestExceedance}h ≥ ${EXCEEDANCE_HOURS}h threshold.`
     : `REJECTED: Peak wind ${peakWind.toFixed(1)} m/s (threshold ${WIND_THRESHOLD_MS} m/s) ` +

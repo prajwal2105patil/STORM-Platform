@@ -19,8 +19,8 @@ export const metadata: Metadata = {
     template: "%s — DREADNOUGHT ASRE",
   },
   description:
-    "Deterministic force-majeure claim adjudication in under 500ms — deterministic, no-LLM verdicts (99.7% on a reproducible 1,000-claim synthetic benchmark), backed by NOAA Rule 803(8) public records.",
-  keywords: ["force majeure", "claim adjudication", "NOAA ISD", "weather data", "insurance", "ASRE", "Rule 803(8)"],
+    "Deterministic force-majeure claim adjudication in under 500ms — no-LLM verdicts (99.7% on a reproducible 1,000-claim synthetic benchmark), backed by NOAA ISD public records.",
+  keywords: ["force majeure", "claim adjudication", "NOAA ISD", "weather data", "insurance", "ASRE", "public records"],
   openGraph: {
     title:       "DREADNOUGHT ASRE | Force Majeure Adjudication",
     description: "Deterministic storm-event adjudication in under 500ms · deterministic verdicts · 99.7% on a synthetic benchmark · NOAA-sourced.",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card:        "summary_large_image",
     title:       "DREADNOUGHT ASRE | Force Majeure Adjudication",
-    description: "Deterministic storm-event adjudication · 99.7% synthetic-benchmark accuracy · NOAA Rule 803(8).",
+    description: "Deterministic storm-event adjudication · 99.7% synthetic-benchmark accuracy · NOAA ISD public records.",
   },
   robots: { index: true, follow: true },
 };

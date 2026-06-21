@@ -159,7 +159,7 @@ async function groqStationFallback(question: string): Promise<string | null> {
 
 const noData = (question: string, station: string, year: number, month: number, metric: string, unit: string, msg: string, t0: number): QueryResult => ({
   question, station, year, month, metric, value: null, unit,
-  source: "NOAA ISD (Rule 803(8))", confidence: 0, answer: msg, message: msg,
+  source: "NOAA ISD (public record)", confidence: 0, answer: msg, message: msg,
   processing_ms: Date.now() - t0,
 });
 
@@ -220,7 +220,7 @@ export async function queryWeather(question: string): Promise<QueryResult> {
       metric: metricKey,
       value,
       unit: metric.unit,
-      source: "NOAA ISD (Rule 803(8))",
+      source: "NOAA ISD (public record)",
       confidence: value !== null ? 1 : 0,
       answer:
         value !== null

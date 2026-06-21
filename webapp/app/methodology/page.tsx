@@ -14,7 +14,7 @@ const PIPELINE = [
 ];
 
 const LEGAL = [
-  { icon: Gavel, title: "Rule 803(8) — Public Records", body: "NOAA Integrated Surface Database observations are records of a public agency, admissible under the public-records hearsay exception. ASRE never invents data; every verdict cites the underlying NOAA station observations." },
+  { icon: Gavel, title: "NOAA Public Records", body: "NOAA Integrated Surface Database observations are records of a US public agency (US FRE 803(8)). ASRE never invents data; every verdict cites the underlying NOAA station observations. Admissibility in other jurisdictions is subject to local evidence law." },
   { icon: FileCheck, title: "Chain of custody", body: "Every adjudication writes an immutable audit-log entry — input payload, decision node path, evidence, and timestamp. The full reasoning is reconstructable for any claim, months later." },
   { icon: GitBranch, title: "Determinism", body: "Identical inputs always produce identical verdicts. No temperature, no sampling, no model drift. The decision logic is inspectable and can be cross-examined — unlike a black-box LLM." },
 ];
@@ -37,7 +37,7 @@ export default function MethodologyPage() {
         <PageHeader
           title="Methodology & Admissibility"
           description="How a claim becomes a defensible verdict — and why it holds up in a dispute"
-          actions={<span className="glass-badge"><Scale size={12} /> NOAA Rule 803(8)</span>}
+          actions={<span className="glass-badge"><Scale size={12} /> NOAA Public Record</span>}
         />
 
         {/* ── The adjudication pipeline ───────────────────────────────── */}

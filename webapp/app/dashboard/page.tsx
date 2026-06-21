@@ -109,7 +109,7 @@ function FloatingVerdictPreview() {
       </div>
       <div className="mt-4 flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
         <Shield size={10} className="text-green-400" />
-        <span className="text-[9px] text-green-400 font-semibold uppercase tracking-wider">NOAA Rule 803(8)</span>
+        <span className="text-[9px] text-green-400 font-semibold uppercase tracking-wider">NOAA Public Record</span>
       </div>
     </div>
   );
@@ -208,7 +208,7 @@ export default function DashboardPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
-              ASRE Engine Online — NOAA Rule 803(8) Grounded
+              ASRE Engine Online — NOAA Public Record Grounded
             </div>
             <h1 className="text-4xl md:text-5xl xl:text-6xl font-extrabold leading-tight mb-5 tracking-tight">
               <span className="block">
@@ -238,7 +238,7 @@ export default function DashboardPage() {
             </motion.p>
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.7 }}
               className="text-blue-200/50 text-base mb-10 max-w-lg leading-relaxed">
-              AI-powered storm-event verification backed by 10 years of NOAA ISD data. Admissible under US FRE 803(8). Deterministic. Reproducible.
+              AI-powered storm-event verification backed by 10 years of NOAA ISD data. Sourced from NOAA public records (US FRE 803(8)). Deterministic. Reproducible.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.6 }}
               className="flex gap-4 flex-wrap mb-14">
@@ -339,13 +339,13 @@ export default function DashboardPage() {
             <div>
               <div className="glass-badge mb-6 inline-flex"><MapPin size={10} className="text-sky" /> Spatial Evidence Layer</div>
               <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">409 NOAA Stations.<br /><span className="text-gradient-electric">One defensible verdict.</span></h2>
-              <p className="text-white/50 text-sm leading-relaxed mb-6">Every adjudication uses Inverse Distance Weighting across all NOAA ISD ground stations within a 300 km search radius. The nearest station, its distance, its IDW confidence weight — all embedded in the evidence packet and admissible under Indian Evidence Act s74 and IT Act s65B.</p>
+              <p className="text-white/50 text-sm leading-relaxed mb-6">Every adjudication uses Inverse Distance Weighting across all NOAA ISD ground stations within a 300 km search radius. The nearest station, its distance, its IDW confidence weight — all embedded in the evidence packet. Designed to support admissibility under applicable evidence law — jurisdictional certification pending.</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Search Radius",   value: "300 km",     color: "#60B8E0" },
                   { label: "Station Network", value: "409 NOAA ISD", color: "#22c55e" },
                   { label: "IDW Power",       value: "p = 2",       color: "#a855f7" },
-                  { label: "Legal Standard",  value: "Rule 803(8)", color: "#f59e0b" },
+                  { label: "Data Source",      value: "NOAA Public Record", color: "#f59e0b" },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="rounded-xl p-3 border" style={{ borderColor: `${color}25`, background: `${color}0a` }}>
                     <p className="text-[9px] uppercase tracking-widest font-bold" style={{ color: `${color}99` }}>{label}</p>

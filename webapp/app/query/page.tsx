@@ -45,7 +45,7 @@ export default function QueryPage() {
     <div className="relative z-10 p-8 max-w-3xl space-y-6">
       <PageHeader
         title="Weather Intelligence Query"
-        description="409 Indian NOAA ISD stations · 2015–2025 · Rule 803(8) certified"
+        description="409 Indian NOAA ISD stations · 2015–2025 · Public record data"
       />
 
       {/* Example chips */}
@@ -97,7 +97,7 @@ export default function QueryPage() {
                 {r.station        && <span className="flex items-center gap-1"><Database size={10} /> {r.station}</span>}
                 {r.processing_ms != null && <span className="flex items-center gap-1"><Clock size={10} /> {r.processing_ms}ms</span>}
                 {r.confidence    != null && <span className="font-mono">confidence: {(r.confidence * 100).toFixed(0)}%</span>}
-                <span className="ml-auto text-white/20 font-mono text-[10px]">NOAA Rule 803(8)</span>
+                <span className="ml-auto text-white/20 font-mono text-[10px]">NOAA Public Record</span>
               </div>
             </div>
           ))}

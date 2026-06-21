@@ -2,7 +2,7 @@
  * benchmark.ts — Single source of truth for the public benchmark figures.
  *
  * These are the results from benchmarks/benchmark_asre.py (seed=42, 1000
- * SYNTHETIC claims, NOAA Rule 803(8) sample). Mirrored here so the website
+ * SYNTHETIC claims, NOAA ISD public-record sample). Mirrored here so the website
  * never fabricates numbers. Regenerate with `python benchmarks/benchmark_asre.py`.
  *
  * HONESTY: this is a self-consistency evaluation on synthetic claims, and the

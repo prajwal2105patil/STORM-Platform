@@ -123,7 +123,7 @@ export default function PolicyPage() {
           <div className="flex items-start gap-2">
             <Shield size={14} className="text-sky mt-0.5 flex-shrink-0" />
             <p className="text-sm text-sky/80">
-              Thresholds are enforced <strong className="text-sky">deterministically</strong>. VALIDATED requires: peak wind ≥ 17.2 m/s <strong className="text-sky">AND</strong> exceedance ≥ 3 hours, using NOAA Rule 803(8) public records within 300 km of the asset. Zero human override.
+              Thresholds are enforced <strong className="text-sky">deterministically</strong>. VALIDATED requires: peak wind ≥ 17.2 m/s <strong className="text-sky">AND</strong> exceedance ≥ 3 hours, using NOAA ISD public records within 300 km of the asset. Zero human override.
             </p>
           </div>
         </div>

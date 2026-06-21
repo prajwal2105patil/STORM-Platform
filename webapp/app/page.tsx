@@ -57,7 +57,7 @@ export default function LandingPage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
             </span>
             <span className="text-[10px] font-extrabold tracking-[0.2em] text-white/70 uppercase">
-              DREADNOUGHT ASRE · NOAA Rule 803(8) Grounded
+              DREADNOUGHT ASRE · NOAA Public Record Grounded
             </span>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function LandingPage() {
 
         <p className="text-base md:text-lg text-white/45 mb-10 max-w-lg leading-relaxed pointer-events-auto">
           AI-powered storm-event verification backed by 10 years of NOAA ISD data.
-          Admissible under US FRE 803(8) · Deterministic · Reproducible.
+          Sourced from NOAA public records (US FRE 803(8)) · Deterministic · Reproducible.
         </p>
 
         {/* CTA buttons */}
@@ -134,7 +134,7 @@ export default function LandingPage() {
           <div className="h-6 w-px bg-white/10 mx-2 hidden sm:block" />
           <div className="flex items-center gap-2 px-4">
             <Shield size={12} className="text-sky-400/60" />
-            <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2015–2025 · Rule 803(8)</span>
+            <span className="text-[9px] text-white/30 font-mono tracking-wider">NOAA ISD 2015–2025 · Public Record</span>
           </div>
         </div>
       </div>
@@ -225,7 +225,7 @@ export default function LandingPage() {
         </div>
 
         <p className="text-center text-[10px] text-white/20 mt-12 font-mono">
-          DREADNOUGHT ASRE · NOAA ISD 2015–2025 · Rule 803(8) · Partition-safe BigQuery engine
+          DREADNOUGHT ASRE · NOAA ISD 2015–2025 · Public Record · Partition-safe engine
         </p>
       </div>
     </section>

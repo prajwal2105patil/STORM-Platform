@@ -32,7 +32,7 @@ const endpoints = [
   "exceedance_hours": 3,
   "idw_confidence": 1.0,
   "processing_ms": 358,
-  "legal_summary": "VALIDATED under NOAA Rule 803(8)...",
+  "legal_summary": "VALIDATED — NOAA public record (US FRE 803(8) source data)...",
   "node_path": ["IntentRouter","SQLGenerator","ExecutionCage","Adjudicator"]
 }`,
   },
@@ -77,7 +77,7 @@ const endpoints = [
   "metric": "wind",
   "value": 20.7,
   "unit": "m/s",
-  "source": "NOAA ISD (Rule 803(8))",
+  "source": "NOAA ISD (public record)",
   "confidence": "exact",
   "message": "Peak Wind Speed in Mumbai (8/2023): 20.7 m/s",
   "processing_ms": 242

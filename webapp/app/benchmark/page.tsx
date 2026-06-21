@@ -66,7 +66,7 @@ export default function BenchmarkPage() {
       <div className="relative z-10 p-8 space-y-8 max-w-6xl">
         <PageHeader
           title="Benchmark Evidence"
-          description={`${config.nClaims.toLocaleString()} synthetic claims · seed ${config.seed} · fully reproducible on NOAA Rule 803(8) data`}
+          description={`${config.nClaims.toLocaleString()} synthetic claims · seed ${config.seed} · fully reproducible on NOAA ISD public-record data`}
           actions={
             <span className="glass-badge">
               <span className="relative flex h-1.5 w-1.5">
@@ -114,7 +114,7 @@ export default function BenchmarkPage() {
                 a <strong>simulated</strong> unrouted control (a calibrated stochastic model, <strong>not a live
                 LLM</strong>) that erred on <strong className="text-amber-300">{pct(baseline.hallucinationRate, 1)}</strong> of
                 claims (mostly false <em>VALIDATED</em> rulings) — illustrating the cost of unrouted generation
-                in a legal-admissibility setting. ASRE&apos;s false-positive rate is{" "}
+                in an evidence-grade setting. ASRE&apos;s false-positive rate is{" "}
                 <strong className="text-green-400">{pct(asre.falsePositiveRate, 0)}</strong>. This is a
                 self-consistency benchmark on synthetic claims — see METHODOLOGY.md, not a measured win over a
                 production model.

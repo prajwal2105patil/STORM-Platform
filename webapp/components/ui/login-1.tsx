@@ -451,7 +451,7 @@ export default function LoginCard() {
 
             {/* Legal footer */}
             <p className="text-[9px] text-white/18 text-center font-mono tracking-wide">
-              NOAA Rule 803(8) · Legal-grade meteorological evidence · Deterministic adjudication
+              NOAA Public Record · Evidence-grade meteorological data · Deterministic adjudication
             </p>
 
           </div>
