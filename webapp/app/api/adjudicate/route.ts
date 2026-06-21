@@ -130,9 +130,10 @@ export async function GET() {
     status:  "operational",
     endpoints: { POST: "/api/adjudicate" },
     thresholds: {
-      wind_threshold_ms: 17.2,
-      exceedance_hours:  3,
-      max_range_km:      300,
+      wind_threshold_ms: parseFloat(process.env.ASRE_WIND_THRESHOLD_MS || "17.2"),
+      exceedance_hours:  parseInt(process.env.ASRE_EXCEEDANCE_HOURS || "3", 10),
+      gust_factor:       parseFloat(process.env.ASRE_GUST_FACTOR || "1.0"),
+      max_range_km:      parseFloat(process.env.ASRE_MAX_RANGE_KM || "300.0"),
     },
   });
 }

@@ -15,11 +15,15 @@ import { getServiceClient } from "./supabase";
 import { ClaimPayload, AdjudicationResult, Station, WeatherStats } from "@/types";
 import Groq from "groq-sdk";
 
-// ── Constants ────────────────────────────────────────────────────────────────
-const WIND_THRESHOLD_MS = 17.2;
-const EXCEEDANCE_HOURS  = 3;
-const MAX_RANGE_KM      = 300.0;
-const IDW_POWER         = 2;
+// ── Thresholds (env-overridable policy knobs) ───────────────────────────────
+// Changing these is a deliberate legal/product decision — see
+// benchmarks/HISTORICAL_VALIDATION.md for the sensitivity analysis.
+// ASRE_GUST_FACTOR=1.4 + ASRE_EXCEEDANCE_HOURS=1 → 58% recall, 0 FP on controls.
+const WIND_THRESHOLD_MS = parseFloat(process.env.ASRE_WIND_THRESHOLD_MS || "17.2");
+const EXCEEDANCE_HOURS  = parseInt(process.env.ASRE_EXCEEDANCE_HOURS || "3", 10);
+const GUST_FACTOR       = parseFloat(process.env.ASRE_GUST_FACTOR || "1.0");
+const MAX_RANGE_KM      = parseFloat(process.env.ASRE_MAX_RANGE_KM || "300.0");
+const IDW_POWER         = parseInt(process.env.ASRE_IDW_POWER || "2", 10);
 
 // Groq model is env-overridable so a model retirement can be fixed by setting
 // GROQ_MODEL in Vercel — no redeploy of code needed. Default tracks a current,
@@ -318,20 +322,22 @@ export async function adjudicate(payload: ClaimPayload): Promise<AdjudicationRes
   }
 
   const peakWind = idwPeakWind > 0 ? idwPeakWind : Math.max(...stats.map((s: any) => s.peak_wind_ms));
+  const effectiveWind = peakWind * GUST_FACTOR;
 
   // ── NODE 4: Adjudicator (Deterministic Decision) ────────────────────────
   nodePath.push("Adjudicator");
 
   const validated =
-    peakWind >= WIND_THRESHOLD_MS && bestExceedance >= EXCEEDANCE_HOURS;
+    effectiveWind >= WIND_THRESHOLD_MS && bestExceedance >= EXCEEDANCE_HOURS;
 
   const label = validated ? "VALIDATED" : "REJECTED_BELOW_THRESHOLD";
 
+  const gustNote = GUST_FACTOR !== 1.0 ? ` (×${GUST_FACTOR} gust factor → ${effectiveWind.toFixed(1)} m/s)` : "";
   const legalSummary = validated
     ? `VALIDATED — NOAA public record. Station: ${nearest.station.name} ` +
-      `(${Math.round(nearest.distKm)}km). Peak wind: ${peakWind.toFixed(1)} m/s. ` +
+      `(${Math.round(nearest.distKm)}km). Peak wind: ${peakWind.toFixed(1)} m/s${gustNote}. ` +
       `Exceedance: ${bestExceedance}h ≥ ${EXCEEDANCE_HOURS}h threshold.`
-    : `REJECTED: Peak wind ${peakWind.toFixed(1)} m/s (threshold ${WIND_THRESHOLD_MS} m/s) ` +
+    : `REJECTED: Peak wind ${peakWind.toFixed(1)} m/s${gustNote} (threshold ${WIND_THRESHOLD_MS} m/s) ` +
       `or exceedance ${bestExceedance}h < ${EXCEEDANCE_HOURS}h required. ` +
       `Station: ${nearest.station.name}.`;
 
