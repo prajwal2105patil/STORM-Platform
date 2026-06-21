@@ -35,6 +35,7 @@ export function getServiceClient() {
       global: { headers: { "x-application": "dreadnought-asre-service" } },
     });
   }
+  // No generated DB types yet — suppress `never` on .from() until `supabase gen types` is run
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return cachedServiceClient as any;
 }

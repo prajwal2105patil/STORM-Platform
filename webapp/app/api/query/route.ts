@@ -40,14 +40,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log("[Query API] Processing question:", parsed.data.question);
     const result = await queryWeather(parsed.data.question);
-    console.log("[Query API] Result:", result);
     return NextResponse.json(result, { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Query API error:", err);
     return NextResponse.json(
-      { error: "Query processing error", message: err?.message },
+      { error: "Query processing failed" },
       { status: 500 }
     );
   }

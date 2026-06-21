@@ -115,10 +115,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ claim_id: claimId, ...result }, { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("ASRE adjudication error:", err);
     return NextResponse.json(
-      { error: "Adjudication engine error", message: err?.message },
+      { error: "Adjudication engine error" },
       { status: 500 }
     );
   }

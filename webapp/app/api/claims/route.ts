@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
   const isAdmin = profile.role === "admin";
 
   const { searchParams } = new URL(req.url);
-  const page     = parseInt(searchParams.get("page")   || "1");
-  const limit    = parseInt(searchParams.get("limit")  || "20");
+  const page     = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+  const limit    = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10) || 20));
   const status   = searchParams.get("status");
   const customer = searchParams.get("customer_id");
   const from     = (page - 1) * limit;

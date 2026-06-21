@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
   if (gate instanceof NextResponse) return gate;
 
   const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10) || 20));
   const sector = searchParams.get("sector");
   const account_status = searchParams.get("account_status");
   const from = (page - 1) * limit;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { getServiceClient } from "@/lib/supabase";
 
 /**
@@ -22,8 +23,11 @@ export async function GET(req: NextRequest) {
   if (!secret || secret.length < 16) {
     return NextResponse.json({ error: "Cron auth not configured" }, { status: 503 });
   }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${secret}`) {
+  const auth = req.headers.get("authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const ta = Buffer.from(token);
+  const tb = Buffer.from(secret);
+  if (ta.length !== tb.length || !timingSafeEqual(ta, tb)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
